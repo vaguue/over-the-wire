@@ -17,11 +17,11 @@ project (over-the-wire)
 
 add_library(${PROJECT_NAME} SHARED ${CMAKE_JS_SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE "${NODE_ADDON_API_DIR}")
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/cxx/include")
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/cxx")
 
-add_subdirectory(cxx/src)
-add_subdirectory(cxx/src/example)
-add_subdirectory(cxx/src/packet-sender)
+add_subdirectory(cxx/)
+add_subdirectory(cxx/example)
+add_subdirectory(cxx/packet-sender)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
