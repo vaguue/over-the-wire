@@ -1,0 +1,24 @@
+{
+  "name": "over-the-wire",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "rebuild": "cmake-js compile -D",
+    "build": "cmake-js build -D",
+    "test:verbose": "node --expose-gc --trace-gc test/index.js",
+    "test": "node --expose-gc test/index.js | faucet"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bindings": "^1.5.0",
+    "node-addon-api": "^7.0.0"
+  },
+  "devDependencies": {
+    "cmake-js": "^7.2.1",
+    "faucet": "^0.0.4",
+    "tape": "^5.7.2"
+  }
+}
