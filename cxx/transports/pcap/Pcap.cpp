@@ -103,6 +103,13 @@ Stream::Stream(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Stream>{info} 
       Napi::Error::New(info.Env(), "Could not open device").ThrowAsJavaScriptException();
       return;
     }
+
+    if (obj.Has("filter")) {
+      if (!dev->setFilter(obj.Get("filter").As<Napi::String>().Utf8Value())) {
+        Napi::Error::New(info.Env(), "Could not set filter").ThrowAsJavaScriptException();
+        return;
+      }
+    }
   }
   else {
     Napi::Error::New(info.Env(), "Interface name is required").ThrowAsJavaScriptException();
