@@ -6,24 +6,15 @@ void init(Napi::Env env, Napi::Object exports) {
   Stream::Init(env, exports);
 }
 
-SendWorker::SendWorker(device_ptr_t dev, Napi::Function& callback, js_buffer_t inputBuf) :
-  AsyncWorker{callback}, dev{dev}, callback{callback} {
-  size = inputBuf.Length();
-  if (size > 0) {
-    buf = new uint8_t[size + 1];
-    std::memcpy(buf, inputBuf.Data(), size);
-  }
-}
+SendWorker::SendWorker(device_ptr_t dev, Napi::Function& callback, std::vector<pcpp::RawPacket>&& packets) :
+  AsyncWorker{callback}, dev{dev}, callback{callback}, packets{packets} {}
 
 SendWorker::~SendWorker() {}
 
 void SendWorker::Execute() {
-  if (size > 0) {
-    auto res = dev->sendPacket(buf, size);
-    if (!res) {
-      SetError("Error sending packet");
-    }
-    delete buf;
+  auto res = dev->sendPackets(packets.data(), packets.size());
+  if (!res) {
+    SetError("Error sending packet");
   }
 }
 
@@ -145,11 +136,38 @@ Stream::~Stream() {
   }
 }
 
+timeval getTime() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv;
+}
+
+pcpp::RawPacket bufToPacket(js_buffer_t&& inputBuf, timeval& tv) {
+  int size = inputBuf.Length();
+  uint8_t* buf = new uint8_t[size + 1];
+  std::memcpy(buf, inputBuf.Data(), size);
+  return pcpp::RawPacket{ buf, size, tv, true };
+}
+
 Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
   checkLength(info, 2);
-  js_buffer_t buf = info[0].As<js_buffer_t>();
+  std::vector<pcpp::RawPacket> packets;
+
+  auto tv = getTime();
+
+  if (info[0].IsArray()) {
+    Napi::Array ar = info[0].As<Napi::Array>();
+    size_t n = ar.Length();
+    packets.resize(n);
+    for (size_t i{}; i < n; ++i) {
+      packets[i] = bufToPacket(ar.Get(i).As<js_buffer_t>(), tv);
+    }
+  }
+  else {
+    packets.push_back(bufToPacket(info[0].As<js_buffer_t>(), tv));
+  }
   Napi::Function callback = info[1].As<Napi::Function>();
-  SendWorker* w = new SendWorker(dev, callback, buf);
+  SendWorker* w = new SendWorker(dev, callback, std::move(packets));
   w->Queue();
   return info.Env().Undefined();
 }
