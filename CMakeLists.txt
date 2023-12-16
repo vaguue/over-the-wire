@@ -19,9 +19,18 @@ add_library(${PROJECT_NAME} SHARED ${CMAKE_JS_SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE "${NODE_ADDON_API_DIR}")
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/cxx")
 
+# PcapPlusPlus
+add_subdirectory(cxx_modules/PcapPlusPlus)
+add_dependencies(${PROJECT_NAME} Pcap++)
+include_directories(cxx_modules/PcapPlusPlus/Pcap++/header)
+include_directories(cxx_modules/PcapPlusPlus/Packet++/header)
+include_directories(cxx_modules/PcapPlusPlus/Common++/header)
+target_link_libraries(${PROJECT_NAME} PUBLIC Pcap++)
+
 add_subdirectory(cxx/)
 add_subdirectory(cxx/example)
-add_subdirectory(cxx/packet-sender)
+add_subdirectory(cxx/transports/pcap)
+#add_subdirectory(cxx/transports/socket)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
