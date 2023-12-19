@@ -11,7 +11,7 @@ namespace OverTheWire::Transports::Pcap {
   using device_ptr_t = std::shared_ptr<device_t>;
   using js_buffer_t = Napi::Buffer<uint8_t>;
 
-  void init(Napi::Env env, Napi::Object exports);
+  Napi::Object init(Napi::Env env, Napi::Object exports);
   void onPacketArrivesRaw(pcpp::RawPacket*, pcpp::PcapLiveDevice*, void*);
   pcpp::RawPacket bufToPacket(js_buffer_t&&, timeval&);
   timeval getTime();
@@ -33,6 +33,7 @@ namespace OverTheWire::Transports::Pcap {
     ~Stream();
     Napi::Value _write(const Napi::CallbackInfo&);
     Napi::Value stats(const Napi::CallbackInfo& info);
+    Napi::Value setFilter(const Napi::CallbackInfo& info);
 
     device_ptr_t dev;
     Napi::ThreadSafeFunction push;

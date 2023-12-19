@@ -2,8 +2,9 @@
 
 namespace OverTheWire::Transports::Pcap {
 
-void init(Napi::Env env, Napi::Object exports) {
+Napi::Object init(Napi::Env env, Napi::Object exports) {
   Stream::Init(env, exports);
+  return exports;
 }
 
 SendWorker::SendWorker(device_ptr_t dev, Napi::Function& callback, std::vector<pcpp::RawPacket>&& packets) :
@@ -25,6 +26,7 @@ void SendWorker::OnOK() {
 Napi::Object Stream::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(env, "PcapDevice", {
     InstanceMethod<&Stream::_write>("_write", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Stream::setFilter>("setFilter", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceAccessor<&Stream::stats>("stats"),
   });
 
@@ -94,7 +96,7 @@ Stream::Stream(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Stream>{info} 
   }
 
   if (obj.Has("iface")) {
-    dev = device_ptr_t{pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByName(obj.Get("iface").As<Napi::String>().Utf8Value()), nop<device_t*>};
+    dev = device_ptr_t{pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByName(obj.Get("iface").As<Napi::String>().Utf8Value())->clone()};
     if (!dev.get()) {
       Napi::Error::New(info.Env(), "Could not get device").ThrowAsJavaScriptException();
       return;
@@ -149,11 +151,11 @@ timeval getTime() {
   return tv;
 }
 
-pcpp::RawPacket bufToPacket(js_buffer_t&& inputBuf, timeval& tv) {
+pcpp::RawPacket bufToPacket(js_buffer_t&& inputBuf, timeval& tv, pcpp::LinkLayerType linkType) {
   int size = inputBuf.Length();
   uint8_t* buf = new uint8_t[size + 1];
   std::memcpy(buf, inputBuf.Data(), size);
-  return pcpp::RawPacket{ buf, size, tv, true };
+  return pcpp::RawPacket{ buf, size, tv, true, linkType };
 }
 
 Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
@@ -161,17 +163,18 @@ Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
   std::vector<pcpp::RawPacket> packets;
 
   auto tv = getTime();
+  auto linkType = dev->getLinkType();
 
   if (info[0].IsArray()) {
     Napi::Array ar = info[0].As<Napi::Array>();
     size_t n = ar.Length();
     packets.resize(n);
     for (size_t i{}; i < n; ++i) {
-      packets[i] = bufToPacket(ar.Get(i).As<js_buffer_t>(), tv);
+      packets[i] = bufToPacket(ar.Get(i).As<js_buffer_t>(), tv, linkType);
     }
   }
   else {
-    packets.push_back(bufToPacket(info[0].As<js_buffer_t>(), tv));
+    packets.push_back(bufToPacket(info[0].As<js_buffer_t>(), tv, linkType));
   }
   Napi::Function callback = info[1].As<Napi::Function>();
   SendWorker* w = new SendWorker(dev, callback, std::move(packets));
@@ -219,6 +222,14 @@ Napi::Value Stream::stats(const Napi::CallbackInfo& info) {
   res.Set("addresses", addressesJs);
 
   return res;
+}
+
+Napi::Value Stream::setFilter(const Napi::CallbackInfo& info) {
+  checkLength(info, 1);
+  if (dev && dev.get()) {
+    dev->setFilter(info[0].As<Napi::String>().Utf8Value());
+  }
+  return info.Env().Undefined();
 }
 
 }

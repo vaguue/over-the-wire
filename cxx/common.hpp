@@ -82,3 +82,27 @@ inline void checkLength(const Napi::CallbackInfo& info, size_t n) {
 
 template<typename... T>
 void nop(T...) {}
+
+template<typename CppCls>
+struct JsParent {};
+
+template<typename ClsId>
+void extendJsClass(Napi::Env env, Napi::Function& cls, const char* moduleName, const char* clsName) {
+  Napi::Function require = env.Global()
+                          .Get("require").As<Napi::Function>();
+  Napi::Function jsCls = require.Call({Napi::String::New(env, moduleName)})
+                          .ToObject()
+                          .Get(clsName)
+                          .As<Napi::Function>();
+
+  Napi::Function setProto = env.Global()
+                                .Get("Object")
+                                .ToObject()
+                                .Get("setPrototypeOf")
+                                .As<Napi::Function>();
+
+  setProto.Call({cls, jsCls});
+  setProto.Call({cls.Get("prototype"), jsCls.Get("prototype")});
+
+  env.GetInstanceData<AddonData>()->SetClass(typeid(ClsId), jsCls);
+}
