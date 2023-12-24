@@ -7,6 +7,15 @@
 #include <utility>
 #include <iostream>
 #include <map>
+#include <sstream>
+
+#define DEBUG
+
+#ifdef DEBUG
+#define DEBUG_OUTPUT(x) std::cout << "[over-the-wire::cxx]: " << (x) << std::endl;
+#else
+#define DEBUG_OUTPUT
+#endif
 
 using promise_t = std::shared_ptr<Napi::Promise::Deferred>;
 

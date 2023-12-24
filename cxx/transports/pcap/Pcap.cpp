@@ -13,20 +13,23 @@ SendWorker::SendWorker(device_ptr_t dev, Napi::Function& callback, std::vector<p
 SendWorker::~SendWorker() {}
 
 void SendWorker::Execute() {
+  DEBUG_OUTPUT("SendWorker::Execute");
   auto res = dev->sendPackets(packets.data(), packets.size());
   if (!res) {
     SetError("Error sending packet");
   }
 }
 
-void SendWorker::OnOK() {
-  Callback().Call({});
-}
-
 Napi::Object Stream::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(env, "PcapDevice", {
     InstanceMethod<&Stream::_write>("_write", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&Stream::setFilter>("setFilter", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Stream::setConfig>("setConfig", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Stream::open>("open", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Stream::startCapture>("startCapture", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Stream::stopCapture>("stopCapture", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Stream::_destroy>("_destroy", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceAccessor<&Stream::devStats>("devStats"),
     InstanceAccessor<&Stream::stats>("stats"),
   });
 
@@ -35,23 +38,74 @@ Napi::Object Stream::Init(Napi::Env env, Napi::Object exports) {
   return exports;
 }
 
-void onPacketArrivesRaw(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
-  auto* push = reinterpret_cast<Napi::ThreadSafeFunction*>(cookie);
-  auto callback = [](Napi::Env env, Napi::Function jsCallback, pcpp::RawPacket* packet) {
-    Napi::Object res = Napi::Object::New(env);
+void CallJs(Napi::Env env, Napi::Function jsCallback, Context* context, pcpp::RawPacket* packet) {
+  DEBUG_OUTPUT((std::stringstream{} << "CallJs: " << (void*)packet->getRawData() << packet->getRawDataLen()).str().c_str());
+  if (env != nullptr && jsCallback != nullptr) {
     jsCallback.Call({ js_buffer_t::Copy(env, packet->getRawData(), packet->getRawDataLen()) });
-  };
+  }
+}
 
-  push->BlockingCall(packet, callback);
+void onPacketArrivesRaw(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
+  DEBUG_OUTPUT("onPacketArrivesRaw");
+  auto* push = reinterpret_cast<TSFN*>(cookie);
+  push->BlockingCall(packet);
 }
 
 Stream::Stream(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Stream>{info} {
+  setConfig(info);
+  Napi::Object obj = info[0].As<Napi::Object>();
+
+  if (obj.Has("iface")) {
+    dev = device_ptr_t{pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByName(obj.Get("iface").As<Napi::String>().Utf8Value())->clone()};
+    if (!dev.get()) {
+      Napi::Error::New(info.Env(), "Could not get device").ThrowAsJavaScriptException();
+      return;
+    }
+  }
+  else {
+    Napi::Error::New(info.Env(), "Interface name is required").ThrowAsJavaScriptException();
+    return;
+  }
+
+  push = TSFN::New(
+    info.Env(),
+    obj.Get("push").As<Napi::Function>(),
+    "push",
+    0,
+    1,
+    nullptr,
+    [](Napi::Env, FinalizerDataType*, Context*) {
+      DEBUG_OUTPUT("TSFN destructor");
+    }
+  );
+}
+
+Napi::Value Stream::open(const Napi::CallbackInfo& info) {
+  DEBUG_OUTPUT("open");
+  if (!dev->open(config)) {
+    Napi::Error::New(info.Env(), "Could not open device").ThrowAsJavaScriptException();
+  }
+
+  return info.Env().Undefined();
+}
+
+Napi::Value Stream::startCapture(const Napi::CallbackInfo& info) {
+  DEBUG_OUTPUT("startCapture");
+  dev->startCapture(onPacketArrivesRaw, &push);
+  return info.Env().Undefined();
+}
+
+Napi::Value Stream::stopCapture(const Napi::CallbackInfo& info) {
+  DEBUG_OUTPUT("stopCapture");
+  dev->stopCapture();
+  return info.Env().Undefined();
+}
+
+Napi::Value Stream::setConfig(const Napi::CallbackInfo& info) {
+  DEBUG_OUTPUT("setConfig");
   checkLength(info, 1);
   Napi::Object obj = info[0].As<Napi::Object>();
-  capture = obj.Has("capture") ? obj.Get("capture").As<Napi::Boolean>() : true;
-  parse = obj.Has("parse") ? obj.Get("parse").As<Napi::Boolean>() : true;
-
-  pcpp::PcapLiveDevice::DeviceConfiguration config;
+  Napi::Env env = info.Env();
   if (obj.Has("mode")) {
     std::string mode = obj.Get("mode").As<Napi::String>().Utf8Value();
     if (mode == "promiscuous") {
@@ -62,8 +116,11 @@ Stream::Stream(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Stream>{info} 
     }
     else {
       Napi::Error::New(info.Env(), "Unknown mode").ThrowAsJavaScriptException();
-      return;
+      return info.Env().Undefined();
     }
+  }
+  else {
+    obj.Set("mode", Napi::String::New(env, config.mode == pcpp::PcapLiveDevice::DeviceMode::Normal ? "normal" : "promiscuous"));
   }
   if (obj.Has("direction")) {
     std::string direction = obj.Get("direction").As<Napi::String>().Utf8Value();
@@ -78,65 +135,49 @@ Stream::Stream(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Stream>{info} 
     }
     else {
       Napi::Error::New(info.Env(), "Unknown direction").ThrowAsJavaScriptException();
-      return;
+      return info.Env().Undefined();
     }
+  }
+  else {
+    obj.Set("direction", Napi::String::New(env, 
+      config.direction == pcpp::PcapLiveDevice::PcapDirection::PCPP_INOUT ? "inout" : 
+      config.direction == pcpp::PcapLiveDevice::PcapDirection::PCPP_IN ? "in" :
+      "out")
+    );
   }
 
   if (obj.Has("packetBufferTimeoutMs")) {
     config.packetBufferTimeoutMs = obj.Get("packetBufferTimeoutMs").As<Napi::Number>().Int32Value();
   }
+  else {
+    obj.Set("packetBufferTimeoutMs", Napi::Number::New(env, config.packetBufferTimeoutMs));
+  }
+
   if (obj.Has("packetBufferSize")) {
     config.packetBufferSize = obj.Get("packetBufferSize").As<Napi::Number>().Int32Value();
   }
+  else {
+    obj.Set("packetBufferSize", Napi::Number::New(env, config.packetBufferSize));
+  }
+
   if (obj.Has("snapshotLength")) {
     config.snapshotLength = obj.Get("snapshotLength").As<Napi::Number>().Int32Value();
   }
+  else {
+    obj.Set("snapshotLength", Napi::Number::New(env, config.snapshotLength));
+  }
+
   if (obj.Has("nflogGroup")) {
     config.nflogGroup = obj.Get("nflogGroup").As<Napi::Number>().Uint32Value();
   }
-
-  if (obj.Has("iface")) {
-    dev = device_ptr_t{pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByName(obj.Get("iface").As<Napi::String>().Utf8Value())->clone()};
-    if (!dev.get()) {
-      Napi::Error::New(info.Env(), "Could not get device").ThrowAsJavaScriptException();
-      return;
-    }
-    if (!dev->open(config)) {
-      Napi::Error::New(info.Env(), "Could not open device").ThrowAsJavaScriptException();
-      return;
-    }
-
-    if (obj.Has("filter")) {
-      if (!dev->setFilter(obj.Get("filter").As<Napi::String>().Utf8Value())) {
-        Napi::Error::New(info.Env(), "Could not set filter").ThrowAsJavaScriptException();
-        return;
-      }
-    }
-  }
   else {
-    Napi::Error::New(info.Env(), "Interface name is required").ThrowAsJavaScriptException();
-    return;
+    obj.Set("nflogGroup", Napi::Number::New(env, config.nflogGroup));
   }
 
-  if (capture) {
-    push = Napi::ThreadSafeFunction::New(
-      info.Env(),
-      obj.Get("push").As<Napi::Function>(),
-      "push",
-      0,
-      1,
-      [this](Napi::Env env) {
-#ifdef DEBUG
-        std::cout << "TSFN destructor" << std::endl;
-#endif
-      }
-    );
-
-    dev->startCapture(onPacketArrivesRaw, &push);
-  }
+  return info.Env().Undefined();
 }
 
-Stream::~Stream() {
+void Stream::_destroy_impl() {
   if (dev && dev.get()) {
     if (dev->captureActive()) {
       dev->stopCapture();
@@ -145,20 +186,48 @@ Stream::~Stream() {
   }
 }
 
+Napi::Value Stream::_destroy(const Napi::CallbackInfo& info) {
+  _destroy_impl();
+  return info.Env().Undefined();
+}
+
+Stream::~Stream() {
+  DEBUG_OUTPUT("~Stream");
+  _destroy_impl();
+  push.Release();
+}
+
 timeval getTime() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return tv;
 }
 
-pcpp::RawPacket bufToPacket(js_buffer_t&& inputBuf, timeval& tv, pcpp::LinkLayerType linkType) {
-  int size = inputBuf.Length();
-  uint8_t* buf = new uint8_t[size + 1];
-  std::memcpy(buf, inputBuf.Data(), size);
+pcpp::RawPacket bufToPacket(Napi::Value&& input, timeval& tv, pcpp::LinkLayerType linkType) {
+  int size;
+  uint8_t* buf;
+  if (input.IsBuffer()) {
+    js_buffer_t inputBuf = input.As<js_buffer_t>();
+    size = inputBuf.Length();
+    buf = new uint8_t[size + 1];
+    std::memcpy(buf, inputBuf.Data(), size);
+  }
+  else if (input.IsTypedArray()) {
+    Napi::TypedArray inputAr = input.As<Napi::TypedArray>();
+    size = inputAr.ByteLength();
+    buf = new uint8_t[size + 1];
+    std::memcpy(buf, static_cast<uint8_t*>(inputAr.ArrayBuffer().Data()) + inputAr.ByteOffset(), size);
+  }
+  else {
+    Napi::Error::New(input.Env(), "Invalid input type, expected either Buffer of TypedArray").ThrowAsJavaScriptException();
+    return pcpp::RawPacket{};
+  }
+  DEBUG_OUTPUT((std::stringstream{} << "size is " << size).str().c_str());
   return pcpp::RawPacket{ buf, size, tv, true, linkType };
 }
 
 Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
+  DEBUG_OUTPUT("_write");
   checkLength(info, 2);
   std::vector<pcpp::RawPacket> packets;
 
@@ -170,11 +239,11 @@ Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
     size_t n = ar.Length();
     packets.resize(n);
     for (size_t i{}; i < n; ++i) {
-      packets[i] = bufToPacket(ar.Get(i).As<js_buffer_t>(), tv, linkType);
+      packets[i] = bufToPacket(ar.Get(i), tv, linkType);
     }
   }
   else {
-    packets.push_back(bufToPacket(info[0].As<js_buffer_t>(), tv, linkType));
+    packets.push_back(bufToPacket(info[0].As<Napi::Value>(), tv, linkType));
   }
   Napi::Function callback = info[1].As<Napi::Function>();
   SendWorker* w = new SendWorker(dev, callback, std::move(packets));
@@ -182,8 +251,12 @@ Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-Napi::Value Stream::stats(const Napi::CallbackInfo& info) {
+Napi::Value Stream::devStats(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
+  if (!dev || !dev.get()) {
+    Napi::Error::New(env, "No device").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
   Napi::Object res = Napi::Object::New(env);
   res.Set("name", Napi::String::New(env, dev->getName()));
   res.Set("description", Napi::String::New(env, dev->getDesc()));
@@ -224,10 +297,33 @@ Napi::Value Stream::stats(const Napi::CallbackInfo& info) {
   return res;
 }
 
+Napi::Value Stream::stats(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!dev || !dev.get()) {
+    Napi::Error::New(env, "No device").ThrowAsJavaScriptException();
+    return info.Env().Undefined();
+  }
+  pcpp::IPcapDevice::PcapStats stats;
+  dev->getStatistics(stats);
+
+  Napi::Object res = Napi::Object::New(env);
+  res.Set("packetsDrop", Napi::Number::New(env, stats.packetsDrop));
+  res.Set("packetsDropByInterface", Napi::Number::New(env, stats.packetsDropByInterface));
+  res.Set("packetsRecv", Napi::Number::New(env, stats.packetsRecv));
+
+  return res;
+}
+
 Napi::Value Stream::setFilter(const Napi::CallbackInfo& info) {
+  DEBUG_OUTPUT("setFilter");
   checkLength(info, 1);
   if (dev && dev.get()) {
-    dev->setFilter(info[0].As<Napi::String>().Utf8Value());
+    if (!dev->setFilter(info[0].As<Napi::String>().Utf8Value())) {
+      Napi::Error::New(info.Env(), "Could not set filter").ThrowAsJavaScriptException();
+    }
+  }
+  else {
+    Napi::Error::New(info.Env(), "Could not set filter (no device)").ThrowAsJavaScriptException();
   }
   return info.Env().Undefined();
 }

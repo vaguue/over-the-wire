@@ -32,6 +32,8 @@ Napi::Object init(Napi::Env env, Napi::Object exports) {
 Napi::Object Stream::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(env, "Socket", {
     InstanceMethod<&Stream::_write>("_write", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Stream::_write>("_read", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Stream::_write>("_startSocket", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
   });
 
   extendJsClass<JsParent<Stream>>(env, func, "events", "EventEmitter");
@@ -57,39 +59,18 @@ Stream::Stream(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Stream>{info} 
   Napi::Object self = this->Value().ToObject();
   emit = self.Get("emit").As<Napi::Function>();
 
-  initSocket(env);
+  createSocket(env);
 }
 
-void Stream::initSocket(Napi::Env env) {
-  if (pollInitialised) {
-    return;
-  }
-
+void Stream::createSocket(Napi::Env env) {
   pollfd = socket(domain, type, protocol);
 
   if (pollfd < 0) {
     Napi::Error::New(env, "Error initializing socket: " + getSystemError()).ThrowAsJavaScriptException();
-    return;
   }
+}
 
-#ifdef _WIN32
-  unsigned long flag = 1;
-  if (ioctlsocket(pollfd, FIONBIO, &flag) != 0) {
-    Napi::Error::New(env, "Error setting socket to non-blocking mode: " + getSystemError()).ThrowAsJavaScriptException();
-    return;
-  }
-#else
-  int flag = 1;
-  if ((flag = fcntl(pollfd, F_GETFL, 0)) == -1) {
-    Napi::Error::New(env, "Error setting socket to non-blocking mode: " + getSystemError()).ThrowAsJavaScriptException();
-    return;
-  }
-  if (fcntl(pollfd, F_SETFL, flag | O_NONBLOCK) == -1) {
-    Napi::Error::New(env, "Error setting socket to non-blocking mode: " + getSystemError()).ThrowAsJavaScriptException();
-    return;
-  }
-#endif
-
+void Stream::initSocket(Napi::Env env) {
   pollWatcher = decltype(pollWatcher){new uv_poll_t};
   
   int initResult = uv_poll_init_socket(uv_default_loop(), pollWatcher.get(), pollfd);
@@ -97,13 +78,26 @@ void Stream::initSocket(Napi::Env env) {
     Napi::Error::New(env, "Error initializing poll watcher: " + getLibuvError(initResult)).ThrowAsJavaScriptException();
     return;
   }
+}
 
-  int startResult = uv_poll_start(pollWatcher.get(), UV_READABLE, IoEvent);
+void Stream::pollStart() {
+  int startResult = uv_poll_start(pollWatcher.get(), flags, IoEvent);
   if (startResult != 0) {
     Napi::Error::New(env, "Error starting poll watcher: " + getLibuvError(startResult)).ThrowAsJavaScriptException();
     return;
   }
-  pollInitialised = true;
+}
+
+void Stream::bind() {
+  //TODO
+}
+
+void Stream::setsockopt() {
+  //TODO
+}
+
+void Stream::ioctl() {
+  //TODO
 }
 
 void Stream::handleIOEvent(int status, int revents) {
@@ -113,20 +107,27 @@ void Stream::handleIOEvent(int status, int revents) {
   } 
 
   if (revents & UV_READABLE) {
-
+    //TODO
   }
   else if (revents & UV_WRITABLE) {
-
+    //TODO
   }
 }
 
-Stream::~Stream() {
-
-}
-
-Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
+Napi::Value Stream::_read(const Napi::CallbackInfo& info) {
+  //TODO
   return info.Env().Undefined();
 }
 
+Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
+  //TODO
+  return info.Env().Undefined();
+}
+
+Stream::~Stream() {
+  if (pollWatcher.get()) {
+    uv_poll_stop(pollWatcher.get());
+  }
+}
 
 };

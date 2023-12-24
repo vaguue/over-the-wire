@@ -9,7 +9,6 @@
 #ifdef _WIN32
 #include <winsock2.h>
 #include <Ws2tcpip.h>
-#define SOCKET_ERRNO WSAGetLastError()
 #define SOCKET_OPT_TYPE char *
 #define SOCKET_LEN_TYPE int
 #else
@@ -22,8 +21,6 @@
 #include <arpa/inet.h>
 #define SOCKET int
 #define SOCKET_ERROR -1
-#define SOCKET_ERRNO errno
-#define INVALID_SOCKET -1
 #define closesocket close
 #define SOCKET_OPT_TYPE void *
 #define SOCKET_LEN_TYPE socklen_t
@@ -38,16 +35,17 @@ namespace OverTheWire::Transports::Socket {
     Stream(const Napi::CallbackInfo& info);
     ~Stream();
     Napi::Value _write(const Napi::CallbackInfo&);
-    void initSocket(Napi::Env);
+    void createSocket(Napi::Env);
+    void startSocket(Napi::Env);
     void handleIOEvent(int status, int revents);
 
     bool noIpHeader;
     int domain;
     int type;
     int protocol;
+    int pollFlags = 0;
     SOCKET pollfd;
     std::unique_ptr<uv_poll_t> pollWatcher;
-    bool pollInitialised;
     bool deconstructing;
     Napi::Function emit;
   };
