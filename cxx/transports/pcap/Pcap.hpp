@@ -9,7 +9,6 @@
 namespace OverTheWire::Transports::Pcap {
   using device_t = pcpp::PcapLiveDevice;
   using device_ptr_t = std::shared_ptr<device_t>;
-  using js_buffer_t = Napi::Buffer<uint8_t>;
   using Context = std::nullptr_t;
   using DataType = pcpp::RawPacket;
   void CallJs(Napi::Env, Napi::Function, Context*, DataType*);

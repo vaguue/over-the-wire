@@ -39,6 +39,11 @@ namespace OverTheWire::Transports::Socket {
     void startSocket(Napi::Env);
     void handleIOEvent(int status, int revents);
 
+    Napi::Value Stream::bind(const Napi::CallbackInfo&);
+    Napi::Value Stream::setsockopt(const Napi::CallbackInfo&);
+    Napi::Value Stream::getsockopt(const Napi::CallbackInfo&);
+    Napi::Value Stream::ioctl(const Napi::CallbackInfo&);
+
     bool noIpHeader;
     int domain;
     int type;

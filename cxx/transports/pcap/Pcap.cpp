@@ -197,33 +197,17 @@ Stream::~Stream() {
   push.Release();
 }
 
+pcpp::RawPacket bufToPacket(Napi::Value&& input, timeval& tv, pcpp::LinkLayerType linkType) {
+  int size;
+  uint8_t* buf;
+  std::tie(buf, size) = toCxx(input);
+  return pcpp::RawPacket{ buf, size, tv, true, linkType };
+}
+
 timeval getTime() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return tv;
-}
-
-pcpp::RawPacket bufToPacket(Napi::Value&& input, timeval& tv, pcpp::LinkLayerType linkType) {
-  int size;
-  uint8_t* buf;
-  if (input.IsBuffer()) {
-    js_buffer_t inputBuf = input.As<js_buffer_t>();
-    size = inputBuf.Length();
-    buf = new uint8_t[size + 1];
-    std::memcpy(buf, inputBuf.Data(), size);
-  }
-  else if (input.IsTypedArray()) {
-    Napi::TypedArray inputAr = input.As<Napi::TypedArray>();
-    size = inputAr.ByteLength();
-    buf = new uint8_t[size + 1];
-    std::memcpy(buf, static_cast<uint8_t*>(inputAr.ArrayBuffer().Data()) + inputAr.ByteOffset(), size);
-  }
-  else {
-    Napi::Error::New(input.Env(), "Invalid input type, expected either Buffer of TypedArray").ThrowAsJavaScriptException();
-    return pcpp::RawPacket{};
-  }
-  DEBUG_OUTPUT((std::stringstream{} << "size is " << size).str().c_str());
-  return pcpp::RawPacket{ buf, size, tv, true, linkType };
 }
 
 Napi::Value Stream::_write(const Napi::CallbackInfo& info) {

@@ -2,13 +2,13 @@
 
 namespace OverTheWire::Example {
 
-Napi::Value someFunction(const Napi::CallbackInfo& info) {
-  std::cout << "kek" << std::endl;
-  return info.Env().Null();
+Napi::Value da(const Napi::CallbackInfo& info) {
+  std::cout << "da" << std::endl;
+  return info.Env().Undefined();
 }
 
 void init(Napi::Env env, Napi::Object exports) {
-  exports.Set("someFunction", Napi::Function::New(env, someFunction));
+  exports.Set("da", Napi::Function::New(env, da));
 }
 
 }
