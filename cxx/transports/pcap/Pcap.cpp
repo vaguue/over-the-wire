@@ -3,11 +3,11 @@
 namespace OverTheWire::Transports::Pcap {
 
 Napi::Object init(Napi::Env env, Napi::Object exports) {
-  Stream::Init(env, exports);
+  PcapDevice::Init(env, exports);
   return exports;
 }
 
-SendWorker::SendWorker(device_ptr_t dev, Napi::Function& callback, std::vector<pcpp::RawPacket>&& packets) :
+SendWorker::SendWorker(device_ptr_t dev, Napi::Function& callback, packets_t&& packets) :
   AsyncWorker{callback}, dev{dev}, callback{callback}, packets{packets} {}
 
 SendWorker::~SendWorker() {}
@@ -20,21 +20,21 @@ void SendWorker::Execute() {
   }
 }
 
-Napi::Object Stream::Init(Napi::Env env, Napi::Object exports) {
+Napi::Object PcapDevice::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(env, "PcapDevice", {
-    InstanceMethod<&Stream::_write>("_write", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
-    InstanceMethod<&Stream::setFilter>("setFilter", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
-    InstanceMethod<&Stream::setConfig>("setConfig", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
-    InstanceMethod<&Stream::open>("open", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
-    InstanceMethod<&Stream::startCapture>("startCapture", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
-    InstanceMethod<&Stream::stopCapture>("stopCapture", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
-    InstanceMethod<&Stream::_destroy>("_destroy", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
-    InstanceAccessor<&Stream::devStats>("devStats"),
-    InstanceAccessor<&Stream::stats>("stats"),
+    InstanceMethod<&PcapDevice::_write>("_write", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&PcapDevice::setFilter>("setFilter", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&PcapDevice::setConfig>("setConfig", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&PcapDevice::open>("open", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&PcapDevice::startCapture>("startCapture", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&PcapDevice::stopCapture>("stopCapture", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&PcapDevice::_destroy>("_destroy", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceAccessor<&PcapDevice::devStats>("devStats"),
+    InstanceAccessor<&PcapDevice::stats>("stats"),
   });
 
-  env.GetInstanceData<AddonData>()->SetClass(typeid(Stream), func);
-  exports.Set("PcapDeviceStream", func);
+  env.GetInstanceData<AddonData>()->SetClass(typeid(PcapDevice), func);
+  exports.Set("PcapDevicePcapDevice", func);
   return exports;
 }
 
@@ -51,7 +51,7 @@ void onPacketArrivesRaw(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void
   push->BlockingCall(packet);
 }
 
-Stream::Stream(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Stream>{info} {
+PcapDevice::PcapDevice(const Napi::CallbackInfo& info) : Napi::ObjectWrap<PcapDevice>{info} {
   setConfig(info);
   Napi::Object obj = info[0].As<Napi::Object>();
 
@@ -80,7 +80,7 @@ Stream::Stream(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Stream>{info} 
   );
 }
 
-Napi::Value Stream::open(const Napi::CallbackInfo& info) {
+Napi::Value PcapDevice::open(const Napi::CallbackInfo& info) {
   DEBUG_OUTPUT("open");
   if (!dev->open(config)) {
     Napi::Error::New(info.Env(), "Could not open device").ThrowAsJavaScriptException();
@@ -89,19 +89,19 @@ Napi::Value Stream::open(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-Napi::Value Stream::startCapture(const Napi::CallbackInfo& info) {
+Napi::Value PcapDevice::startCapture(const Napi::CallbackInfo& info) {
   DEBUG_OUTPUT("startCapture");
   dev->startCapture(onPacketArrivesRaw, &push);
   return info.Env().Undefined();
 }
 
-Napi::Value Stream::stopCapture(const Napi::CallbackInfo& info) {
+Napi::Value PcapDevice::stopCapture(const Napi::CallbackInfo& info) {
   DEBUG_OUTPUT("stopCapture");
   dev->stopCapture();
   return info.Env().Undefined();
 }
 
-Napi::Value Stream::setConfig(const Napi::CallbackInfo& info) {
+Napi::Value PcapDevice::setConfig(const Napi::CallbackInfo& info) {
   DEBUG_OUTPUT("setConfig");
   checkLength(info, 1);
   Napi::Object obj = info[0].As<Napi::Object>();
@@ -177,7 +177,7 @@ Napi::Value Stream::setConfig(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-void Stream::_destroy_impl() {
+void PcapDevice::_destroy_impl() {
   if (dev && dev.get()) {
     if (dev->captureActive()) {
       dev->stopCapture();
@@ -186,13 +186,13 @@ void Stream::_destroy_impl() {
   }
 }
 
-Napi::Value Stream::_destroy(const Napi::CallbackInfo& info) {
+Napi::Value PcapDevice::_destroy(const Napi::CallbackInfo& info) {
   _destroy_impl();
   return info.Env().Undefined();
 }
 
-Stream::~Stream() {
-  DEBUG_OUTPUT("~Stream");
+PcapDevice::~PcapDevice() {
+  DEBUG_OUTPUT("~PcapDevice");
   _destroy_impl();
   push.Release();
 }
@@ -210,10 +210,10 @@ timeval getTime() {
   return tv;
 }
 
-Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
+Napi::Value PcapDevice::_write(const Napi::CallbackInfo& info) {
   DEBUG_OUTPUT("_write");
   checkLength(info, 2);
-  std::vector<pcpp::RawPacket> packets;
+  packets_t packets;
 
   auto tv = getTime();
   auto linkType = dev->getLinkType();
@@ -235,7 +235,7 @@ Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-Napi::Value Stream::devStats(const Napi::CallbackInfo& info) {
+Napi::Value PcapDevice::devStats(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   if (!dev || !dev.get()) {
     Napi::Error::New(env, "No device").ThrowAsJavaScriptException();
@@ -281,7 +281,7 @@ Napi::Value Stream::devStats(const Napi::CallbackInfo& info) {
   return res;
 }
 
-Napi::Value Stream::stats(const Napi::CallbackInfo& info) {
+Napi::Value PcapDevice::stats(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   if (!dev || !dev.get()) {
     Napi::Error::New(env, "No device").ThrowAsJavaScriptException();
@@ -298,7 +298,7 @@ Napi::Value Stream::stats(const Napi::CallbackInfo& info) {
   return res;
 }
 
-Napi::Value Stream::setFilter(const Napi::CallbackInfo& info) {
+Napi::Value PcapDevice::setFilter(const Napi::CallbackInfo& info) {
   DEBUG_OUTPUT("setFilter");
   checkLength(info, 1);
   if (dev && dev.get()) {

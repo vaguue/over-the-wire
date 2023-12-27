@@ -118,5 +118,5 @@ void extendJsClass(Napi::Env env, Napi::Function& cls, const char* moduleName, c
 
 using js_buffer_t = Napi::Buffer<uint8_t>;
 
-std::pair<uint8_t*, size_t> toCxx(Napi::Value&&);
-std::pair<uint8_t*, size_t> toCxx(Napi::Value&);
+std::pair<uint8_t*, size_t> toCxx(const Napi::Value&&);
+std::pair<uint8_t*, size_t> toCxx(const Napi::Value&);

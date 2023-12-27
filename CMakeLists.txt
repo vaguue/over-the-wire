@@ -30,7 +30,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC Pcap++)
 add_subdirectory(cxx/)
 add_subdirectory(cxx/example)
 add_subdirectory(cxx/transports/pcap)
-#add_subdirectory(cxx/transports/socket)
+add_subdirectory(cxx/transports/socket)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 

@@ -14,6 +14,7 @@ namespace OverTheWire::Transports::Pcap {
   void CallJs(Napi::Env, Napi::Function, Context*, DataType*);
   using TSFN = Napi::TypedThreadSafeFunction<Context, DataType, CallJs>;
   using FinalizerDataType = void;
+  using packets_t = std::vector<pcpp::RawPacket>;
 
   Napi::Object init(Napi::Env env, Napi::Object exports);
   void onPacketArrivesRaw(pcpp::RawPacket*, pcpp::PcapLiveDevice*, void*);
@@ -21,19 +22,19 @@ namespace OverTheWire::Transports::Pcap {
   timeval getTime();
 
   struct SendWorker : public Napi::AsyncWorker {
-    SendWorker(device_ptr_t, Napi::Function&, std::vector<pcpp::RawPacket>&&);
+    SendWorker(device_ptr_t, Napi::Function&, packets_t&&);
     ~SendWorker();
     void Execute() override;
 
     device_ptr_t dev;
     Napi::Function& callback;
-    std::vector<pcpp::RawPacket> packets;
+    packets_t packets;
   };
 
-  struct Stream : public Napi::ObjectWrap<Stream> {
+  struct PcapDevice : public Napi::ObjectWrap<PcapDevice> {
     static Napi::Object Init(Napi::Env, Napi::Object);
-    Stream(const Napi::CallbackInfo& info);
-    ~Stream();
+    PcapDevice(const Napi::CallbackInfo& info);
+    ~PcapDevice();
     Napi::Value _write(const Napi::CallbackInfo&);
     Napi::Value devStats(const Napi::CallbackInfo& info);
     Napi::Value stats(const Napi::CallbackInfo& info);

@@ -2,54 +2,34 @@
 
 namespace OverTheWire::Transports::Socket {
 
-#ifdef _WIN32
-static thread_local char errbuf[1024];
-#endif
-std::string getSystemError() {
-#ifdef _WIN32
-  if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, 0, WSAGetLastError(), 0, errbuf, 1024, NULL)) {
-    return std::string(errbuf);
-  } 
-  else {
-    strcpy(errbuf, "Unknown error");
-    return std::string(errbuf);
-  }
-#else
-  return std::string(strerror(errno));
-#endif
-}
-
-std::string getLibuvError(int code) {
-  return std::string(uv_strerror(code));
-}
-
 Napi::Object init(Napi::Env env, Napi::Object exports) {
-  Stream::Init(env, exports);
+  Socket::Init(env, exports);
+  SockAddr::Init(env, exports);
   return exports;
 }
 
-
-Napi::Object Stream::Init(Napi::Env env, Napi::Object exports) {
+Napi::Object Socket::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(env, "Socket", {
-    InstanceMethod<&Stream::_write>("_write", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
-    InstanceMethod<&Stream::open>("open", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Socket::_write>("_write", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Socket::_write>("bind", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Socket::_write>("setsockopt", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Socket::_write>("getsockopt", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
+    InstanceMethod<&Socket::_write>("ioctl", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
   });
 
-  extendJsClass<JsParent<Stream>>(env, func, "events", "EventEmitter");
-  env.GetInstanceData<AddonData>()->SetClass(typeid(Stream), func);
+  env.GetInstanceData<AddonData>()->SetClass(typeid(Socket), func);
 
   exports.Set("socket", func);
   return exports;
 }
 
 static void IoEvent(uv_poll_t* watcher, int status, int revents) {
-  Stream* socket = static_cast<Stream*>(watcher->data);
+  Socket* socket = static_cast<Socket*>(watcher->data);
   socket->handleIOEvent(status, revents);
 }
 
-Stream::Stream(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Stream>{info} {
+Socket::Socket(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Socket>{info}, packets{flags, connected} {
   Napi::Env env = info.Env();
-  env.GetInstanceData<AddonData>()->GetClass(typeid(JsParent<Stream>)).Call(this->Value(), {});
   checkLength(info, 1);
   if (info[0].IsObject()) {
     Napi::Object obj = info[0].As<Napi::Object>();
@@ -57,24 +37,22 @@ Stream::Stream(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Stream>{info} 
       Napi::Error::New(env, "You should specife domain, type and protocol").ThrowAsJavaScriptException();
       return;
     }
-    domain = obj.Get("domain").As<Napi::String>().Utf8Value();
-    type = obj.Get("type").As<Napi::String>().Utf8Value();
-    protocol = obj.Get("protocol").As<Napi::String>().Utf8Value();
+    domain = obj.Get("domain").As<Napi::Number>().Int32Value();
+    type = obj.Get("type").As<Napi::Number>().Int32Value();
+    protocol = obj.Get("protocol").As<Napi::Number>().Int32Value();
   }
   else {
     checkLength(info, 3);
     domain = info[0].As<Napi::Number>().Int32Value();
     type = info[0].As<Napi::Number>().Int32Value();
     protocol = info[0].As<Napi::Number>().Int32Value();
-
-    Napi::Object self = this->Value().ToObject();
-    emit = self.Get("emit").As<Napi::Function>();
   }
 
   createSocket(env);
+  initSocket(env);
 }
 
-void Stream::createSocket(Napi::Env env) {
+void Socket::createSocket(Napi::Env env) {
   pollfd = socket(domain, type, protocol);
 
   if (pollfd < 0) {
@@ -82,7 +60,7 @@ void Stream::createSocket(Napi::Env env) {
   }
 }
 
-void Stream::initSocket(Napi::Env env) {
+void Socket::initSocket(Napi::Env env) {
   pollWatcher = decltype(pollWatcher){new uv_poll_t};
   pollWatcher->data = this;
   
@@ -93,15 +71,15 @@ void Stream::initSocket(Napi::Env env) {
   }
 }
 
-void Stream::pollStart() {
+void Socket::pollStart() {
   int startResult = uv_poll_start(pollWatcher.get(), flags, IoEvent);
   if (startResult != 0) {
-    Napi::Error::New(env, "Error starting poll watcher: " + getLibuvError(startResult)).ThrowAsJavaScriptException();
+    Napi::Error::New(push.Env(), "Error starting poll watcher: " + getLibuvError(startResult)).ThrowAsJavaScriptException();
     return;
   }
 }
 
-void Stream::setFlag(int flag, bool value) {
+void Socket::setFlag(int flag, bool value) {
   if (value) {
     flags |= flag;
   }
@@ -110,41 +88,45 @@ void Stream::setFlag(int flag, bool value) {
   }
 }
 
-Napi::Value Stream::bind(const Napi::CallbackInfo& info) {
+bool Socket::getFlag(int flag) {
+  return (flags & flag) != 0;
+}
+
+Napi::Value Socket::bind(const Napi::CallbackInfo& info) {
   //TODO
   return info.Env().Undefined();
 }
 
-Napi::Value Stream::setsockopt(const Napi::CallbackInfo& info) {
+Napi::Value Socket::setsockopt(const Napi::CallbackInfo& info) {
   //TODO
   return info.Env().Undefined();
 }
 
-Napi::Value Stream::getsockopt(const Napi::CallbackInfo& info) {
+Napi::Value Socket::getsockopt(const Napi::CallbackInfo& info) {
   //TODO
   return info.Env().Undefined();
 }
 
-Napi::Value Stream::ioctl(const Napi::CallbackInfo& info) {
+Napi::Value Socket::ioctl(const Napi::CallbackInfo& info) {
   //TODO
   return info.Env().Undefined();
 }
 
-Napi::Value Stream::startReading(const Napi::CallbackInfo& info) {
-  setFlags(UV_READABLE, true);
+Napi::Value Socket::startReading(const Napi::CallbackInfo& info) {
+  setFlag(UV_READABLE, true);
   pollStart();
   return info.Env().Undefined();
 }
 
-Napi::Value Stream::stopReading(const Napi::CallbackInfo& info) {
-  setFlags(UV_READABLE, false);
+Napi::Value Socket::stopReading(const Napi::CallbackInfo& info) {
+  setFlag(UV_READABLE, false);
   pollStart();
   return info.Env().Undefined();
 }
 
-void Stream::handleIOEvent(int status, int revents) {
+void Socket::handleIOEvent(int status, int revents) {
   if (status < 0) {
-    emit.MakeCallback(this->Value(), { Napi::String::New(emit.Env(), "error"), Napi::String::New(emit.Env(), getLibuvError(status)) }, nullptr);
+    onError.MakeCallback(this->Value(), { Napi::String::New(onError.Env(), "error"), Napi::String::New(onError.Env(), getLibuvError(status)) }, nullptr);
     return;
   }
 
@@ -152,16 +134,55 @@ void Stream::handleIOEvent(int status, int revents) {
     //TODO
   }
   else if (revents & UV_WRITABLE) {
-    //TODO
+    auto result = packets.send(pollfd);
+    switch(result) {
+      case SendStatus::ok:
+        setFlag(UV_WRITABLE, false);
+        pollStart();
+        return;
+      case SendStatus::fail:
+        Napi::Error::New(callback.Value().Env(), "Error sending packet: " + getSystemError()).ThrowAsJavaScriptException();
+        return;
+      case SendStatus::again:
+        return;
+    }
   }
 }
 
-Napi::Value Stream::_write(const Napi::CallbackInfo& info) {
-  //TODO
+Napi::Value Socket::_write(const Napi::CallbackInfo& info) {
+  checkLength(info, 1);
+  size_t size;
+  uint8_t* buf;
+  if (info[0].IsArray()) {
+    Napi::Array ar = info[0].As<Napi::Array>();
+    size_t n = ar.Length();
+    for (size_t i{}; i < n; ++i) {
+      std::tie(buf, size) = toCxx(ar.Get(i));
+      //TODO
+      /*if (!packets.add(buf, size)) {
+        Napi::Error::New(info.Env(), "Error queueing packet").ThrowAsJavaScriptException();
+        return info.Env().Undefined();
+      }*/
+    }
+  }
+  else {
+    std::tie(buf, size) = toCxx(info[0]);
+    //TODO
+    /*if (!packets.add(buf, size)) {
+      Napi::Error::New(info.Env(), "Error queueing packet").ThrowAsJavaScriptException();
+      return info.Env().Undefined();
+    }*/
+  }
+
+  if (!getFlag(UV_WRITABLE)) {
+    setFlag(UV_WRITABLE, true);
+    pollStart();
+  }
+
   return info.Env().Undefined();
 }
 
-Stream::~Stream() {
+Socket::~Socket() {
   if (pollWatcher.get()) {
     uv_poll_stop(pollWatcher.get());
   }
