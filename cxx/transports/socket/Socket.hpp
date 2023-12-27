@@ -7,6 +7,7 @@
 #include "Packet.hpp"
 #include "Error.hpp"
 #include "SockAddr.hpp"
+#include "Enums.hpp"
 
 namespace OverTheWire::Transports::Socket {
 

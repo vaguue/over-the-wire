@@ -5,6 +5,7 @@ namespace OverTheWire::Transports::Socket {
 Napi::Object init(Napi::Env env, Napi::Object exports) {
   Socket::Init(env, exports);
   SockAddr::Init(env, exports);
+  Enums::Init(env, exports);
   return exports;
 }
 
@@ -19,7 +20,7 @@ Napi::Object Socket::Init(Napi::Env env, Napi::Object exports) {
 
   env.GetInstanceData<AddonData>()->SetClass(typeid(Socket), func);
 
-  exports.Set("socket", func);
+  exports.Set("Socket", func);
   return exports;
 }
 

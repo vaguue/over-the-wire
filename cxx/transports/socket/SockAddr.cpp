@@ -142,7 +142,11 @@ Napi::Value SockAddr::toHuman(const Napi::CallbackInfo& info) {
     ss << "<SockAddr | " << "invalid" << ">";
   }
   else {
-    ss << "<SockAddr | " << name << ">";
+    ss << "<SockAddr | IP: " << name;
+    if (port > 0) {
+      ss << " port: " << port;
+    }
+    ss << '>';
   }
   return Napi::String::New(env, ss.str());
 }
