@@ -12,7 +12,7 @@
 #define DEBUG
 
 #ifdef DEBUG
-#define DEBUG_OUTPUT(x) std::cout << "[over-the-wire::cxx]: " << (x) << std::endl;
+#define DEBUG_OUTPUT(x) std::cout << "[over-the-wire::cxx] " << (x) << std::endl;
 #else
 #define DEBUG_OUTPUT
 #endif
@@ -60,7 +60,7 @@ inline std::string demangle(const char* name) {
 template<typename T, bool skip = false>
 void deleter(Napi::Env env, T p) {
 #ifdef DEBUG
-  std::cout << "[*] Deleting: " << demangle(typeid(T).name());
+  std::cout << "[over-the-wire::cxx] Deleting " << demangle(typeid(T).name());
 #endif
   if constexpr (skip) {
 #ifdef DEBUG

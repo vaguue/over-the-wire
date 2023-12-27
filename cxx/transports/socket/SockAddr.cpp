@@ -131,7 +131,10 @@ Napi::Value SockAddr::toBuffer(const Napi::CallbackInfo& info) {
   sockaddr_ptr_t target;
   size_t size;
   std::tie(target, size) = addr();
-  return js_buffer_t::NewOrCopy(info.Env(), (uint8_t*)target.release(), size, [](Napi::Env env, uint8_t* data) { delete data; });
+  return js_buffer_t::NewOrCopy(info.Env(), (uint8_t*)target.release(), size, [](Napi::Env env, uint8_t* data) { 
+    DEBUG_OUTPUT("Deleting SockAddr buffer");
+    delete data; 
+  });
 }
 
 Napi::Value SockAddr::toHuman(const Napi::CallbackInfo& info) {

@@ -34,7 +34,7 @@ Napi::Object PcapDevice::Init(Napi::Env env, Napi::Object exports) {
   });
 
   env.GetInstanceData<AddonData>()->SetClass(typeid(PcapDevice), func);
-  exports.Set("PcapDevicePcapDevice", func);
+  exports.Set("PcapDevice", func);
   return exports;
 }
 
