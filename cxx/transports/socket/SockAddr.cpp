@@ -44,47 +44,47 @@ SockAddr::SockAddr(const Napi::CallbackInfo& info) : Napi::ObjectWrap<SockAddr>{
 
 SockAddr::~SockAddr() { }
 
-std::pair<sockaddr_ptr_t, size_t> SockAddr::addr() {
+std::pair<std::string, addr_t> SockAddr::addr() {
   auto res = std::make_pair(sockaddr_ptr_t{(sockaddr*)nullptr}, size_t{});
-  if (port == -1) {
-    err = "Invalid port";
-    return res;
-  }
-  if (ip.size() == 0) {
-    err = "Invalid destination";
-    return res;
-  }
-  if (domain == AF_INET6){
-    res.second = sizeof(sockaddr_in6);
-    res.first = sockaddr_ptr_t{(sockaddr*)new sockaddr_in6};
-    int code = uv_ip6_addr(ip.c_str(), port, (sockaddr_in6*)res.first.get());
-    if (code < 0) {
-      err = getLibuvError(code);
+  std::string err = "";
+  do {
+    if (port < 0) {
+      err = "Invalid port";
+      break;
+    }
+    if (ip.size() == 0) {
+      err = "Invalid destination";
+      break;
+    }
+    if (domain == AF_INET6){
+      res.second = sizeof(sockaddr_in6);
+      res.first = sockaddr_ptr_t{(sockaddr*)new sockaddr_in6};
+      int code = uv_ip6_addr(ip.c_str(), port, (sockaddr_in6*)res.first.get());
+      if (code < 0) {
+        err = getLibuvError(code);
+        break;
+      }
+    }
+    else if (domain == AF_INET) {
+      res.second = sizeof(sockaddr_in);
+      res.first = sockaddr_ptr_t{(sockaddr*)new sockaddr_in};
+      int code =  uv_ip4_addr(ip.c_str(), port, (sockaddr_in*)res.first.get());
+      if (code < 0) {
+        err = getLibuvError(code);
+        break;
+      }
     }
     else {
-      err = "";
+      err = "Unknown domain";
+      break;
     }
-  }
-  else if (domain == AF_INET) {
-    res.second = sizeof(sockaddr_in);
-    res.first = sockaddr_ptr_t{(sockaddr*)new sockaddr_in};
-    int code =  uv_ip4_addr(ip.c_str(), port, (sockaddr_in*)res.first.get());
-    if (code < 0) {
-      err = getLibuvError(code);
-    }
-    else {
-      err = "";
-    }
-  }
-  else {
-    err = "Unknown domain";
-  }
+  } while(0);
 
-  return res;
+  return std::make_pair(err, std::move(res));
 }
 
 //from https://github.com/libuv/libuv/pull/3368/files
-int uv_ip_name(const struct sockaddr *src, char *dst, size_t size) {
+int ip_name(const struct sockaddr *src, char *dst, size_t size) {
   switch (src->sa_family) {
   case AF_INET:
     return uv_inet_ntop(AF_INET, &((struct sockaddr_in *)src)->sin_addr,
@@ -98,16 +98,17 @@ int uv_ip_name(const struct sockaddr *src, char *dst, size_t size) {
 }
 
 bool SockAddr::genName(Napi::Env env, bool toThrow = true) {
+  std::string err;
   sockaddr_ptr_t target;
   size_t size;
-  std::tie(target, size) = addr();
+  std::forward_as_tuple(err, std::tie(target, size)) = addr();
   if (err.size() > 0) {
     if (toThrow) {
       Napi::Error::New(env, err).ThrowAsJavaScriptException();
     }
     return false;
   }
-  int code = uv_ip_name(target.get(), name, INET6_ADDRSTRLEN);
+  int code = ip_name(target.get(), name, INET6_ADDRSTRLEN);
   if (code < 0) {
     if (toThrow) {
       Napi::Error::New(env, getLibuvError(code)).ThrowAsJavaScriptException();
@@ -128,9 +129,10 @@ Napi::Value SockAddr::toString(const Napi::CallbackInfo& info) {
 }
 
 Napi::Value SockAddr::toBuffer(const Napi::CallbackInfo& info) {
+  std::string err;
   sockaddr_ptr_t target;
   size_t size;
-  std::tie(target, size) = addr();
+  std::forward_as_tuple(err, std::tie(target, size)) = addr();
   return js_buffer_t::NewOrCopy(info.Env(), (uint8_t*)target.release(), size, [](Napi::Env env, uint8_t* data) { 
     DEBUG_OUTPUT("Deleting SockAddr buffer");
     delete data; 

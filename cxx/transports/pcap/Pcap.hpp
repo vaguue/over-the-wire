@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include "common.hpp"
 #include "stdlib.h"
@@ -5,6 +7,13 @@
 #include "IpUtils.h"
 #include "SystemUtils.h"
 #include "pcap.h"
+
+/* PcapLiveDevice bindings that are specifically designed for 
+ * the Duplex stream wrapper. Btw, the only way to send L2 packets
+ * on all platforms. Nice. Here we don't utilize the .pcap parsing
+ * functions, because they are not stream-friendly for Node.
+ * Streams are cool.
+ */
 
 namespace OverTheWire::Transports::Pcap {
   using device_t = pcpp::PcapLiveDevice;

@@ -1,7 +1,7 @@
 set(SOCKET_SRC
   "${CMAKE_CURRENT_SOURCE_DIR}/Socket.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Error.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Packet.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Packets.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/SockAddr.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Enums.cpp"
 )
@@ -9,7 +9,7 @@ set(SOCKET_SRC
 set(SOCKET_HDR
   "${CMAKE_CURRENT_SOURCE_DIR}/Socket.hpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Error.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Packet.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Packets.hpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Sys.hpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/SockAddr.hpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Enums.hpp"

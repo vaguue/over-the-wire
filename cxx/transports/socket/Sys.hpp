@@ -19,3 +19,16 @@
 #define SOCKET_OPT_TYPE void *
 #define SOCKET_LEN_TYPE socklen_t
 #endif
+
+//from https://github.com/libuv/libuv/blob/v1.x/src/unix/internal.h
+#if defined(_AIX) || \
+    defined(__APPLE__) || \
+    defined(__DragonFly__) || \
+    defined(__FreeBSD__) || \
+    defined(__linux__) || \
+    defined(__OpenBSD__) || \
+    defined(__NetBSD__)
+#define USE_IOCTL 1
+#else
+#define USE_IOCTL 0
+#endif

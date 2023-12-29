@@ -1,31 +1,19 @@
-#include "Packet.hpp"
+#include "Packets.hpp"
 
 namespace OverTheWire::Transports::Socket {
 
 Packets::Packets(int& flags, bool& connected) : flags{flags}, connected{connected} {}
 
 #ifndef _WIN32
-std::pair<bool, msghdr> createMsghdr(uint8_t* buf, size_t size, sockaddr* addr, iovec* msgIov) {
+std::pair<bool, msghdr> createMsghdr(uint8_t* buf, size_t size, sockaddr* addr, size_t addrSize, iovec* msgIov, bool connected) {
   auto res = std::make_pair(true, msghdr{});
-  if (addr->sa_family == AF_UNSPEC) {
+  if (addr->sa_family == AF_UNSPEC || connected) {
     res.second.msg_name = NULL;
     res.second.msg_namelen = 0;
   } 
   else {
     res.second.msg_name = addr;
-    if (addr->sa_family == AF_INET6){
-      res.second.msg_namelen = sizeof(sockaddr_in6);
-    }
-    else if (addr->sa_family == AF_INET) {
-      res.second.msg_namelen = sizeof(sockaddr_in);
-    }
-    else if (addr->sa_family == AF_UNIX) {
-      res.second.msg_namelen = sizeof(sockaddr_un);
-    }
-    else {
-      res.first = false;
-      return res;
-    }
+    res.second.msg_namelen = addrSize;
   }
   msgIov->iov_base = buf;
   msgIov->iov_len = size;
@@ -36,20 +24,24 @@ std::pair<bool, msghdr> createMsghdr(uint8_t* buf, size_t size, sockaddr* addr, 
 }
 #endif
 
-bool Packets::add(uint8_t* buf, size_t size, std::optional<sockaddr*> addr) {
-  //TODO
-  if (addr) {
-    addrs.emplace_back(*addr);
+bool Packets::add(uint8_t* buf, size_t size, SockAddr* target) {
+  addr_t addr;
+  if (!connected || addrs.size() == 0) {
+    std::string err;
+    std::tie(err, addr) = target->addr();
+    if (err.size() > 0 && !connected) {
+      return false;
+    }
+    addrs.push_back(std::move(addr));
   }
 #ifdef _WIN32
   packets.emplace_back(size, buf);
 #else
-  sockaddr* addrp = addrs.back().get();
   iovecs.emplace_back();
   iovec* iovec = &iovecs.back();
   bool ok;
   msghdr msg;
-  std::tie(ok, msg) = createMsghdr(buf, size, addrp, iovec);
+  std::tie(ok, msg) = createMsghdr(buf, size, addr.first.get(), addr.second, iovec, connected);
   if (!ok) return false;
 #if defined(__linux__) || defined(__FreeBSD__)
   mmsghdr p;
@@ -64,29 +56,52 @@ bool Packets::add(uint8_t* buf, size_t size, std::optional<sockaddr*> addr) {
 
 SendStatus Packets::send(SOCKET fd) {
 #ifdef _WIN32
-  int bytes;
-  WSAOVERLAPPED ioOverlapped;
-  int result = WSASendTo(fd,
-                     packets.data(),
-                     packets.size(),
-                     &bytes,
-                     0,
-                     addrs.data(),
-                     addres.size(),
-                     &ioOverlapped,
-                     flags);
-  
-  if (result == 0) {
-    addrs.clear();
-    packets.clear();
-    return SendStatus::ok;
+  int bytes, result;
+  WSAOVERLAPPED ioOverlapped = { 0 };
+  if (connected) {
+    assert(packets.size() == addrs.size());
+  }
+  while (!packets.empty()) {
+    auto* pkt = &packets.front();
+
+    if (connected) {
+        result = WSASend(fd,
+                       pkt,
+                       1,
+                       &bytes,
+                       0,
+                       &ioOverlapped,
+                       flags);
+
+    }
+    else {
+      auto& addr = addrs.front();
+      result = WSASendTo(fd,
+                       pkt,
+                       1,
+                       &bytes,
+                       0,
+                       addr.first.get(),
+                       addr.second,
+                       &ioOverlapped,
+                       flags);
+    }
+
+    if (result == 0) {
+      packets.pop_front();
+      if (!connected) {
+        addrs.pop_front();
+      }
+    }
+
+    if (GetLastError() == ERROR_IO_PENDING) {
+      return SendStatus::again;
+    }
+
+    return SendStatus::fail;
   }
 
-  if (GetLastError() == ERROR_IO_PENDING) {
-    return SendStatus::again;
-  }
-
-  return SendStatus::fail;
+  return SendStatus::ok;
 
 #elif defined(__linux__) || defined(__FreeBSD__)
   int npkts;
@@ -106,6 +121,9 @@ SendStatus Packets::send(SOCKET fd) {
   return SendStatus::ok;
 #else
   assert(packets.size() == iovecs.size());
+  if (!connected) {
+    assert(packets.size() == addrs.size());
+  }
   int npkts;
   while (!packets.empty()) {
     auto& pkt = packets.front();
@@ -127,6 +145,10 @@ SendStatus Packets::send(SOCKET fd) {
   }
   return SendStatus::ok;
 #endif
+}
+
+size_t Packets::size() {
+  return packets.size();
 }
 
 };

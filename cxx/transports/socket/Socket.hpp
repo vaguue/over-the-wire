@@ -4,10 +4,14 @@
 #include <uv.h>
 
 #include "common.hpp"
-#include "Packet.hpp"
+#include "Packets.hpp"
 #include "Error.hpp"
 #include "SockAddr.hpp"
 #include "Enums.hpp"
+
+/* This class tries to tie together the OS-specific API, N-API and libuv.
+ * This is quite hard.
+ */
 
 namespace OverTheWire::Transports::Socket {
 
@@ -25,24 +29,26 @@ namespace OverTheWire::Transports::Socket {
     void setFlag(int, bool);
     bool getFlag(int);
 
+    bool processReq(Napi::Env&, const Napi::Value&&);
+
     Napi::Value startReading(const Napi::CallbackInfo&);
     Napi::Value stopReading(const Napi::CallbackInfo&);
     Napi::Value bind(const Napi::CallbackInfo&);
+    Napi::Value connect(const Napi::CallbackInfo&);
     Napi::Value setsockopt(const Napi::CallbackInfo&);
     Napi::Value getsockopt(const Napi::CallbackInfo&);
     Napi::Value ioctl(const Napi::CallbackInfo&);
 
     bool connected = false;
     int flags = 0;
+    int sendFlags = 0;
     int domain;
     int type;
     int protocol;
     int pollFlags = 0;
     SOCKET pollfd;
     std::unique_ptr<uv_poll_t> pollWatcher;
-    Napi::FunctionReference push;
-    Napi::FunctionReference callback;
-    Napi::FunctionReference onError;
+    Napi::Function emit;
     Packets packets;
   };
 
