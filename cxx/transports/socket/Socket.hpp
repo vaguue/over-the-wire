@@ -7,7 +7,7 @@
 #include "Packets.hpp"
 #include "Error.hpp"
 #include "SockAddr.hpp"
-#include "Enums.hpp"
+#include "Enums/Enums.hpp"
 
 /* This class tries to tie together the OS-specific API, N-API and libuv.
  * This is quite hard.
