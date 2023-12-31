@@ -39,8 +39,9 @@ struct AddonData {
     return constructors[tid];
   }
 
-  void SetClass(const std::type_index& tid, Napi::Function func) {
+  Napi::FunctionReference& SetClass(const std::type_index& tid, Napi::Function func) {
     constructors[tid] = std::forward<Napi::FunctionReference>(Napi::Persistent(func));
+    return constructors[tid];
   }
 
   bool HasClass(const std::type_index& tid) {
@@ -124,6 +125,8 @@ void extendJsClass(Napi::Env env, Napi::Function& cls, const char* moduleName, c
 }
 
 using js_buffer_t = Napi::Buffer<uint8_t>;
+using c_buffer_t = std::pair<uint8_t*, size_t>;
+using cxx_buffer_t = std::pair<std::unique_ptr<uint8_t>, size_t>;
 
-std::pair<uint8_t*, size_t> toCxx(const Napi::Value&&);
-std::pair<uint8_t*, size_t> toCxx(const Napi::Value&);
+c_buffer_t toCxx(const Napi::Value&&);
+c_buffer_t toCxx(const Napi::Value&);

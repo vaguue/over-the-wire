@@ -12,7 +12,8 @@ Napi::Object SockAddr::Init(Napi::Env env, Napi::Object exports) {
     InstanceAccessor<&SockAddr::getDomain, &SockAddr::setDomain>("domain"),
   });
 
-  env.GetInstanceData<AddonData>()->SetClass(typeid(SockAddr), func);
+  auto& ctorRef = env.GetInstanceData<AddonData>()->SetClass(typeid(SockAddr), func);
+  ctor() = &ctorRef;
 
   exports.Set("SockAddr", func);
 
@@ -27,8 +28,34 @@ Napi::Object SockAddr::Init(Napi::Env env, Napi::Object exports) {
   return exports;
 }
 
+Napi::Value SockAddr::fromRaw(Napi::Env env, addr_t&& addr) {
+  Napi::EscapableHandleScope scope(env);
+  Napi::Object obj = ctor()->New({ Napi::External<addr_t>::New(env, &addr) });
+  return scope.Escape(napi_value(obj)).ToObject();
+}
+
 SockAddr::SockAddr(const Napi::CallbackInfo& info) : Napi::ObjectWrap<SockAddr>{info} {
   if (info.Length() > 0) {
+    /* I'm keeping it, because it is a funny way to debug output, and I'll maybe need to use it again
+    auto console = info[0].Env().Global().Get("console").As<Napi::Object>();
+    auto log = console.Get("log").As<Napi::Function>();
+    log.Call(console, { info[0] });
+    */
+    if (info[0].IsExternal()) {
+      addr_t* addr = info[0].As<Napi::External<addr_t>>().Data();
+      domain = addr->first->sa_family;
+      if (domain == AF_INET) {
+        sockaddr_in* cAddr = (sockaddr_in*)addr->first.get();
+        port = cAddr->sin_port;
+      }
+      else if (domain == AF_INET6) {
+        sockaddr_in6* cAddr = (sockaddr_in6*)addr->first.get();
+        port = cAddr->sin6_port;
+      }
+      ip_name(addr->first.get(), name, INET6_ADDRSTRLEN);
+      ip = std::string{name};
+      return;
+    }
     Napi::Object obj = info[0].As<Napi::Object>();
     if (obj.Has("ip")) {
       ip = obj.Get("ip").As<Napi::String>().Utf8Value();
@@ -190,17 +217,11 @@ Napi::Value inetPton(const Napi::CallbackInfo& info) {
   std::string src = info[1].As<Napi::String>().Utf8Value();
   js_buffer_t res = js_buffer_t::New(env, sizeof(in6_addr));
 
-  int s = inet_pton(domain, src.c_str(), res.Data());
+  int s = uv_inet_pton(domain, src.c_str(), res.Data());
 
-  if (s <= 0) {
-    if (s == 0) {
-      Napi::Error::New(env, "Not in presentation format").ThrowAsJavaScriptException();
-      return env.Undefined();
-    }
-    else {
-      Napi::Error::New(env, getSystemError()).ThrowAsJavaScriptException();
-      return env.Undefined();
-    }
+  if (s != 0) {
+    Napi::Error::New(env, getLibuvError(s)).ThrowAsJavaScriptException();
+    return env.Undefined();
   }
 
   return res;
@@ -214,8 +235,10 @@ Napi::Value inetNtop(const Napi::CallbackInfo& info) {
 
   char str[INET6_ADDRSTRLEN];
 
-  if (inet_ntop(domain, buf.Data(), str, INET6_ADDRSTRLEN) == NULL) {
-    Napi::Error::New(env, "Not in presentation format").ThrowAsJavaScriptException();
+  int s = uv_inet_ntop(domain, buf.Data(), str, INET6_ADDRSTRLEN);
+
+  if (s != 0) {
+    Napi::Error::New(env, getLibuvError(s)).ThrowAsJavaScriptException();
     return env.Undefined();
   }
 

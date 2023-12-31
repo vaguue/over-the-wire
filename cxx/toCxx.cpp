@@ -1,6 +1,6 @@
 #include "common.hpp" 
 
-std::pair<uint8_t*, size_t> toCxx(const Napi::Value& input) {
+c_buffer_t toCxx(const Napi::Value& input) {
   auto res = std::make_pair((uint8_t*)nullptr, size_t{});
   if (input.IsBuffer()) {
     js_buffer_t inputBuf = input.As<js_buffer_t>();
@@ -21,6 +21,6 @@ std::pair<uint8_t*, size_t> toCxx(const Napi::Value& input) {
   return res;
 }
 
-std::pair<uint8_t*, size_t> toCxx(const Napi::Value&& input) {
+c_buffer_t toCxx(const Napi::Value&& input) {
   return toCxx(input);
 }

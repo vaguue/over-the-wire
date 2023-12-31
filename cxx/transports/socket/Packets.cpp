@@ -26,12 +26,14 @@ std::pair<bool, msghdr> createMsghdr(uint8_t* buf, size_t size, sockaddr* addr, 
 
 bool Packets::add(uint8_t* buf, size_t size, SockAddr* target) {
   addr_t addr;
+  sockaddr* addrRaw = nullptr;
   if (!connected || addrs.size() == 0) {
     std::string err;
     std::tie(err, addr) = target->addr();
     if (err.size() > 0 && !connected) {
       return false;
     }
+    addrRaw = addr.first.get();
     addrs.push_back(std::move(addr));
   }
 #ifdef _WIN32
@@ -41,7 +43,7 @@ bool Packets::add(uint8_t* buf, size_t size, SockAddr* target) {
   iovec* iovec = &iovecs.back();
   bool ok;
   msghdr msg;
-  std::tie(ok, msg) = createMsghdr(buf, size, addr.first.get(), addr.second, iovec, connected);
+  std::tie(ok, msg) = createMsghdr(buf, size, addrRaw, addr.second, iovec, connected);
   if (!ok) return false;
 #if defined(__linux__) || defined(__FreeBSD__)
   mmsghdr p;
@@ -131,8 +133,10 @@ SendStatus Packets::send(SOCKET fd) {
     do {
       size = sendmsg(fd, &pkt, flags);
     } while (npkts == -1 && errno == EINTR);
+    DEBUG_OUTPUT(size);
 
     if (size < 1) {
+      DEBUG_OUTPUT(getSystemError());
       if (errno == EAGAIN || errno == EWOULDBLOCK || errno == ENOBUFS) {
         return SendStatus::again;
       }

@@ -14,6 +14,7 @@ namespace OverTheWire::Transports::Socket::Enums {
 #endif
 
 Napi::Object InitPorts(Napi::Env env, Napi::Object exports) {
+  /*
   ENUM_VALUE_MANUAL(IPPORT_ECHO, 7);
   ENUM_VALUE_MANUAL(IPPORT_DISCARD, 9);
   ENUM_VALUE_MANUAL(IPPORT_SYSTAT, 11);
@@ -40,6 +41,7 @@ Napi::Object InitPorts(Napi::Env env, Napi::Object exports) {
   ENUM_VALUE_MANUAL(IPPORT_ROUTESERVER, 520);
   ENUM_VALUE_MANUAL(IPPORT_RESERVED, 1024);
   ENUM_VALUE_MANUAL(IPPORT_USERRESERVED, 5000);
+  */
 
   return exports;
 };

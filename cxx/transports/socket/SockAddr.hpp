@@ -24,8 +24,15 @@ namespace OverTheWire::Transports::Socket {
   using sockaddr_ptr_t = std::unique_ptr<sockaddr>;
   using addr_t = std::pair<sockaddr_ptr_t, size_t>;
 
+  int ip_name(const struct sockaddr*, char*, size_t);
+
   struct SockAddr : public Napi::ObjectWrap<SockAddr> {
     static Napi::Object Init(Napi::Env, Napi::Object);
+    static Napi::Value fromRaw(Napi::Env, addr_t&&);
+    static Napi::FunctionReference*& ctor() {
+      static Napi::FunctionReference* _ctor;
+      return _ctor;
+    };
     SockAddr(const Napi::CallbackInfo& info);
     ~SockAddr();
     bool genName(Napi::Env, bool);

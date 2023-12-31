@@ -24,6 +24,9 @@ ChartJS.register(
 import data from '../memory.log';
 
 export const options = {
+  animation: {
+    duration: 0,
+  },
   plugins: {
     legend: {
       position: 'top',
@@ -36,6 +39,6 @@ export const options = {
 };
 
 export default function App() {
-  console.log('data', data);
+  //console.log('data', data);
   return <Line options={options} data={data} width={1000} height={1000}/>;
 }
