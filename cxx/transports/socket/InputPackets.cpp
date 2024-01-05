@@ -59,7 +59,7 @@ void InputPacketsIterator::read() {
     delete buf.buf;
   }
   value.pData.pBuf = std::make_pair(decltype(value.second.first.first){buf.buf}, result);
-//TODO recmmsg is way too hard to implenet here, so I save it for later
+//TODO recvmmsg is way too hard to implenet here, so I save it for later
 #else
   msghdr h{};
   ssize_t nread = 0;
