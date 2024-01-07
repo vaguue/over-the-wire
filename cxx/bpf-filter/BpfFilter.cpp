@@ -10,7 +10,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 Napi::Object BpfFilter::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(env, "BpfFilter", {
     InstanceMethod<&BpfFilter::match>("match", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
-    InstanceAccessor<&BpfFilter::getFilter, &BpfFilter::setFilter>("filter"),
+    InstanceAccessor<&BpfFilter::getFilter, &BpfFilter::setFilter>("value"),
     InstanceAccessor<&BpfFilter::getLinkType, &BpfFilter::setLinkType>("linkType"),
   });
 
