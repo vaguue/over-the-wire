@@ -2,7 +2,7 @@
 
 namespace OverTheWire::Transports::Pcap {
 
-Napi::Object init(Napi::Env env, Napi::Object exports) {
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
   PcapDevice::Init(env, exports);
   return exports;
 }

@@ -31,6 +31,8 @@ add_subdirectory(cxx/)
 add_subdirectory(cxx/example)
 add_subdirectory(cxx/transports/pcap)
 add_subdirectory(cxx/transports/socket)
+add_subdirectory(cxx/bpf-filter)
+add_subdirectory(cxx/enums)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 

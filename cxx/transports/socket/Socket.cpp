@@ -2,7 +2,7 @@
 
 namespace OverTheWire::Transports::Socket {
 
-Napi::Object init(Napi::Env env, Napi::Object exports) {
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
   Socket::Init(env, exports);
   SockAddr::Init(env, exports);
   Enums::Init(env, exports);

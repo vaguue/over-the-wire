@@ -25,7 +25,7 @@ namespace OverTheWire::Transports::Pcap {
   using FinalizerDataType = void;
   using packets_t = std::vector<pcpp::RawPacket>;
 
-  Napi::Object init(Napi::Env env, Napi::Object exports);
+  Napi::Object Init(Napi::Env env, Napi::Object exports);
   void onPacketArrivesRaw(pcpp::RawPacket*, pcpp::PcapLiveDevice*, void*);
   pcpp::RawPacket bufToPacket(js_buffer_t&&, timeval&);
   timeval getTime();
