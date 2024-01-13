@@ -1,0 +1,212 @@
+_transform <Buffer 0a 0d 0d 0a 60 01 00 00 4d 3c 2b 1a 01 00 00 00 ff ff ff ff ff ff ff ff 01 00 e2 00 43 4c 49 45 4e 54 5f 52 41 4e 44 4f 4d 20 45 33 39 42 35 42 46 34 ... 26150 more bytes>
+hdr { block_type: 168627466, total_length: 352 }
+section-header {
+  byte_order_magic: 439041101,
+  major_version: 1,
+  minor_version: 0,
+  section_length: -1n,
+  options: [
+    {
+      option_code: 1,
+      option_length: 226,
+      buf: 'CLIENT_RANDOM E39B5BF4903C68684E8512FB2F60213E9EE843A0810B4982B607914D8092D482 95A5D39B02693BC1FB39254B179E9293007F6D37C66172B1EE4EF0D5E25CE1DABE878B6143DC3B266883E51A75E99DF9                                                   \x00\x00'
+    },
+    {
+      option_code: 3,
+      option_length: 19,
+      buf: 'Linux 3.18.1-1-ARCH\x00'
+    },
+    {
+      option_code: 4,
+      option_length: 57,
+      buf: 'Dumpcap (Wireshark) 1.99.1 (Git Rev Unknown from unknown)\x00\x00\x00'
+    },
+    { option_code: 0, option_length: 0, buf: '' }
+  ]
+}
+hdr { block_type: 1, total_length: 84 }
+interface-description {
+  linktype: 1,
+  reserved: 0,
+  snaplen: 262144,
+  options: [
+    { option_code: 2, option_length: 2, buf: 'lo\x00\x00' },
+    { option_code: 9, option_length: 1, buf: '\t\x00\x00\x00' },
+    {
+      option_code: 11,
+      option_length: 14,
+      buf: '\x00tcp port 3306\x00\x00'
+    },
+    {
+      option_code: 12,
+      option_length: 19,
+      buf: 'Linux 3.18.1-1-ARCH\x00'
+    },
+    { option_code: 0, option_length: 0, buf: '' }
+  ]
+}
+hdr { block_type: 6, total_length: 108 }
+length 96 96
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2253399017,
+  caplen: 74,
+  len: 74,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00 00 3c 47 08 40 00 40 06 f5 b1 7f 00 00 01 7f 00 00 01 9d 70 0c ea ff fb 36 8c 00 00 00 00 a0 02 aa aa ... 24 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 108 }
+length 96 96
+input packet {
+  interface_id: 0,
+  timestamp_high: 673935748,
+  timestamp_low: 673539080,
+  caplen: 74,
+  len: 74,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00 00 3c 00 00 40 00 40 06 3c ba 7f 00 00 01 7f 00 00 01 0c ea 9d 70 71 29 bf a8 ff fb 36 8d a0 12 aa aa ... 24 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 100 }
+length 88 88
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2253452593,
+  caplen: 66,
+  len: 66,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00 00 34 47 09 40 00 40 06 f5 b8 7f 00 00 01 7f 00 00 01 9d 70 0c ea ff fb 36 8d 71 29 bf a9 80 10 01 56 ... 16 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 204 }
+length 192 192
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2305869625,
+  caplen: 169,
+  len: 169,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00 00 9b ce 2d 40 00 40 06 6e 2d 7f 00 00 01 7f 00 00 01 0c ea 9d 70 71 29 bf a9 ff fb 36 8d 80 18 01 56 ... 119 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 100 }
+length 88 88
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2305961293,
+  caplen: 66,
+  len: 66,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 08 00 34 47 0a 40 00 40 06 f5 af 7f 00 00 01 7f 00 00 01 9d 70 0c ea ff fb 36 8d 71 29 c0 10 80 10 01 56 ... 16 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 136 }
+length 124 124
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2310976602,
+  caplen: 102,
+  len: 102,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 08 00 58 47 0b 40 00 40 06 f5 8a 7f 00 00 01 7f 00 00 01 9d 70 0c ea ff fb 36 8d 71 29 c0 10 80 18 01 56 ... 52 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 100 }
+length 88 88
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2310991216,
+  caplen: 66,
+  len: 66,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00 00 34 ce 2e 40 00 40 06 6e 93 7f 00 00 01 7f 00 00 01 0c ea 9d 70 71 29 c0 10 ff fb 36 b1 80 10 01 56 ... 16 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 460 }
+length 448 448
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2314929416,
+  caplen: 427,
+  len: 427,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 08 01 9d 47 0c 40 00 40 06 f4 44 7f 00 00 01 7f 00 00 01 9d 70 0c ea ff fb 36 b1 71 29 c0 10 80 18 01 56 ... 377 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 100 }
+length 88 88
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2314940771,
+  caplen: 66,
+  len: 66,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00 00 34 ce 2f 40 00 40 06 6e 92 7f 00 00 01 7f 00 00 01 0c ea 9d 70 71 29 c0 10 ff fb 38 1a 80 10 01 5e ... 16 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 1296 }
+length 1284 1284
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2370381897,
+  caplen: 1261,
+  len: 1261,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00 04 df ce 30 40 00 40 06 69 e6 7f 00 00 01 7f 00 00 01 0c ea 9d 70 71 29 c0 10 ff fb 38 1a 80 18 01 5e ... 1211 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 100 }
+length 88 88
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2370449286,
+  caplen: 66,
+  len: 66,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 08 00 34 47 0d 40 00 40 06 f5 ac 7f 00 00 01 7f 00 00 01 9d 70 0c ea ff fb 38 1a 71 29 c4 bb 80 10 05 55 ... 16 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 244 }
+length 232 232
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2371714197,
+  caplen: 212,
+  len: 212,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 08 00 c6 47 0e 40 00 40 06 f5 19 7f 00 00 01 7f 00 00 01 9d 70 0c ea ff fb 38 1a 71 29 c4 bb 80 18 05 55 ... 162 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 100 }
+length 88 88
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2371725087,
+  caplen: 66,
+  len: 66,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00 00 34 ce 31 40 00 40 06 6e 90 7f 00 00 01 7f 00 00 01 0c ea 9d 70 71 29 c4 bb ff fb 38 ac 80 10 01 67 ... 16 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 332 }
+length 320 320
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2418272634,
+  caplen: 300,
+  len: 300,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00 01 1e ce 32 40 00 40 06 6d a5 7f 00 00 01 7f 00 00 01 0c ea 9d 70 71 29 c4 bb ff fb 38 ac 80 18 01 67 ... 250 more bytes>,
+  options: []
+}
+hdr { block_type: 6, total_length: 252 }
+length 240 240
+input packet {
+  interface_id: 0,
+  timestamp_high: 331208109,
+  timestamp_low: 2418553833,
+  caplen: 220,
+  len: 220,
+  pkt: <Buffer 00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 08 00 ce 47 0f 40 00 40 06 f5 10 7f 00 00 01 7f 00 00 01 9d 70 0c ea ff fb 38 ac 71 29 c5 a5 80 18 05 68 ... 170 more bytes>,
+  options: []
+}
