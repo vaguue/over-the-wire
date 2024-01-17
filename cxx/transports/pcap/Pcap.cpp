@@ -247,6 +247,7 @@ Napi::Value PcapDevice::devStats(const Napi::CallbackInfo& info) {
   res.Set("mac", Napi::String::New(env, dev->getMacAddress().toString()));
   res.Set("gateway", Napi::String::New(env, dev->getDefaultGateway().toString()));
   res.Set("mtu", Napi::Number::New(env, dev->getMtu()));
+  res.Set("linktype", Napi::Number::New(env, dev->getLinkType()));
 
   auto& dnsServers = dev->getDnsServers();
   Napi::Array dnsServersJs = Napi::Array::New(env, dnsServers.size());
