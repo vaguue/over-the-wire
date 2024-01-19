@@ -45,7 +45,7 @@ namespace OverTheWire::Transports::Pcap {
     PcapDevice(const Napi::CallbackInfo& info);
     ~PcapDevice();
     Napi::Value _write(const Napi::CallbackInfo&);
-    Napi::Value devStats(const Napi::CallbackInfo& info);
+    Napi::Value interfaceInfo(const Napi::CallbackInfo& info);
     Napi::Value stats(const Napi::CallbackInfo& info);
     Napi::Value setFilter(const Napi::CallbackInfo& info);
     Napi::Value setConfig(const Napi::CallbackInfo& info);

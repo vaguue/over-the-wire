@@ -29,7 +29,7 @@ Napi::Object PcapDevice::Init(Napi::Env env, Napi::Object exports) {
     InstanceMethod<&PcapDevice::startCapture>("startCapture", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&PcapDevice::stopCapture>("stopCapture", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&PcapDevice::_destroy>("_destroy", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
-    InstanceAccessor<&PcapDevice::devStats>("devStats"),
+    InstanceAccessor<&PcapDevice::interfaceInfo>("interfaceInfo"),
     InstanceAccessor<&PcapDevice::stats>("stats"),
   });
 
@@ -235,7 +235,7 @@ Napi::Value PcapDevice::_write(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-Napi::Value PcapDevice::devStats(const Napi::CallbackInfo& info) {
+Napi::Value PcapDevice::interfaceInfo(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   if (!dev || !dev.get()) {
     Napi::Error::New(env, "No device").ThrowAsJavaScriptException();
