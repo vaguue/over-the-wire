@@ -215,7 +215,7 @@ Napi::Value inetPton(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   int domain = info[0].As<Napi::Number>().Uint32Value();
   std::string src = info[1].As<Napi::String>().Utf8Value();
-  js_buffer_t res = js_buffer_t::New(env, sizeof(in6_addr));
+  js_buffer_t res = js_buffer_t::New(env, domain == AF_INET6 ? sizeof(in6_addr) : sizeof(in_addr));
 
   int s = uv_inet_pton(domain, src.c_str(), res.Data());
 
