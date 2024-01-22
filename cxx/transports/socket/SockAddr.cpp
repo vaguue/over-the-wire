@@ -230,12 +230,18 @@ Napi::Value inetPton(const Napi::CallbackInfo& info) {
 Napi::Value inetNtop(const Napi::CallbackInfo& info) {
   checkLength(info, 2);
   Napi::Env env = info.Env();
-  int domain = info[0].As<Napi::Number>().Uint32Value();
-  js_buffer_t buf = info[1].As<js_buffer_t>();
-
   char str[INET6_ADDRSTRLEN];
+  int domain = info[0].As<Napi::Number>().Uint32Value();
+  int s;
 
-  int s = uv_inet_ntop(domain, buf.Data(), str, INET6_ADDRSTRLEN);
+  if (info[1].IsBuffer()) {
+    js_buffer_t buf = info[1].As<js_buffer_t>();
+    s = uv_inet_ntop(domain, buf.Data(), str, INET6_ADDRSTRLEN);
+  }
+  else if (info[1].IsNumber()) {
+    uint32_t val = info[1].As<Napi::Number>().Uint32Value();
+    s = uv_inet_ntop(domain, &val, str, INET6_ADDRSTRLEN);
+  }
 
   if (s != 0) {
     Napi::Error::New(env, getLibuvError(s)).ThrowAsJavaScriptException();
