@@ -5,6 +5,7 @@
 #include "transports/socket/Socket.hpp"
 #include "enums/Enums.hpp"
 #include "bpf-filter/BpfFilter.hpp"
+#include "checksums/Checksums.hpp"
 
 static Napi::Object Init(Napi::Env env, Napi::Object exports) {
   initAddon(env);
@@ -13,9 +14,9 @@ static Napi::Object Init(Napi::Env env, Napi::Object exports) {
   OverTheWire::Enums::Init(env, exports);
   OverTheWire::BpfFilter::Init(env, exports);
 
-  Napi::Object socketExports = Napi::Object::New(env);
-  exports.Set("socket", socketExports);
-  OverTheWire::Transports::Socket::Init(env, socketExports);
+  exports.Set("socket", OverTheWire::Transports::Socket::Init(env, Napi::Object::New(env)));
+  exports.Set("checksums", OverTheWire::Checksums::Init(env, Napi::Object::New(env)));
+
   return exports;
 }
 
