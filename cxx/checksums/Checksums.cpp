@@ -9,7 +9,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
 pcpp::ScalarBuffer<uint16_t> convertBuf(const Napi::Value& val) {
   Napi::Buffer<uint16_t> buf = val.As<Napi::Buffer<uint16_t>>();
-  return { buf.Data(), buf.Length() };
+  return { buf.Data(), buf.Length() * 2 };
 }
 
 Napi::Value IPChecksum(const Napi::CallbackInfo& info) {
@@ -27,7 +27,7 @@ Napi::Value IPChecksum(const Napi::CallbackInfo& info) {
     bufs.push_back(convertBuf(info[0]));
   }
 
-  return Napi::Number::New(info.Env(), ntohs(computeChecksum(bufs.data(), bufs.size())));
+  return Napi::Number::New(info.Env(), computeChecksum(bufs.data(), bufs.size()));
 }
 
 }
