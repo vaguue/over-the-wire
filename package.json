@@ -6,8 +6,12 @@
   "scripts": {
     "rebuild": "cmake-js compile -D",
     "build": "cmake-js build -D",
-    "test:verbose": "node --expose-gc --trace-gc test/index.js",
-    "test": "node --expose-gc test/index.js | faucet"
+    "test": "node --test test/*.test.js",
+    "test-cov-text": "node --test --experimental-test-coverage test/*.test.js",
+    "test-cov": "node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=lcov.info test/*.test.js"
+  },
+  "imports": {
+    "#lib/*": "./lib/*.js"
   },
   "keywords": [],
   "author": "",
