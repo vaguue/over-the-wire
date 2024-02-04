@@ -35,25 +35,18 @@ const dev = new Pcap.LiveDevice({
 });
 
 // Save captured packets to a pcapng file
-async function dump() {
-  const dump = Pcap.createWriteStream({ format: 'pcapng', interfaces: [dev.iface] });
-  dump.pipe(fs.createWriteStream('dump.pcapng'));
+const dump = Pcap.createWriteStream({ format: 'pcapng', interfaces: [dev.iface] });
+dump.pipe(fs.createWriteStream('dump.pcapng'));
 
-  dev.on('data', pkt => {
-    dump.write(pkt);
-  });
-}
+dev.on('data', pkt => {
+  dump.write(pkt);
+);
 
 // Create and inject a packet
-function send() {
-  const pkt = new Packet()
-                  .IP({ dst: '192.168.1.1' })
-                  .ICMP();
-  dev.write(pkt);
-}
-
-dump().catch(console.error);
-send();
+const pkt = new Packet()
+                .IP({ dst: '192.168.1.1' })
+                .ICMP();
+dev.write(pkt);
 ```
 
 ## Documentation
