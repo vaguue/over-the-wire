@@ -20,7 +20,6 @@
 
 ```bash
 npm install over-the-wire --save
-```bash
 ```
 
 ## Getting started
