@@ -21,6 +21,7 @@
     "node-addon-api": "^7.0.0"
   },
   "devDependencies": {
-    "cmake-js": "^7.2.1"
+    "cmake-js": "^7.2.1",
+    "jsdoc": "^4.0.2"
   }
 }
