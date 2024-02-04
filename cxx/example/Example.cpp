@@ -7,8 +7,10 @@ Napi::Value da(const Napi::CallbackInfo& info) {
   return info.Env().Undefined();
 }
 
-void Init(Napi::Env env, Napi::Object exports) {
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("da", Napi::Function::New(env, da));
+
+  return exports;
 }
 
 }

@@ -21,8 +21,6 @@
     "node-addon-api": "^7.0.0"
   },
   "devDependencies": {
-    "cmake-js": "^7.2.1",
-    "faucet": "^0.0.4",
-    "tape": "^5.7.2"
+    "cmake-js": "^7.2.1"
   }
 }

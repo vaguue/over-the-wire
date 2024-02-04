@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include "common.hpp"
 
@@ -6,7 +8,7 @@
  */
 
 namespace OverTheWire::Example {
-  void Init(Napi::Env env, Napi::Object exports);
+  Napi::Object Init(Napi::Env env, Napi::Object exports);
 
   Napi::Value da(const Napi::CallbackInfo&);
 }
