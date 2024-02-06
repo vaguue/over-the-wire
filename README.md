@@ -31,7 +31,7 @@ const { Pcap, Packet } = require('over-the-wire');
 const dev = new Pcap.LiveDevice({
   iface: 'en0',
   direction: 'inout',
-  filter: 'tcp.port is 80',
+  filter: 'src port 80',
 });
 
 // Save captured packets to a pcapng file
