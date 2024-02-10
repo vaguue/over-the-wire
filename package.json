@@ -1,11 +1,22 @@
 {
   "name": "over-the-wire",
   "version": "1.0.0",
-  "description": "",
+  "description": "The Node.js client for the Internet",
   "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/vaguue/over-the-wire.git"
+  },
+  "homepage": "https://github.com/vaguue/over-the-wire",
+  "bugs": {
+    "url": "https://github.com/vaguue/over-the-wire/issues"
+  },
+  "author": "Seva D. <sabrinarempel7@gmail.com>",
   "scripts": {
-    "rebuild": "cmake-js compile -D",
-    "build": "cmake-js build -D",
+    "rebuild-debug": "cmake-js compile -D",
+    "build-debug": "cmake-js build -D",
+    "rebuild": "cmake-js compile",
+    "build": "cmake-js build",
     "test": "node --test test/*.test.js",
     "test-cov-text": "node --test --experimental-test-coverage test/*.test.js",
     "test-cov": "node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=lcov.info test/*.test.js"
@@ -13,13 +24,16 @@
   "imports": {
     "#lib/*": "./lib/*.js"
   },
-  "keywords": [],
+  "keywords": ["security", "pcap", "network", "packet-analyser", "packet-sniffer", "network-discovery", "network-analysis", "packet-crafting", "packet-capture", "network-security", "security-tools"],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bindings": "^1.5.0",
     "node-addon-api": "^7.0.0",
     "struct-compile": "^1.1.1"
+  },
+  "engines": {
+    "node": ">=16.10.0"
   },
   "devDependencies": {
     "cmake-js": "^7.2.1",
