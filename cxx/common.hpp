@@ -16,6 +16,8 @@
  * and JS <=> C++ specific functions.
  */
 
+#define DEBUG
+
 #ifdef DEBUG
 #define DEBUG_OUTPUT(x) std::cout << "[over-the-wire::cxx] " << (x) << std::endl;
 #else

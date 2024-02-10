@@ -29,7 +29,8 @@ test('IPv4', async (t) => {
       checksum: 36050,
       src: '192.168.1.103',
       dst: '206.189.28.230',
-      fragmentInfo: { isFragment: false, value: 0, flags: 64 }
+      fragmentInfo: { isFragment: false, value: 0, flags: 64 },
+      options: [],
     }
   );
 
@@ -39,6 +40,7 @@ test('IPv4', async (t) => {
   ip.checksum = 0;
   ip.calculateChecksum();
   assert.equal(ip.checksum, checksum);
+  assert.equal(ip.buffer, buf);
 
   ip.dst = '192.168.1.1';
   assert.equal(ip.dst, '192.168.1.1');
