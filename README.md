@@ -49,7 +49,8 @@ dev.on('data', pkt => {
 );
 
 // Create and inject a packet
-const pkt = new Packet()
+const pkt = new Packet({ iface: dev.iface })
+                .Ethernet()
                 .IPv4({ dst: '192.168.1.1' })
                 .ICMP();
 dev.write(pkt);
