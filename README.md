@@ -42,15 +42,15 @@ const dump = Pcap.createWriteStream({ format: 'pcapng', interfaces: [dev.iface] 
 dump.pipe(fs.createWriteStream('dump.pcapng'));
 
 dev.on('data', pkt => {
-  if (pkt.layers.IP) {
-    console.log(`[*] ${pkt.layers.IP.src} -> ${pkt.layers.IP.dst}`);
+  if (pkt.layers.IPv4) {
+    console.log(`[*] ${pkt.layers.IPv4.src} -> ${pkt.layers.IPv4.dst}`);
   }
   dump.write(pkt);
 );
 
 // Create and inject a packet
 const pkt = new Packet()
-                .IP({ dst: '192.168.1.1' })
+                .IPv4({ dst: '192.168.1.1' })
                 .ICMP();
 dev.write(pkt);
 ```
