@@ -42,6 +42,9 @@ const dump = Pcap.createWriteStream({ format: 'pcapng', interfaces: [dev.iface] 
 dump.pipe(fs.createWriteStream('dump.pcapng'));
 
 dev.on('data', pkt => {
+  if (pkt.layers.IP) {
+    console.log(`[*] ${pkt.layers.IP.src} -> ${pkt.layers.IP.dst}`);
+  }
   dump.write(pkt);
 );
 
