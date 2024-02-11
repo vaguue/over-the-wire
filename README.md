@@ -46,7 +46,7 @@ dev.on('data', pkt => {
     console.log(`[*] ${pkt.layers.IPv4.src} -> ${pkt.layers.IPv4.dst}`);
   }
   dump.write(pkt);
-);
+});
 
 // Create and inject a packet
 const pkt = new Packet({ iface: dev.iface })
