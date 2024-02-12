@@ -59,5 +59,7 @@ test('TCP', async (t) => {
 
   tcp.flags.syn = 1;
 
-  assert.equal(new TCP(tcp.buffer, opts).flags.syn, 1);
+  assert.equal(new TCP(tcp.buffer).flags.syn, 1);
+  assert.deepEqual(new TCP(tcp.toObject()).toObject(), tcp.toObject());
+  assert.deepEqual(new TCP(tcp.toObject()).buffer, tcp.buffer);
 });
