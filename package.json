@@ -11,7 +11,7 @@
   "bugs": {
     "url": "https://github.com/vaguue/over-the-wire/issues"
   },
-  "author": "",
+  "author": "Seva D. <sabrinarempel7@gmail.com>",
   "scripts": {
     "rebuild-debug": "cmake-js compile -D",
     "build-debug": "cmake-js build -D",
