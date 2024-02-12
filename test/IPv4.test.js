@@ -5,7 +5,7 @@ const { extendAt, shrinkAt } = require('#lib/buffer');
 const { IPv4 } = require('#lib/layers/IPv4');
 
 test('IPv4', async (t) => {
-  const buf = Buffer.from('450000730000400040068cd2c0a80167cebd1ce6e33d5debb394ef8ddd9ed0568018080', 'hex');
+  const buf = Buffer.from('450000730000400040068cd2c0a80167cebd1ce6e33d5debb394ef8d', 'hex');
   const ip = new IPv4(buf, {
     shrinkAt(...args) {
       return shrinkAt(buf, ...args);
@@ -66,4 +66,5 @@ test('IPv4', async (t) => {
   assert.deepEqual([...ip.options], options);
 
   assert.deepEqual(ip.toObject(), new IPv4(ip.toObject()).toObject());
+  assert.deepEqual(new IPv4(ip.toObject()).buffer, ip.buffer);
 });

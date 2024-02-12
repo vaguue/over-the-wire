@@ -11,7 +11,7 @@
   "bugs": {
     "url": "https://github.com/vaguue/over-the-wire/issues"
   },
-  "author": "Seva D. <sabrinarempel7@gmail.com>",
+  "author": "",
   "scripts": {
     "rebuild-debug": "cmake-js compile -D",
     "build-debug": "cmake-js build -D",
@@ -24,13 +24,24 @@
   "imports": {
     "#lib/*": "./lib/*.js"
   },
-  "keywords": ["security", "pcap", "network", "packet-analyser", "packet-sniffer", "network-discovery", "network-analysis", "packet-crafting", "packet-capture", "network-security", "security-tools"],
-  "author": "",
+  "keywords": [
+    "security",
+    "pcap",
+    "network",
+    "packet-analyser",
+    "packet-sniffer",
+    "network-discovery",
+    "network-analysis",
+    "packet-crafting",
+    "packet-capture",
+    "network-security",
+    "security-tools"
+  ],
   "license": "ISC",
   "dependencies": {
     "bindings": "^1.5.0",
     "node-addon-api": "^7.0.0",
-    "struct-compile": "^1.1.1"
+    "struct-compile": "^1.2.0"
   },
   "engines": {
     "node": ">=16.10.0"
