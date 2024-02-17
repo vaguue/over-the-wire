@@ -66,9 +66,9 @@ Napi::Value BpfFilter::match(const Napi::CallbackInfo& info) {
   DEBUG_OUTPUT(filter);
 
   js_buffer_t buf = info[0].As<js_buffer_t>();
-  Napi::Array hrtime = info[1].As<Napi::Array>();
   struct timespec ts;
   if (info.Length() > 1) {
+    Napi::Array hrtime = info[1].As<Napi::Array>();
     ts.tv_sec = hrtime.Get("0").As<Napi::Number>().Uint32Value();
     ts.tv_nsec = hrtime.Get("1").As<Napi::Number>().Uint32Value();
   }
