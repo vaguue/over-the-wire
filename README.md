@@ -37,8 +37,11 @@ const dev = new Pcap.LiveDevice({
   filter: 'src port 443',
 });
 
+// Get info about interface
+console.log('[*] Interface: ', dev.iface);
+
 // Save captured packets to a pcapng file
-const dump = Pcap.createWriteStream({ format: 'pcapng', interfaces: [dev.iface] });
+const dump = Pcap.createWriteStream({ format: 'pcapng' });
 dump.pipe(fs.createWriteStream('dump.pcapng'));
 
 dev.on('data', pkt => {
