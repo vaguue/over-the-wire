@@ -75,3 +75,29 @@ test('Pcap write', async (t) => {
 
   assert.equal(origHash.digest('hex'), resultHash.digest('hex'));
 });
+
+test('Pcapng read', (t, done) => {
+  const pcapng = createReadStream({ format: 'pcapng' });
+  const input = fs.createReadStream(path.resolve(__dirname, 'data/pcapng-example.pcapng'));
+  
+  input.pipe(pcapng);
+
+  console.time('Pcapng parsing');
+
+  pcapng.on('interface-description', hdr => {
+    console.log(hdr);
+  });
+
+  pcapng.on('section-header', hdr => {
+    console.log(hdr);
+  });
+
+  pcapng.on('data', pkt => {
+    console.log(pkt);
+  });
+
+  pcapng.on('end', () => {
+    console.timeEnd('Pcapng parsing')
+    done();
+  });
+});
