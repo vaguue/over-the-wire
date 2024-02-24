@@ -4,12 +4,21 @@ const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
 const { pipeline } = require('node:stream/promises');
-const { createHash } = require('node:crypto');
+const { createHash, randomUUID } = require('node:crypto');
+const exec = require('util').promisify(require('node:child_process').exec);
 
 const { createReadStream, createWriteStream } = require('#lib/pcapFile/index');
 const { Packet } = require('#lib/packet');
 const { fromNumber } = require('#lib/buffer');
-const { omit } = require('#lib/pick');
+
+const Tsresol = require('#lib/pcapFile/pcapng/tsresol');
+const { TimeStamp } = require('#lib/timestamp');
+
+test('Tsresol', t => {
+  const now = TimeStamp.now();
+  const resoled = Tsresol.serialize(null, now);
+  assert.equal(now.compare(Tsresol.parse(null, resoled)), 0);
+});
 
 test('Pcap read', (t, done) => {
   const pcap = createReadStream({ format: 'pcap' });
@@ -167,28 +176,20 @@ test('Pcapng write', async (t) => {
 
   const dumpPacket = (hash, pkt) => {
     hash.write(pkt.buffer);
-    hash.write(fromNumber(pkt.timestamp.ms));
+
+    const ms = Buffer.from(pkt.timestamp.ms.toString());
+    hash.write(ms);
+
     if (pkt.comment) {
       hash.write(Buffer.from(pkt.comment));
     }
   };
-
-  const dumpIdb = (hash, idb) => {
-    hash.write(fromNumber(idb.linktype));
-  }
-
-  pcapIn.on('interface-description', hdr => dumpIdb(origHash, hdr));
-  pcapInAfter.on('interface-description', hdr => dumpIdb(resultHash, hdr));
-
-  const orig = [];
-  const result = [];
 
   await pipeline(
     input,
     pcapIn,
     async function*(source) {
       for await (const pkt of source) {
-        orig.push(pkt);
         dumpPacket(origHash, pkt);
         yield pkt;
       }
@@ -197,21 +198,40 @@ test('Pcapng write', async (t) => {
     pcapInAfter,
     async function*(source) {
       for await (const pkt of source) {
-        result.push(pkt);
         dumpPacket(resultHash, pkt);
       }
     },
   );
 
-  console.log(orig.length, result.length);
-  for (let i = 0; i < result.length; ++i) {
-    if (!orig[i].equals(result[i])) {
-      //console.log('here', orig[i], result[i]);
-    }
-  }
-
   origHash.end();
   resultHash.end();
 
   assert.equal(origHash.digest('hex'), resultHash.digest('hex'));
+});
+
+test('Tshark check', async (t) => {
+  const pcapIn = createReadStream({ format: 'pcapng' });
+  const pcapOut = createWriteStream({ format: 'pcapng' });
+
+  const inputPath = path.resolve(__dirname, 'data/example2.pcapng');
+  const outputPath = path.resolve(os.tmpdir(), `${randomUUID()}.pcapng`);
+
+  const input = fs.createReadStream(inputPath);
+  const output = fs.createWriteStream(outputPath);
+
+  await pipeline(
+    input,
+    pcapIn,
+    pcapOut,
+    output,
+  );
+
+  let stoudOrig = null, stdoutResult = null;
+
+  try {
+    stdoutOrig = await exec(`./tshark.sh ${inputPath}`).then(res => res.stdout);
+    stdoutResult = await exec(`./tshark.sh ${inputPath}`).then(res => res.stdout);
+  } finally {
+    assert.equal(stdoutOrig, stdoutResult);
+  }
 });

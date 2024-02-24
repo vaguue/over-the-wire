@@ -5,6 +5,8 @@ const { TimeStamp } = require('#lib/timestamp');
 
 const closeEqual = (a, b, threshold = 1e-3) => Math.abs(a - b) < threshold;
 
+const sleep = (ms = 10) => new Promise((resolve) => setTimeout(resolve, ms));
+
 test('TimeStamp', async (t) => {
   const ts = new TimeStamp({ s: 1000, ms: 1000, ns: 123 });
 
@@ -14,7 +16,7 @@ test('TimeStamp', async (t) => {
   assert.deepEqual(ts.packedIn({ s: true, ns: true }), { s: 1001, ns: 123 });
 
   const dateNow = Date.now();
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  await sleep();
   const now = TimeStamp.now('ns');
 
   assert.ok(closeEqual(now.ms / now.s, 1e3));
@@ -27,4 +29,9 @@ test('TimeStamp', async (t) => {
 
   assert.equal(typeof new TimeStamp().ms, 'number');
   assert.equal(typeof TimeStamp.now('s').ms, 'number');
+
+  await sleep();
+
+  assert.ok(now.compare(TimeStamp.now()) < 0);
+  assert.equal(now.compare(now.clone()), 0);
 });

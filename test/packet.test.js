@@ -4,8 +4,11 @@ const test = require('node:test');
 const defaults = require('#lib/defaults');
 const { Packet } = require('#lib/packet');
 
-test('Packet', async (t) => {
-  const buffer = Buffer.from('424242424242424242424242080045000034000040004006a79ac0a80165a5162c06cd8e5debee16992ebea89919801008000d1200000101080a52d3c650dd04cdd6', 'hex');
+const pktBuf = () => 
+  Buffer.from('424242424242424242424242080045000034000040004006a79ac0a80165a5162c06cd8e5debee16992ebea89919801008000d1200000101080a52d3c650dd04cdd6', 'hex');
+
+test('Packet parsing', async (t) => {
+  const buffer = pktBuf();
   const pkt = new Packet({ buffer, iface: defaults });
 
   assert.deepEqual(pkt.toObject(), {
@@ -71,4 +74,13 @@ test('Packet', async (t) => {
     }
   });
 
+});
+
+test('Packet clone and compare', t => {
+  const pkt = new Packet({ 
+    buffer: pktBuf(),
+    iface: defaults,
+  });
+
+  assert.ok(pkt.equals(pkt.clone()));
 });

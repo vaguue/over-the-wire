@@ -63,8 +63,6 @@ Napi::Value BpfFilter::match(const Napi::CallbackInfo& info) {
     return Napi::Boolean::New(info.Env(), true);
   }
 
-  DEBUG_OUTPUT(filter);
-
   js_buffer_t buf = info[0].As<js_buffer_t>();
   struct timespec ts;
   if (info.Length() > 1) {
