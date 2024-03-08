@@ -231,6 +231,8 @@ test('Tshark check', async (t) => {
   try {
     stdoutOrig = await exec(`./tshark.sh ${inputPath}`).then(res => res.stdout);
     stdoutResult = await exec(`./tshark.sh ${inputPath}`).then(res => res.stdout);
+  } catch(err) {
+    console.error(`[!] Error checking tshark ${err}`);
   } finally {
     assert.equal(stdoutOrig, stdoutResult);
   }

@@ -84,3 +84,32 @@ test('Packet clone and compare', t => {
 
   assert.ok(pkt.equals(pkt.clone()));
 });
+
+test('Packet building', t => {
+  const pkt = new Packet({ iface: { linktype: 1, mtu: 1500 } })
+                  .Ethernet({ src: '42:42:42:42:42:42', dst: '42:42:42:42:42:42' })
+                  .IPv4({ dst: '192.168.1.1' })
+                  .Payload({ data: Buffer.from('kek') });
+
+  assert.equal(Buffer.compare(pkt.buffer, Buffer.from([0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x42, 0x08, 0x00, 0x45, 0x00, 0x00, 0x17, 0x00, 0x00, 0x00, 0x00, 0x40, 0xff, 0xb8, 0x3f, 0x00, 0x00, 0x00, 0x00, 0xc0, 0xa8, 0x01, 0x01, 0x6b, 0x65, 0x6b])), 0);
+
+  assert.deepEqual(pkt.toObject()?.layers, {
+    Ethernet: { dst: '42:42:42:42:42:42', src: '42:42:42:42:42:42', type: 2048 },
+    IPv4: {
+      headerLength: 5,
+      version: 4,
+      typeOfService: 0,
+      totalLength: 23,
+      id: 0,
+      fragmentOffsetRaw: 0,
+      timeToLive: 64,
+      protocol: 255,
+      checksum: 47167,
+      src: '0.0.0.0',
+      dst: '192.168.1.1',
+      fragmentInfo: { isFragment: false, value: 0, flags: 0 },
+      options: []
+    },
+    Payload: { data: Buffer.from([0x6b, 0x65, 0x6b]) }
+  })
+});
