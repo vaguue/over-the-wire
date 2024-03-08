@@ -226,7 +226,7 @@ test('Tshark check', async (t) => {
     output,
   );
 
-  let stoudOrig = null, stdoutResult = null;
+  let stdoutOrig = null, stdoutResult = null;
 
   try {
     stdoutOrig = await exec(`./tshark.sh ${inputPath}`).then(res => res.stdout);
