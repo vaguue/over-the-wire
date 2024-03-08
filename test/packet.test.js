@@ -113,3 +113,14 @@ test('Packet building', t => {
     Payload: { data: Buffer.from([0x6b, 0x65, 0x6b]) }
   })
 });
+
+test('Packet building and cloning', t => {
+  const pkt = new Packet({ iface: { linktype: 1, mtu: 1500 } })
+                  .Ethernet({ src: '42:42:42:42:42:42', dst: '42:42:42:42:42:42' })
+                  .IPv4({ dst: '192.168.1.1' })
+                  .Payload({ data: Buffer.from('kek') });
+
+  const newPkt = pkt.clone();
+
+  assert.deepEqual(pkt.toObject(), newPkt.toObject());
+})
