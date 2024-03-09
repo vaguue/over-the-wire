@@ -54,6 +54,7 @@ namespace OverTheWire::Transports::Pcap {
     Napi::Value stopCapture(const Napi::CallbackInfo& info);
     Napi::Value _destroy(const Napi::CallbackInfo&);
 
+    bool destroyed = false;
     void _destroy_impl();
 
     pcpp::PcapLiveDevice::DeviceConfiguration config;

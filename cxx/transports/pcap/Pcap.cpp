@@ -178,23 +178,31 @@ Napi::Value PcapDevice::setConfig(const Napi::CallbackInfo& info) {
 }
 
 void PcapDevice::_destroy_impl() {
+  DEBUG_OUTPUT("_destroy_impl");
   if (dev && dev.get()) {
     if (dev->captureActive()) {
       dev->stopCapture();
     }
+    DEBUG_OUTPUT("close");
     dev->close();
   }
+
+  push.Release();
+  destroyed = true;
 }
 
 Napi::Value PcapDevice::_destroy(const Napi::CallbackInfo& info) {
-  _destroy_impl();
+  if (!destroyed) {
+    _destroy_impl();
+  }
   return info.Env().Undefined();
 }
 
 PcapDevice::~PcapDevice() {
   DEBUG_OUTPUT("~PcapDevice");
-  _destroy_impl();
-  push.Release();
+  if (!destroyed) {
+    _destroy_impl();
+  }
 }
 
 pcpp::RawPacket bufToPacket(Napi::Value&& input, timeval& tv, pcpp::LinkLayerType linkType) {
