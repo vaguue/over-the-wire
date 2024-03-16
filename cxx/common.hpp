@@ -9,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <cxxabi.h>
 
 /* For me, utils or helpers are anti-patterns, 
  * hence I names this file common.hpp.

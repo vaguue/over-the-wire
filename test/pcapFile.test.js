@@ -229,8 +229,9 @@ test('Tshark check', async (t) => {
   let stdoutOrig = null, stdoutResult = null;
 
   try {
-    stdoutOrig = await exec(`./tshark.sh ${inputPath}`).then(res => res.stdout);
-    stdoutResult = await exec(`./tshark.sh ${inputPath}`).then(res => res.stdout);
+    const tshark = path.resolve(__dirname, 'tshark.sh');
+    stdoutOrig = await exec(`${tshark} ${inputPath}`).then(res => res.stdout);
+    stdoutResult = await exec(`${tshark} ${outputPath}`).then(res => res.stdout);
   } catch(err) {
     console.error(`[!] Error checking tshark ${err}`);
   } finally {
