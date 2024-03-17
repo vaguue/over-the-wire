@@ -6,7 +6,7 @@
 #include "common.hpp"
 #include "Packets.hpp"
 #include "InputPackets.hpp"
-#include "Error.hpp"
+#include "error/Error.hpp"
 #include "SockAddr.hpp"
 #include "Enums/Enums.hpp"
 

@@ -3,7 +3,7 @@
 #include <uv.h>
 
 #include "common.hpp"
-#include "Error.hpp"
+#include "error/Error.hpp"
 
 /* 
  * Container for sockaddr struct. Some of the useful info below.
@@ -57,13 +57,5 @@ namespace OverTheWire::Transports::Socket {
 
     char name[INET6_ADDRSTRLEN];
   };
-
-  Napi::Value inetPton(const Napi::CallbackInfo&);
-  Napi::Value inetNtop(const Napi::CallbackInfo&);
-
-  Napi::Value jsHtonl(const Napi::CallbackInfo&);
-  Napi::Value jsNtohl(const Napi::CallbackInfo&);
-  Napi::Value jsHtons(const Napi::CallbackInfo&);
-  Napi::Value jsNtohs(const Napi::CallbackInfo&);
 
 }

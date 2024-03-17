@@ -4,7 +4,7 @@
 
 #include "common.hpp"
 #include "Sys.hpp"
-#include "Error.hpp"
+#include "error/Error.hpp"
 #include "SockAddr.hpp"
 
 /*
