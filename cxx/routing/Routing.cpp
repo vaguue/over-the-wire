@@ -30,9 +30,9 @@ void RoutingWorker::OnOK() {
     for (size_t i{}; i < v.size(); ++i) {
       Napi::Object rec = Napi::Object::New(Env());
 
-      rec.Set("ipAddr", Napi::String::New(Env(), v[i].ipAddr));
-      rec.Set("hwAddr", Napi::String::New(Env(), v[i].hwAddr));
-      rec.Set("hwType", Napi::Number::New(Env(), v[i].hwType));
+      rec.Set("destination", Napi::String::New(Env(), v[i].destination));
+      rec.Set("gateway", Napi::String::New(Env(), v[i].gateway));
+      rec.Set("mask", Napi::String::New(Env(), v[i].mask));
 
       auto flags = Napi::Array::New(Env(), v[i].flags.size());
       rec.Set("flags", flags);

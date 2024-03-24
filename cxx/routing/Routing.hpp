@@ -9,13 +9,13 @@
 
 namespace OverTheWire::Routing {
   struct RoutingRecord {
-    std::string ipAddr;
-    std::string hwAddr;
-    uint32_t hwType = 0x1;
+    std::string destination;
+    std::string gateway;
+    std::string mask;
     std::vector<std::string> flags;
   };
 
-  using arp_table_t = std::map<std::string, std::vector<RoutingRecord>>;
+  using routing_table_t = std::map<std::string, std::vector<RoutingRecord>>;
 
   Napi::Object Init(Napi::Env env, Napi::Object exports);
 
@@ -26,10 +26,10 @@ namespace OverTheWire::Routing {
     void OnOK() override;
 
     Napi::Function& callback;
-    arp_table_t res;
+    routing_table_t res;
   };
 
-  std::pair<std::string, arp_table_t> fromSys();
+  std::pair<std::string, routing_table_t> fromSys();
 
   Napi::Value getRoutingTable(const Napi::CallbackInfo& info);
 }

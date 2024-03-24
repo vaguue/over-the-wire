@@ -1,13 +1,13 @@
-set(ARP_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/Arp.cpp"
+set(ROUTING_SRC
+  "${CMAKE_CURRENT_SOURCE_DIR}/Routing.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Platform.cpp"
 )
 
-set(ARP_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/Arp.hpp"
+set(ROUTING_HDR
+  "${CMAKE_CURRENT_SOURCE_DIR}/Routing.hpp"
 )
 
-source_group("Source Files\\Arp" FILES ${ARP_SRC})
-source_group("Header Files\\Arp" FILES ${ARP_HDR})
+source_group("Source Files\\Routing" FILES ${ROUTING_SRC})
+source_group("Header Files\\Routing" FILES ${ROUTING_HDR})
 
-target_sources(${PROJECT_NAME} PRIVATE ${ARP_SRC} ${ARP_HDR})
+target_sources(${PROJECT_NAME} PRIVATE ${ROUTING_SRC} ${ROUTING_HDR})

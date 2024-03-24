@@ -35,6 +35,7 @@ add_subdirectory(cxx/bpf-filter)
 add_subdirectory(cxx/enums)
 add_subdirectory(cxx/checksums)
 add_subdirectory(cxx/arp)
+add_subdirectory(cxx/routing)
 add_subdirectory(cxx/error)
 add_subdirectory(cxx/converters)
 

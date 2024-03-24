@@ -8,6 +8,7 @@
 #include "checksums/Checksums.hpp"
 #include "converters/Converters.hpp"
 #include "arp/Arp.hpp"
+#include "routing/Routing.hpp"
 
 static Napi::Object Init(Napi::Env env, Napi::Object exports) {
   initAddon(env);
@@ -16,6 +17,7 @@ static Napi::Object Init(Napi::Env env, Napi::Object exports) {
   OverTheWire::Enums::Init(env, exports);
   OverTheWire::BpfFilter::Init(env, exports);
   OverTheWire::Arp::Init(env, exports);
+  OverTheWire::Routing::Init(env, exports);
 
   exports.Set("socket", OverTheWire::Transports::Socket::Init(env, Napi::Object::New(env)));
   exports.Set("converters", OverTheWire::Converters::Init(env, Napi::Object::New(env)));
