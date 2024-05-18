@@ -41,7 +41,7 @@
   "dependencies": {
     "bindings": "^1.5.0",
     "node-addon-api": "^7.0.0",
-    "struct-compile": "^1.2.1"
+    "struct-compile": "^1.2.2"
   },
   "engines": {
     "node": ">=16.10.0"
