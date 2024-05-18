@@ -61,7 +61,7 @@ dev.write(pkt);
 
 ## Documentation
 
-Coming soon.
+[Here :)](https://vaguue.github.io/over-the-wire)
 
 ## Questions or Suggestions
 Feel free to open any issue in the Issues section of this repository. Currently, there are no restrictions on the format.

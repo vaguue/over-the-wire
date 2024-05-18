@@ -33,6 +33,9 @@ jobs:
     - name: Generate JSDoc
       run: npm run generate-docs
 
+    - name: Copy assets
+      run: cp -r assets docs
+
     - name: Setup Pages
       uses: actions/configure-pages@v5
 
