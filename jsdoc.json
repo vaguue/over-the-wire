@@ -7,6 +7,7 @@
   },
   "opts": {
     "destination": "./docs",
-    "template": "node_modules/clean-jsdoc-theme"
+    "template": "node_modules/clean-jsdoc-theme",
+    "readme": "./README.md"
   }
 }
