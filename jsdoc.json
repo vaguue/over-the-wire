@@ -1,0 +1,12 @@
+{
+  "source": {
+    "include": ["lib", "lib/layers"],
+    "exclude": ["lib/checks"],
+    "includePattern": ".js$",
+    "excludePattern": "(node_modules/|docs)"
+  },
+  "opts": {
+    "destination": "./docs",
+    "template": "node_modules/clean-jsdoc-theme"
+  }
+}

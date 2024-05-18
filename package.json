@@ -19,7 +19,8 @@
     "build": "cmake-js build",
     "test": "node --test test/*.test.js",
     "test-cov-text": "node --test --experimental-test-coverage test/*.test.js",
-    "test-cov": "node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=lcov.info test/*.test.js"
+    "test-cov": "node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=lcov.info test/*.test.js",
+    "generate-docs": "jsdoc --configure jsdoc.json --verbose"
   },
   "imports": {
     "#lib/*": "./lib/*.js"
@@ -47,6 +48,7 @@
     "node": ">=16.10.0"
   },
   "devDependencies": {
+    "clean-jsdoc-theme": "^4.3.0",
     "cmake-js": "^7.2.1",
     "jsdoc": "^4.0.2"
   }
