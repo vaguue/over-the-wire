@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deque>
+#include <cassert>
 
 #include "common.hpp"
 #include "Sys.hpp"
