@@ -42,6 +42,9 @@ jobs:
       - name: Install Zip
         if: matrix.os == 'windows-latest'
         run: choco install zip
+      - name: Submodule update
+        run: git submodule update --resursive
+        shell: bash
       - name: Build and Text
         run: npm i && npm run build && npm run test
         shell: bash
