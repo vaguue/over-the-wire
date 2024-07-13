@@ -56,7 +56,15 @@ PcapDevice::PcapDevice(const Napi::CallbackInfo& info) : Napi::ObjectWrap<PcapDe
   Napi::Object obj = info[0].As<Napi::Object>();
 
   if (obj.Has("iface")) {
-    dev = device_ptr_t{pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByName(obj.Get("iface").As<Napi::String>().Utf8Value())->clone()};
+    std::string ifaceName = obj.Get("iface").As<Napi::String>().Utf8Value();
+
+    auto initDev = pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByName(ifaceName);
+    if (!initDev) {
+      Napi::Error::New(info.Env(), "Could not find device").ThrowAsJavaScriptException();
+      return;
+    }
+    dev = device_ptr_t{initDev->clone()};
+
     if (!dev.get()) {
       Napi::Error::New(info.Env(), "Could not get device").ThrowAsJavaScriptException();
       return;
@@ -78,6 +86,8 @@ PcapDevice::PcapDevice(const Napi::CallbackInfo& info) : Napi::ObjectWrap<PcapDe
       DEBUG_OUTPUT("TSFN destructor");
     }
   );
+
+  hasPush = true;
 }
 
 Napi::Value PcapDevice::open(const Napi::CallbackInfo& info) {
@@ -187,7 +197,9 @@ void PcapDevice::_destroy_impl() {
     dev->close();
   }
 
-  push.Release();
+  if (hasPush) {
+    push.Release();
+  }
   destroyed = true;
 }
 

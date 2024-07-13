@@ -59,6 +59,7 @@ namespace OverTheWire::Transports::Pcap {
 
     pcpp::PcapLiveDevice::DeviceConfiguration config;
     device_ptr_t dev;
+    bool hasPush = false;
     TSFN push;
   };
 }

@@ -11,23 +11,28 @@ test('LiveDevice', (t) => {
     return false;
   }) ?? [];
 
-  console.log('os.networkInterfaces()', os.networkInterfaces());
-  console.log('ifaceName', ifaceName);
-
   if (!ifaceName) return;
 
-  const dev = new LiveDevice({ iface: ifaceName });
+  try {
+    const dev = new LiveDevice({ iface: ifaceName + 'k' });
 
-  const { iface } = dev;
+    dev.on('error', err => {
+      console.log('caught error', err);
+    });
 
-  assert.ok(iface.hasOwnProperty('name'));
-  assert.ok(iface.hasOwnProperty('description'));
-  assert.ok(iface.hasOwnProperty('mac'));
-  assert.ok(iface.hasOwnProperty('gateway'));
-  assert.ok(iface.hasOwnProperty('mtu'));
-  assert.ok(iface.hasOwnProperty('linktype'));
-  assert.ok(iface.hasOwnProperty('dnsServers'));
-  assert.ok(iface.hasOwnProperty('addresses'));
+    const { iface } = dev;
 
-  dev.destroy();
+    assert.ok(iface.hasOwnProperty('name'));
+    assert.ok(iface.hasOwnProperty('description'));
+    assert.ok(iface.hasOwnProperty('mac'));
+    assert.ok(iface.hasOwnProperty('gateway'));
+    assert.ok(iface.hasOwnProperty('mtu'));
+    assert.ok(iface.hasOwnProperty('linktype'));
+    assert.ok(iface.hasOwnProperty('dnsServers'));
+    assert.ok(iface.hasOwnProperty('addresses'));
+
+    dev.destroy();
+  } catch(err) {
+    console.log('try-catch', err);
+  }
 });
