@@ -43,7 +43,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: choco install zip
       - name: Build and Text
-        run: npm run i && npm run build && npm run test
+        run: npm i && npm run build && npm run test
         shell: bash
           #- name: Upload
           #  uses: actions/upload-release-asset@v1
