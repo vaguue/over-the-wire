@@ -14,13 +14,15 @@ test('LiveDevice', (t) => {
   if (!ifaceName) return;
 
   try {
-    const dev = new LiveDevice({ iface: ifaceName });
+    const dev = new LiveDevice({ iface: 'anpi1' });
 
     dev.on('error', err => {
-      console.log('caught error', err);
+      console.log('caught error', err.message);
     });
 
     const { iface } = dev;
+
+    console.log('iface', iface);
 
     assert.ok(iface.hasOwnProperty('name'));
     assert.ok(iface.hasOwnProperty('description'));
