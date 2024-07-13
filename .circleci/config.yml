@@ -1,0 +1,43 @@
+version: 2.1
+
+executors:
+  node-executor:
+    docker:
+      - image: circleci/node:latest
+
+jobs:
+  install:
+    executor: node-executor
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: npm install
+
+  build:
+    executor: node-executor
+    steps:
+      - checkout
+      - run:
+          name: Build Project
+          command: npm run build
+
+  test:
+    executor: node-executor
+    steps:
+      - checkout
+      - run:
+          name: Run Tests
+          command: npm test
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - install
+      - build:
+          requires:
+            - install
+      - test:
+          requires:
+            - build
