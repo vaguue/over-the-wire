@@ -67,7 +67,7 @@ jobs:
         run: npm i && npm run build && npm run test
         shell: bash
       - name: Prebuild
-        run: npm run prebuild && zip -r prebuids-${{ matrix.os }}.zip prebuilds
+        run: npm run prebuild && zip -r prebuilds-${{ matrix.os }}.zip prebuilds
         shell: bash
       - name: Upload
         uses: actions/upload-release-asset@v1

@@ -14,7 +14,7 @@ test('LiveDevice', (t) => {
   if (!ifaceName) return;
 
   try {
-    const dev = new LiveDevice({ iface: ifaceName + 'k' });
+    const dev = new LiveDevice({ iface: ifaceName });
 
     dev.on('error', err => {
       console.log('caught error', err);
