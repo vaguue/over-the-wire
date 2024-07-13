@@ -1,0 +1,54 @@
+name: "build"
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  draft_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            🚀 This release contains necessary binaries to install over-the-wire on different platforms. See README.md of this repo for more details.
+          draft: true
+          prerelease: false
+  build:
+    needs: [draft_release]
+    name: "Build"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install coreutils for macOS
+        if: matrix.os == 'macOS-latest'
+        run: brew install coreutils
+      - name: Install Zip
+        if: matrix.os == 'windows-latest'
+        run: choco install zip
+      - name: Build and Text
+        run: npm run i && npm run build && npm run test
+        shell: bash
+          #- name: Upload
+          #  uses: actions/upload-release-asset@v1
+          #  env:
+          #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #  with:
+          #    upload_url: ${{ needs.draft_release.outputs.upload_url }}
+          #    asset_path: dist/javet/Ghidra.js.zip
+          #    asset_name: ${{ matrix.build-prefix }}-Ghidra.js-Javet-Ghidra_${{ matrix.ghidra }}.zip
+          #    asset_content_type: application/zip
