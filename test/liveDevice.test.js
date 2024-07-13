@@ -11,6 +11,9 @@ test('LiveDevice', (t) => {
     return false;
   }) ?? [];
 
+  console.log('os.networkInterfaces()', os.networkInterfaces());
+  console.log('ifaceName', ifaceName);
+
   if (!ifaceName) return;
 
   const dev = new LiveDevice({ iface: ifaceName });

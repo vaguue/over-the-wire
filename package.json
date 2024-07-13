@@ -16,6 +16,7 @@
     "rebuild-debug": "cmake-js compile -D",
     "build-debug": "cmake-js build -D",
     "rebuild": "cmake-js compile",
+    "prebuild": "prebuild --backend cmake-js -r node -t 14.21.3 -t 16.20.2 -t 20.13.1 -t 21.5.0",
     "build": "cmake-js build",
     "test": "node --test test/*.test.js",
     "test-cov-text": "node --test --experimental-test-coverage test/*.test.js",

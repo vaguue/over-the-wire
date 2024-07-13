@@ -66,12 +66,15 @@ jobs:
       - name: Build and Text
         run: npm i && npm run build && npm run test
         shell: bash
-          #- name: Upload
-          #  uses: actions/upload-release-asset@v1
-          #  env:
-          #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          #  with:
-          #    upload_url: ${{ needs.draft_release.outputs.upload_url }}
-          #    asset_path: dist/javet/Ghidra.js.zip
-          #    asset_name: ${{ matrix.build-prefix }}-Ghidra.js-Javet-Ghidra_${{ matrix.ghidra }}.zip
-          #    asset_content_type: application/zip
+      - name: Prebuild
+        run: npm run prebuild && zip -r prebuids-${{ matrix.os }}.zip prebuilds
+        shell: bash
+      - name: Upload
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.draft_release.outputs.upload_url }}
+          asset_path: prebuilds-${{ matrix.os }}.zip
+          asset_name: prebuilds-${{ matrix.os }}.zip
+          asset_content_type: application/zip
