@@ -13,6 +13,7 @@
   },
   "author": "Seva D. <sabrinarempel7@gmail.com>",
   "scripts": {
+    "install": "prebuild-install || cmake-js build",
     "rebuild-debug": "cmake-js compile -D",
     "build-debug": "cmake-js build -D",
     "rebuild": "cmake-js compile",
