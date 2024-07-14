@@ -69,6 +69,9 @@ jobs:
       - name: Prebuild
         run: npm run prebuild && zip -r prebuilds-${{ matrix.os }}.zip prebuilds
         shell: bash
+      - name: ls
+        run: ls
+        shell: bash
       - name: Upload
         uses: actions/upload-release-asset@v1
         env:
