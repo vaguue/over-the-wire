@@ -67,7 +67,7 @@ jobs:
           #    & "$env:TEMP/npcap-oem.exe" /S
       - name: Install npcap on Windows
         if: matrix.os == 'windows-latest'
-        run: choco install nmap
+        run: choco install nmap && choco install wireshark
       - name: Submodule update
         run: git submodule update --init --recursive
         shell: bash
