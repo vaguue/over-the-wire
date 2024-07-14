@@ -1,7 +1,7 @@
 {
   "name": "over-the-wire",
   "version": "1.0.0",
-  "description": "The Node.js client for the Internet",
+  "description": "Network inspection library for Node",
   "main": "lib/index.js",
   "repository": {
     "type": "git",
