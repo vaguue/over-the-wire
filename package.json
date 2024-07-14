@@ -1,6 +1,6 @@
 {
   "name": "over-the-wire",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Network inspection library for Node",
   "main": "lib/index.js",
   "repository": {
