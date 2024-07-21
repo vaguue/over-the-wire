@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/vaguue/over-the-wire.git"
+    "url": "https://github.com/vaguue/over-the-wire.git"
   },
   "homepage": "https://github.com/vaguue/over-the-wire",
   "bugs": {
@@ -13,7 +13,7 @@
   },
   "author": "Seva D. <sabrinarempel7@gmail.com>",
   "scripts": {
-    "install": "prebuild-install || cmake-js build",
+    "install": "prebuild-install -r node || cmake-js compile",
     "rebuild-debug": "cmake-js compile -D",
     "build-debug": "cmake-js build -D",
     "rebuild": "cmake-js compile",
@@ -45,7 +45,7 @@
     "bindings": "^1.5.0",
     "node-addon-api": "^7.0.0",
     "prebuild": "^13.0.1",
-    "prebuild-install": "^7.1.2",
+    "@vaguuue/prebuild-install": "^7.1.2",
     "struct-compile": "^1.2.2"
   },
   "engines": {
