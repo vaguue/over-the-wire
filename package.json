@@ -51,6 +51,7 @@
   "engines": {
     "node": ">=16.10.0"
   },
+  "files": ["assets", "lib", "test"],
   "devDependencies": {
     "clean-jsdoc-theme": "^4.3.0",
     "cmake-js": "^7.2.1",
