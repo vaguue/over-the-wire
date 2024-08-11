@@ -58,7 +58,7 @@ jobs:
           brew install libpcap
       - name: Install npcap on Windows
         if: matrix.os == 'windows-latest'
-        run: mkdir -p build/Release && wget "https://npcap.com/dist/npcap-sdk-1.13.zip" && unzip npcap-sdk-1.13.zip -d build/Release
+        run: choco install wget --no-progress && mkdir -p build/Release && wget "https://npcap.com/dist/npcap-sdk-1.13.zip" && unzip npcap-sdk-1.13.zip -d build/Release
         shell: bash
           #- name: Install npcap on Windows
           #  if: matrix.os == 'windows-latest'
