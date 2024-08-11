@@ -31,8 +31,7 @@ jobs:
     name: "Build"
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        #os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -59,14 +58,14 @@ jobs:
           brew install libpcap
       - name: Install npcap on Windows
         if: matrix.os == 'windows-latest'
+        run: choco install nmap && choco install wireshark
+      - name: Install npcap on Windows
+        if: matrix.os == 'windows-latest'
         run: |
           Invoke-WebRequest -Uri "$env:NPCAP_OEM_URL" -OutFile "$env:TEMP/npcap-oem.exe"
           # for this ridiculous `&` syntax alone, I'd rather use COBOL than Powershell
           # see https://stackoverflow.com/a/1674950/5637701
           & "$env:TEMP/npcap-oem.exe" /S
-      #- name: Install npcap on Windows
-      #  if: matrix.os == 'windows-latest'
-      #  run: choco install nmap && choco install wireshark
       - name: Submodule update
         run: git submodule update --init --recursive
         shell: bash
@@ -74,7 +73,7 @@ jobs:
         run: npm i && npm run build && npm run test
         shell: bash
       - name: Prebuild
-        run: npm run prebuild && ls prebuilds && zip -r prebuilds-${{ matrix.os }}.zip prebuilds
+        run: npm run precompile && ls prebuilds && zip -r prebuilds-${{ matrix.os }}.zip prebuilds
         shell: bash
       - name: ls
         run: ls
