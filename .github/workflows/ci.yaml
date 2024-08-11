@@ -56,10 +56,10 @@ jobs:
         run: |
           brew update
           brew install libpcap
-        - name: Install npcap on Windows
-          if: matrix.os == 'windows-latest'
-          run: mkdir -p build/Release && wget "https://npcap.com/dist/npcap-sdk-1.13.zip" && unzip npcap-sdk-1.13.zip -d build/Release
-          shell: bash
+      - name: Install npcap on Windows
+        if: matrix.os == 'windows-latest'
+        run: mkdir -p build/Release && wget "https://npcap.com/dist/npcap-sdk-1.13.zip" && unzip npcap-sdk-1.13.zip -d build/Release
+        shell: bash
           #- name: Install npcap on Windows
           #  if: matrix.os == 'windows-latest'
           #  run: choco install nmap && choco install wireshark
