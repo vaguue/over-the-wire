@@ -54,7 +54,7 @@ add_subdirectory(cxx/converters)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
-target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_JS_LIB})
 
 # define NPI_VERSION
 add_definitions(-DNAPI_VERSION=6)
