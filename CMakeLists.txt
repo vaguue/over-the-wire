@@ -29,7 +29,7 @@ endif()
 
 if(PCAP_ROOT)
     target_include_directories(${PROJECT_NAME} PRIVATE "${PCAP_ROOT}/Include")
-    target_link_libraries(${PROJECT_NAME} PRIVATE "${PCAP_ROOT}/Lib/Packet.lib" "${PCAP_ROOT}/Lib/wpcap.lib")
+    target_link_libraries(${PROJECT_NAME} PUBLIC "${PCAP_ROOT}/Lib/Packet.lib" "${PCAP_ROOT}/Lib/wpcap.lib")
 endif()
 
 # PcapPlusPlus
