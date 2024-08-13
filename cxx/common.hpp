@@ -9,7 +9,9 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#if defined(__unix__)
 #include <cxxabi.h>
+#endif
 
 /* For me, utils or helpers are anti-patterns, 
  * hence I names this file common.hpp.
