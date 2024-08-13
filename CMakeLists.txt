@@ -19,6 +19,19 @@ add_library(${PROJECT_NAME} SHARED ${CMAKE_JS_SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE "${NODE_ADDON_API_DIR}")
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/cxx")
 
+if(DEFINED ENV{PCAP_ROOT})
+    set(PCAP_ROOT $ENV{PCAP_ROOT})
+    message("PCAP_ROOT: ${PCAP_ROOT}")
+    add_definitions(-DPCAP_ROOT="${PCAP_ROOT}")
+else()
+    message(WARNING "PCAP_ROOT is not set in the environment. Default paths will be used.")
+endif()
+
+if(PCAP_ROOT)
+    target_include_directories(${PROJECT_NAME} PRIVATE "${PCAP_ROOT}/Include")
+    target_link_libraries(${PROJECT_NAME} PRIVATE "${PCAP_ROOT}/Lib/Packet.lib" "${PCAP_ROOT}/Lib/wpcap.lib")
+endif()
+
 # PcapPlusPlus
 add_subdirectory(cxx_modules/PcapPlusPlus)
 add_dependencies(${PROJECT_NAME} Pcap++)
