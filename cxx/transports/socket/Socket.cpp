@@ -209,6 +209,7 @@ Napi::Value Socket::getsockopt(const Napi::CallbackInfo& info) {
 
 Napi::Value Socket::ioctl(const Napi::CallbackInfo& info) {
   //TODO
+/*
   checkLength(info, 2);
   int name = info[0].As<Napi::Number>().Int32Value();
   int value = info[1].As<Napi::Number>().Int32Value();
@@ -222,6 +223,7 @@ Napi::Value Socket::ioctl(const Napi::CallbackInfo& info) {
 #else
 
 #endif
+*/
   return info.Env().Undefined();
 }
 

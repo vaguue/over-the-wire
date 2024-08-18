@@ -37,7 +37,10 @@ bool Packets::add(uint8_t* buf, size_t size, SockAddr* target) {
     addrs.push_back(std::move(addr));
   }
 #ifdef _WIN32
-  packets.emplace_back(size, buf);
+  WSABUF pkt;
+  pkt.len = size;
+  pkt.buf = (char*)buf;
+  packets.push_back(pkt);
 #else
   iovecs.emplace_back();
   iovec* iovec = &iovecs.back();
@@ -58,7 +61,8 @@ bool Packets::add(uint8_t* buf, size_t size, SockAddr* target) {
 
 SendStatus Packets::send(SOCKET fd) {
 #ifdef _WIN32
-  int bytes, result;
+  int result;
+  DWORD bytes;
   WSAOVERLAPPED ioOverlapped = { 0 };
   if (connected) {
     assert(packets.size() == addrs.size());
@@ -73,7 +77,7 @@ SendStatus Packets::send(SOCKET fd) {
                        &bytes,
                        0,
                        &ioOverlapped,
-                       flags);
+                       NULL);
 
     }
     else {
@@ -86,7 +90,7 @@ SendStatus Packets::send(SOCKET fd) {
                        addr.first.get(),
                        addr.second,
                        &ioOverlapped,
-                       flags);
+                       NULL);
     }
 
     if (result == 0) {

@@ -15,6 +15,12 @@ include_directories(${CMAKE_JS_INC})
 
 project (over-the-wire)
 
+if (WIN32)
+  add_compile_options(/WX-)
+  add_definitions(-D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS=1)
+  message("Silencing MS warnings")
+endif()
+
 add_library(${PROJECT_NAME} SHARED ${CMAKE_JS_SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE "${NODE_ADDON_API_DIR}")
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/cxx")

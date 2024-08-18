@@ -23,16 +23,18 @@ void InputPacketsIterator::read() {
 #ifdef _WIN32
   //TODO
   WSAOVERLAPPED ioOverlapped = { 0 };
-  int bytes, result, flags = 0;
+  DWORD bytes = 0;
+  DWORD flags = 0;
+  int result;
   WSABUF buf;
-  buf.buf = new uint8_t[parent.bufSize];
+  buf.buf = (char*)new uint8_t[parent.bufSize];
   buf.len = parent.bufSize;
 
   if (parent.queryAddr) {
-    fromPtr = sockaddr_ptr_t{new sockaddr_storage};
+    sockaddr_ptr_t fromPtr {(sockaddr*)(new sockaddr_storage)};
     int from_len;
     memset(fromPtr.get(), 0, sizeof sockaddr_storage);
-    from_len = sizeof from;
+    from_len = sizeof sockaddr_storage;
     result = WSARecvFrom(parent.fd,
                 (WSABUF*)&buf,
                 1,
@@ -50,15 +52,15 @@ void InputPacketsIterator::read() {
                     1,
                     &bytes,
                     &flags,
-                    ioOverlapped,
-                    NULL)
+                    &ioOverlapped,
+                    NULL);
   }
   if (result == -1) {
     value.pErr = getSystemError();
     isNull = true;
     delete buf.buf;
   }
-  value.pData.pBuf = std::make_pair(decltype(value.second.first.first){buf.buf}, result);
+  value.pData.pBuf = std::make_pair(decltype(value.second.first.first){(uint8_t*)buf.buf}, result);
 //TODO recvmmsg is way too hard to implenet here, so I save it for later
 #else
   msghdr h{};
