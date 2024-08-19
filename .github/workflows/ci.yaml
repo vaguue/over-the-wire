@@ -5,6 +5,8 @@ on:
     branches:
       - release
 
+#trigger build
+
 jobs:
   draft_release:
     name: Create Release
