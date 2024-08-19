@@ -67,9 +67,9 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           choco install wget --no-progress
-          mkdir -p build/Release/npcap
+          mkdir -p npcap
           wget "https://npcap.com/dist/npcap-sdk-1.13.zip"
-          unzip npcap-sdk-1.13.zip -d build/Release/npcap
+          unzip npcap-sdk-1.13.zip -d npcap
         shell: bash
 
       - name: Install npcap on Windows (step 2)
@@ -89,9 +89,9 @@ jobs:
       - name: Build and Test (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          ls "$(pwd)/build/Release/npcap"
-          PCAP_ROOT="$(pwd)/build/Release/npcap" npm i
-          PCAP_ROOT="$(pwd)/build/Release/npcap" npm run build
+          ls "$(pwd)/npcap"
+          PCAP_ROOT="$(pwd)/npcap" npm i
+          PCAP_ROOT="$(pwd)/npcap" npm run build
           node --test test/liveDevice.test.js test/arpTable.test.js test/routing.test.js
         shell: bash
 
@@ -106,8 +106,8 @@ jobs:
       - name: Prebuild (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          ls "$(pwd)/build/Release/npcap"
-          PCAP_ROOT="$(pwd)/build/Release/npcap" npm run precompile
+          ls "$(pwd)/npcap"
+          PCAP_ROOT="$(pwd)/npcap" npm run precompile
           ls prebuilds
           zip -r prebuilds-${{ matrix.os }}.zip prebuilds
         shell: bash
