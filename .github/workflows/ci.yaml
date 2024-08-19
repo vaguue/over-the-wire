@@ -5,8 +5,6 @@ on:
     branches:
       - release
 
-#trigger build
-
 jobs:
   draft_release:
     name: Create Release
@@ -28,6 +26,7 @@ jobs:
             🚀 This release contains necessary binaries to install over-the-wire on different platforms. See README.md of this repo for more details.
           draft: true
           prerelease: false
+
   build:
     needs: [draft_release]
     name: "Build"
@@ -38,75 +37,92 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: Install coreutils for macOS
-        if: matrix.os == 'macOS-latest'
+        if: matrix.os == 'macos-latest'
         run: brew install coreutils
+
       - name: Install Zip
         if: matrix.os == 'windows-latest'
         run: choco install zip
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
+
       - name: Install libpcap on Ubuntu
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libpcap-dev
+
       - name: Install libpcap on macOS
         if: matrix.os == 'macos-latest'
         run: |
           brew update
           brew install libpcap
+
       - name: Install npcap on Windows
         if: matrix.os == 'windows-latest'
-        run: choco install wget --no-progress && mkdir -p build/Release/npcap && wget "https://npcap.com/dist/npcap-sdk-1.13.zip" && unzip npcap-sdk-1.13.zip -d build/Release/npcap
+        run: |
+          choco install wget --no-progress
+          mkdir -p build/Release/npcap
+          wget "https://npcap.com/dist/npcap-sdk-1.13.zip"
+          unzip npcap-sdk-1.13.zip -d build/Release/npcap
         shell: bash
-          #- name: Install npcap on Windows
-          #  if: matrix.os == 'windows-latest'
-          #  run: choco install nmap && choco install wireshark
-          #- name: Install npcap on Windows
-          #  if: matrix.os == 'windows-latest'
-          #  run: |
-          #    Invoke-WebRequest -Uri "$env:NPCAP_OEM_URL" -OutFile "$env:TEMP/npcap-oem.exe"
-          #    # for this ridiculous `&` syntax alone, I'd rather use COBOL than Powershell
-          #    # see https://stackoverflow.com/a/1674950/5637701
-          #    & "$env:TEMP/npcap-oem.exe" /S
-    - name: Install npcap on Windows (step 2)
-      if: matrix.os == 'windows-latest'
-      run: |
-        set NPCAP_FILE=npcap-0.96.exe
-        curl -L https://npcap.com/dist/%NPCAP_FILE% --output %NPCAP_FILE%
-        %NPCAP_FILE% /S /winpcap_mode
-        xcopy C:\Windows\System32\Npcap\*.dll C:\Windows\System32
-        xcopy C:\Windows\SysWOW64\Npcap\*.dll C:\Windows\SysWOW64
-      shell: cmd
+
+      - name: Install npcap on Windows (step 2)
+        if: matrix.os == 'windows-latest'
+        run: |
+          set NPCAP_FILE=npcap-0.96.exe
+          curl -L https://npcap.com/dist/%NPCAP_FILE% --output %NPCAP_FILE%
+          %NPCAP_FILE% /S /winpcap_mode
+          xcopy C:\Windows\System32\Npcap\*.dll C:\Windows\System32
+          xcopy C:\Windows\SysWOW64\Npcap\*.dll C:\Windows\SysWOW64
+        shell: cmd
+
       - name: Submodule update
         run: git submodule update --init --recursive
         shell: bash
 
       - name: Build and Test (Windows)
         if: matrix.os == 'windows-latest'
-        run: ls "$(pwd)/build/Release/npcap" && PCAP_ROOT="$(pwd)/build/Release/npcap" npm i && PCAP_ROOT="$(pwd)/build/Release/npcap" npm run build && node --test test/liveDevice.test.js test/arpTable.test.js test/routing.test.js
+        run: |
+          ls "$(pwd)/build/Release/npcap"
+          PCAP_ROOT="$(pwd)/build/Release/npcap" npm i
+          PCAP_ROOT="$(pwd)/build/Release/npcap" npm run build
+          node --test test/liveDevice.test.js test/arpTable.test.js test/routing.test.js
         shell: bash
 
       - name: Build and Test
         if: matrix.os != 'windows-latest'
-        run: npm i && npm run build && npm run test
+        run: |
+          npm i
+          npm run build
+          npm run test
         shell: bash
 
       - name: Prebuild (Windows)
         if: matrix.os == 'windows-latest'
-        run: PCAP_ROOT="$(pwd)/build/Release/npcap" npm run precompile && ls prebuilds && zip -r prebuilds-${{ matrix.os }}.zip prebuilds
+        run: |
+          PCAP_ROOT="$(pwd)/build/Release/npcap" npm run precompile
+          ls prebuilds
+          zip -r prebuilds-${{ matrix.os }}.zip prebuilds
         shell: bash
 
       - name: Prebuild
         if: matrix.os != 'windows-latest'
-        run: npm run precompile && ls prebuilds && zip -r prebuilds-${{ matrix.os }}.zip prebuilds
+        run: |
+          npm run precompile
+          ls prebuilds
+          zip -r prebuilds-${{ matrix.os }}.zip prebuilds
         shell: bash
+
       - name: ls
         run: ls
         shell: bash
+
       - name: Upload
         uses: actions/upload-release-asset@v1
         env:
