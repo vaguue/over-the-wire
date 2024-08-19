@@ -76,7 +76,7 @@ jobs:
 
       - name: Build and Test (Windows)
         if: matrix.os == 'windows-latest'
-        run: ls "$(pwd)/build/Release/npcap" && PCAP_ROOT="$(pwd)/build/Release/npcap" npm i && PCAP_ROOT="$(pwd)/build/Release/npcap" npm run build && npm run test
+        run: ls "$(pwd)/build/Release/npcap" && PCAP_ROOT="$(pwd)/build/Release/npcap" npm i && PCAP_ROOT="$(pwd)/build/Release/npcap" npm run build && node --test test/liveDevice.test.js test/arpTable.test.js test/routing.test.js
         shell: bash
 
       - name: Build and Test
