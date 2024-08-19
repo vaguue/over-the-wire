@@ -1,8 +1,13 @@
 #pragma once
 
 #ifdef _WIN32
-#include <winsock2.h>
+#define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#include <iphlpapi.h>
 #include <Ws2tcpip.h>
+#include <Windows.h>
+//#include <winsock2.h>
 #define SOCKET_OPT_TYPE char *
 #define SOCKET_LEN_TYPE int
 #else

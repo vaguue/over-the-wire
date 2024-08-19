@@ -10,7 +10,6 @@ set(SOCKET_HDR
   "${CMAKE_CURRENT_SOURCE_DIR}/Socket.hpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Packets.hpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/InputPackets.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Sys.hpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/SockAddr.hpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/SockAddr.hpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Enums/Enums.hpp"

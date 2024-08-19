@@ -2,76 +2,57 @@
 
 #include "win32.hpp"
 
-namespace OverTheWire::Arp {
+namespace OverTheWire::Routing {
 
-std::pair<std::string, arp_table_t> fromSys() {
-  arp_table_t res{};
+std::pair<std::string, routing_table_t> fromSys() {
+  routing_table_t res{};
 
-  PMIB_IPNET_TABLE2 pipTable = NULL;
+  DWORD retval;
+  MIB_IPFORWARD_TABLE2 *routes = NULL;
+  MIB_IPFORWARD_ROW2 *route;
 
-  auto status = GetIpNetTable2(AF_UNSPEC, &pipTable);
-  if (status != NO_ERROR) {
-    return {"GetIpNetTable returned error" + std::to_string(status), res};
+  retval = GetIpForwardTable2(AF_INET, &routes);
+  if (retval != ERROR_SUCCESS) {
+    return {"GetIpForwardTable2 failed", res};
   }
 
-  for (int i = 0; (unsigned) i < pipTable->NumEntries; ++i) {
-    char ifname[IF_NAMESIZE];
-    if (if_indextoname(pipTable->Table[i].InterfaceIndex, ifname) == NULL) {
-      strcpy(ifname, "unknown");
-    }
-    auto& vec = table[ifname];
+  for (int idx = 0; idx < routes->NumEntries; idx++) {
+    route = routes->Table + idx;
 
-    ArpRecord rec;
+    std::string iface;
+    iface.resize(IF_MAX_STRING_SIZE + 1);
+
+    DWORD dwSize = IF_MAX_STRING_SIZE + 1;
+    DWORD dwRetVal = ConvertInterfaceLuidToNameW(&route->InterfaceLuid, (PWSTR)iface.data(), iface.size());
+
+    auto& vec = res[iface];
+
+    RoutingRecord rec;
 
     char str[INET6_ADDRSTRLEN];
+    auto& ipPrefix = route->DestinationPrefix;
+
     uv_inet_ntop(
-        pipTable->Table[i].Address.si_family, 
-        pipTable->Table[i].Address.si_family == AF_INET6 ? 
-          pipTable->Table[i].Address.IPv6 : 
-          pipTable->Table[i].Address.IPv4, 
+        ipPrefix.Prefix.si_family, 
+        ipPrefix.Prefix.si_family == AF_INET6 ? 
+          (const void*)(&ipPrefix.Prefix.Ipv6) : 
+          (const void*)(&ipPrefix.Prefix.Ipv4), 
         str, INET6_ADDRSTRLEN);
 
-    rec.ipAddr = str;
-    std::stringstream ss;
-    ss << std::hex;
-    for (int j = 0; j < pipTable->Table[i].PhysicalAddressLength; j++) {
-      if (j) {
-        ss << ":";
-      }
-      ss << (int)pipTable->Table[i].PhysicalAddress[j];
-    }
+    rec.destination = str;
 
-    rec.hwAddr = ss.str();
-    rec.hwType = pipTable->Table[i].InterfaceLuid.Info.IfType;
+    auto& nextHop = route->NextHop;
 
-    switch (pipTable->Table[i].State) {
-      case NlnsUnreachable:
-        rec.flags.push_back("NlnsUnreachable");
-        break;
-      case NlnsIncomplete:
-        rec.flags.push_back("NlnsIncomplete");
-        break;
-      case NlnsProbe:
-        rec.flags.push_back("NlnsProbe");
-        break;
-      case NlnsDelay:
-        rec.flags.push_back("NlnsDelay");
-        break;
-      case NlnsStale:
-        rec.flags.push_back("NlnsStale");
-        break;
-      case NlnsReachable:
-        rec.flags.push_back("NlnsReachable");
-        break;
-      case NlnsPermanent:
-        rec.flags.push_back("NlnsPermanent");
-        break;
-      default:
-        rec.flags.push_back("Unknown");
-        break;
-    }
+    uv_inet_ntop(
+        nextHop.si_family, 
+        nextHop.si_family == AF_INET6 ? 
+          (const void*)(&nextHop.Ipv6) : 
+          (const void*)(&nextHop.Ipv4), 
+        str, INET6_ADDRSTRLEN);
 
-    vec.push_back(std::move(rec));
+    rec.gateway = str;
+
+    vec.push_back(rec);
   }
 
   return {"", res};

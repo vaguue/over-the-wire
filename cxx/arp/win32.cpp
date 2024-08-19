@@ -19,7 +19,7 @@ std::pair<std::string, arp_table_t> fromSys() {
     if (if_indextoname(pipTable->Table[i].InterfaceIndex, ifname) == NULL) {
       strcpy(ifname, "unknown");
     }
-    auto& vec = table[ifname];
+    auto& vec = res[ifname];
 
     ArpRecord rec;
 
@@ -27,8 +27,8 @@ std::pair<std::string, arp_table_t> fromSys() {
     uv_inet_ntop(
         pipTable->Table[i].Address.si_family, 
         pipTable->Table[i].Address.si_family == AF_INET6 ? 
-          pipTable->Table[i].Address.IPv6 : 
-          pipTable->Table[i].Address.IPv4, 
+          (const void*)(&pipTable->Table[i].Address.Ipv6) : 
+          (const void*)(&pipTable->Table[i].Address.Ipv4), 
         str, INET6_ADDRSTRLEN);
 
     rec.ipAddr = str;

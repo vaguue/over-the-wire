@@ -1,10 +1,7 @@
 #pragma once
 
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2ipdef.h>
-#include <iphlpapi.h>
+#include "Sys.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "Arp.hpp"
+#include "Routing.hpp"
