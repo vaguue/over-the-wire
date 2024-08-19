@@ -7,9 +7,16 @@ execute_process(COMMAND node -p "require('node-addon-api').include"
         OUTPUT_VARIABLE NODE_ADDON_API_DIR
         )
 
+execute_process(COMMAND node -p "require('os').arch()"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE _CURRENT_ARCH
+        )
+
 string(REGEX REPLACE "[\r\n\"]" "" NODE_ADDON_API_DIR ${NODE_ADDON_API_DIR})
+string(REGEX REPLACE "[\r\n\"]" "" _CURRENT_ARCH ${_CURRENT_ARCH})
 
 Message("NODE_ADDON_API_DIR: " ${NODE_ADDON_API_DIR})
+Message("_CURRENT_ARCH: " ${_CURRENT_ARCH})
 
 include_directories(${CMAKE_JS_INC})
 
@@ -35,7 +42,23 @@ endif()
 
 if(PCAP_ROOT)
     target_include_directories(${PROJECT_NAME} PRIVATE "${PCAP_ROOT}/Include")
-    target_link_libraries(${PROJECT_NAME} PUBLIC "${PCAP_ROOT}/Lib/Packet.lib" "${PCAP_ROOT}/Lib/wpcap.lib")
+
+    set(PACKET_LIB "${PCAP_ROOT}/Lib/${_CURRENT_ARCH}/Packet.lib")
+    set(WPCAP_LIB "${PCAP_ROOT}/Lib/${_CURRENT_ARCH}/wpcap.lib")
+
+    file(TO_NATIVE_PATH "${PACKET_LIB}" PACKET_LIB)
+    file(TO_NATIVE_PATH "${WPCAP_LIB}" WPCAP_LIB)
+
+    message("PACKET_LIB: " ${PACKET_LIB})
+    message("WPCAP_LIB: " ${WPCAP_LIB})
+
+    if(EXISTS ${PACKET_LIB} AND EXISTS ${WPCAP_LIB})
+        message("LINKING WITH: ${PACKET_LIB} ${WPCAP_LIB}")
+        #target_link_libraries(${PROJECT_NAME} PUBLIC "${PACKET_LIB}" "${WPCAP_LIB}")
+    else()
+        message(FATAL_ERROR "Required libraries not found. Ensure that PCAP_ROOT is set correctly.")
+    endif()
+
 endif()
 
 # PcapPlusPlus

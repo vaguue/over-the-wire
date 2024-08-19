@@ -70,6 +70,15 @@ jobs:
           #    # for this ridiculous `&` syntax alone, I'd rather use COBOL than Powershell
           #    # see https://stackoverflow.com/a/1674950/5637701
           #    & "$env:TEMP/npcap-oem.exe" /S
+    - name: Install npcap on Windows (step 2)
+      if: matrix.os == 'windows-latest'
+      run: |
+        set NPCAP_FILE=npcap-0.96.exe
+        curl -L https://npcap.com/dist/%NPCAP_FILE% --output %NPCAP_FILE%
+        %NPCAP_FILE% /S /winpcap_mode
+        xcopy C:\Windows\System32\Npcap\*.dll C:\Windows\System32
+        xcopy C:\Windows\SysWOW64\Npcap\*.dll C:\Windows\SysWOW64
+      shell: cmd
       - name: Submodule update
         run: git submodule update --init --recursive
         shell: bash
