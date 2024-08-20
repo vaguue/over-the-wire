@@ -1,6 +1,6 @@
 {
   "name": "over-the-wire",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Network inspection library for Node",
   "main": "lib/index.js",
   "repository": {
@@ -51,7 +51,11 @@
   "engines": {
     "node": ">=16.10.0"
   },
-  "files": ["assets", "lib", "test"],
+  "files": [
+    "assets",
+    "lib",
+    "test"
+  ],
   "devDependencies": {
     "clean-jsdoc-theme": "^4.3.0",
     "cmake-js": "^7.2.1",
