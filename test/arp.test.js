@@ -9,8 +9,8 @@ test('Arp', async (t) => {
   assert.deepEqual(arp.toObject(), {
     hardwareType: 1,
     protocolType: 2048,
-    hardwareSize: 6,
-    protocolSize: 4,
+    hardwareLength: 6,
+    protocolLength: 4,
     opcode: 'who-has',
     hardwareSrc: '42:42:42:42:42:42',
     protocolSrc: '192.168.1.130',
