@@ -25,8 +25,6 @@
 #include <err.h>
 #include <time.h>
 
-#include "Routing.hpp"
-
 #define ROUNDUP(a) \
        ((a) > 0 ? (1 + (((a) - 1) | (sizeof(uint32_t) - 1))) : sizeof(uint32_t))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
