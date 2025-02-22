@@ -2,12 +2,11 @@
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
-#include <WinSock2.h>
-#include <WS2tcpip.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <iphlpapi.h>
-#include <Ws2tcpip.h>
-#include <Windows.h>
-//#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
 #define SOCKET_OPT_TYPE char *
 #define SOCKET_LEN_TYPE int
 #else
