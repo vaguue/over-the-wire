@@ -30,8 +30,6 @@
 #include <strings.h>
 #include <unistd.h>
 
-#include "Arp.hpp"
-
 #ifndef SA_SIZE
 #define SA_SIZE(sa)                                             \
     (  (!(sa) || ((struct sockaddr *)(sa))->sa_len == 0) ?      \
