@@ -1,6 +1,10 @@
 //https://learn.microsoft.com/en-us/windows/win32/api/netioapi/nf-netioapi-getipnettable2
 
-#include "win32.hpp"
+#include "Sys.hpp"
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "Routing.hpp"
 
 namespace OverTheWire::Routing {
 

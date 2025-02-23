@@ -1,6 +1,7 @@
 //https://learn.microsoft.com/en-us/windows/win32/api/netioapi/nf-netioapi-getipnettable2
 
-#include "win32.hpp"
+#include <stdlib.h>
+#include "Arp.hpp"
 
 namespace OverTheWire::Arp {
 
