@@ -17,7 +17,7 @@ c_buffer_t toCxx(const Napi::Value& input) {
   else {
     Napi::Error::New(input.Env(), "Invalid input type, expected either Buffer of TypedArray").ThrowAsJavaScriptException();
   }
-  DEBUG_OUTPUT((std::stringstream{} << "size is " << res.second).str().c_str());
+  DEBUG_OUTPUT((std::stringstream{} << "size is " << res.second).str());
   return res;
 }
 
