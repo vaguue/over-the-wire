@@ -133,3 +133,34 @@ jobs:
           asset_path: prebuilds-${{ matrix.os }}.zip
           asset_name: prebuilds-${{ matrix.os }}.zip
           asset_content_type: application/zip
+
+  alpine:
+    needs: [draft_release]
+    name: "Build Alpine"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Submodule update
+        run: git submodule update --init --recursive
+        shell: bash
+
+      - name: Prebuild
+        run: |
+          docker buildx build . --output prebuilds
+          ls prebuilds
+          zip -r prebuilds-${{ matrix.os }}.zip prebuilds
+
+      - name: Upload
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.draft_release.outputs.upload_url }}
+          asset_path: prebuilds-${{ matrix.os }}.zip
+          asset_name: prebuilds-${{ matrix.os }}.zip
+          asset_content_type: application/zip

@@ -1,0 +1,12 @@
+.*
+*.md
+assets
+build
+Dockerfile
+docs
+memory.log
+node_modules
+notes.txt
+out
+prebuilds
+scr.sh
