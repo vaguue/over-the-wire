@@ -39,7 +39,7 @@ Napi::Object PcapDevice::Init(Napi::Env env, Napi::Object exports) {
 }
 
 void CallJs(Napi::Env env, Napi::Function jsCallback, Context* context, pcpp::RawPacket* packet) {
-  DEBUG_OUTPUT((std::stringstream{} << "CallJs: " << (void*)packet->getRawData() << packet->getRawDataLen()).str().c_str());
+  DEBUG_OUTPUT((std::stringstream{} << "CallJs: " << (void*)packet->getRawData() << packet->getRawDataLen()).str());
   if (env != nullptr && jsCallback != nullptr) {
     jsCallback.Call({ js_buffer_t::Copy(env, packet->getRawData(), packet->getRawDataLen()) });
   }
