@@ -1,37 +1,7 @@
-<p align='center'>
-  <img src='assets/s1.svg' width='180' alt='Hacker spider'>
-</p>
-
-
-# Over-the-wire [![GitHub license](https://img.shields.io/github/license/vaguue/over-the-wire?style=flat)](https://github.com/vaguue/over-the-wire/blob/main/LICENSE) [![npm](https://img.shields.io/npm/v/over-the-wire)](https://www.npmjs.com/package/over-the-wire) ![Development Status](https://img.shields.io/badge/status-in_development-orange)
-
-*The project is currently under active development.*
-
-## Overview
-`over-the-wire` is a Node.js packet manipulation library supporting:
-- Packet crafting and parsing
-- Capturing network traffic and sending packets in all formats
-- Parsing and serializing pcap and pcapng file formats
-- Creating custom non-TCP/UDP socket instances
-
-## System Requirements
-- Libpcap/WinPcap/Npcap library installed (if Wireshark is installed on your system, you are good to go)
-- Node.js version 16.10.0 or higher recommended
-- C++ compiler, if there are no prebuilt bindings for your system
-
-## Installation
-
-```bash
-npm install over-the-wire --save
-```
-
-## Getting started
-The goal of this program is to illustrate various usage of the librarie's API. The program determines the default gateway and pings it, dumping all live ICMP requests in a pcap file.
-```javascript
 const os = require('node:os');
 const fs = require('node:fs');
 
-const otw = require('over-the-wire');
+const otw = require('..');
 
 async function pingGateway(iface, ifaceData) {
   const { Pcap, Packet } = otw;
@@ -96,11 +66,3 @@ const [[iface, [data]]] = Object.entries(os.networkInterfaces())
 ;
 
 pingGateway(iface, data).catch(console.error);
-```
-
-## Documentation
-
-[Here :)](https://vaguue.github.io/over-the-wire)
-
-## Questions or Suggestions
-Feel free to open any issue in the Issues section of this repository. Currently, there are no restrictions on the format.
