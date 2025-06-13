@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_id: ${{ steps.create_release.outputs.id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -117,7 +118,6 @@ jobs:
         run: |
           npm run precompile
           ls prebuilds
-          zip -r prebuilds-${{ matrix.os }}.zip prebuilds
         shell: bash
 
       - name: ls
@@ -125,14 +125,32 @@ jobs:
         shell: bash
 
       - name: Upload
-        uses: actions/upload-release-asset@v1
+        uses: actions/github-script@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ needs.draft_release.outputs.release_id }}
         with:
-          upload_url: ${{ needs.draft_release.outputs.upload_url }}
-          asset_path: prebuilds-${{ matrix.os }}.zip
-          asset_name: prebuilds-${{ matrix.os }}.zip
-          asset_content_type: application/zip
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const release_id = process.env.RELEASE_ID;
+
+            console.log('[*] Environment', process.versions);
+            console.log('[*] Release ID', release_id);
+
+            const fs = require('fs').promises;
+
+            const { repo: { owner, repo }, sha } = context;
+            console.log({ owner, repo, sha });
+
+            for (let file of await fs.readdir('prebuilds')) {
+              console.log('uploading', file);
+
+              await github.repos.uploadReleaseAsset({
+                owner, repo,
+                release_id,
+                name: file,
+                data: await fs.readFile(`./prebuilds/${file}`)
+              });
+            }
 
   alpine:
     needs: [draft_release]
@@ -153,14 +171,31 @@ jobs:
         run: |
           docker buildx build . --output prebuilds
           ls prebuilds
-          zip -r prebuilds-${{ matrix.os }}.zip prebuilds
 
       - name: Upload
-        uses: actions/upload-release-asset@v1
+        uses: actions/github-script@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ needs.draft_release.outputs.release_id }}
         with:
-          upload_url: ${{ needs.draft_release.outputs.upload_url }}
-          asset_path: prebuilds-${{ matrix.os }}.zip
-          asset_name: prebuilds-${{ matrix.os }}.zip
-          asset_content_type: application/zip
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const release_id = process.env.RELEASE_ID;
+
+            console.log('[*] Environment', process.versions);
+            console.log('[*] Release ID', release_id);
+
+            const fs = require('fs').promises;
+
+            const { repo: { owner, repo }, sha } = context;
+            console.log({ owner, repo, sha });
+
+            for (let file of await fs.readdir('prebuilds')) {
+              console.log('uploading', file);
+
+              await github.repos.uploadReleaseAsset({
+                owner, repo,
+                release_id,
+                name: file,
+                data: await fs.readFile(`./prebuilds/${file}`)
+              });
+            }
