@@ -26,7 +26,7 @@ npm install over-the-wire --save
 ```
 
 ## Getting started
-The goal of this program is to illustrate various usage of the librarie's API. The program determines the default gateway and pings it, dumping all live ICMP requests in a pcap file.
+This program demonstrates the library's API capabilities by performing a practical network task: it identifies the default gateway and sends ICMP echo requests (pings) to it, while capturing all network traffic in a pcap file for analysis.
 ```javascript
 const os = require('node:os');
 const fs = require('node:fs');
