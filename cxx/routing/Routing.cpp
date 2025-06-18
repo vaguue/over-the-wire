@@ -32,7 +32,7 @@ void RoutingWorker::OnOK() {
 
       rec.Set("destination", Napi::String::New(Env(), v[i].destination));
       rec.Set("gateway", Napi::String::New(Env(), v[i].gateway));
-      rec.Set("mask", Napi::String::New(Env(), v[i].mask));
+      rec.Set("prefixLength", Napi::Number::New(Env(), v[i].prefixLength));
 
       auto flags = Napi::Array::New(Env(), v[i].flags.size());
       rec.Set("flags", flags);

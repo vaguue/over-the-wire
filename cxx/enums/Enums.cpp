@@ -1,5 +1,9 @@
 #include "Enums.hpp"
 
+#if defined(__linux__) || defined(__APPLE__)
+#include <net/route.h>
+#endif
+
 namespace OverTheWire::Enums {
 
 #define ENUM_VALUE(x) exports.Set(#x, Napi::Number::New(env, x))
@@ -117,12 +121,94 @@ Napi::Object InitLinkLayerType(Napi::Env env, Napi::Object exports) {
   return exports;
 }
 
+#if defined(__linux__) || defined(__APPLE__)
+Napi::Object InitRouteFlags(Napi::Env env, Napi::Object exports) {
+
+#ifdef RTF_UP
+  ENUM_VALUE(RTF_UP);
+#endif
+#ifdef RTF_GATEWAY
+  ENUM_VALUE(RTF_GATEWAY);
+#endif
+#ifdef RTF_HOST
+  ENUM_VALUE(RTF_HOST);
+#endif
+#ifdef RTF_REJECT
+  ENUM_VALUE(RTF_REJECT);
+#endif
+#ifdef RTF_DYNAMIC
+  ENUM_VALUE(RTF_DYNAMIC);
+#endif
+#ifdef RTF_MODIFIED
+  ENUM_VALUE(RTF_MODIFIED);
+#endif
+#ifdef RTF_MULTICAST
+  ENUM_VALUE(RTF_MULTICAST);
+#endif
+
+#ifdef RTF_DONE
+  ENUM_VALUE(RTF_DONE);
+#endif
+#ifdef RTF_CLONING
+  ENUM_VALUE(RTF_CLONING);
+#endif
+#ifdef RTF_XRESOLVE
+  ENUM_VALUE(RTF_XRESOLVE);
+#endif
+#ifdef RTF_LLINFO
+  ENUM_VALUE(RTF_LLINFO);
+#endif
+#ifdef RTF_STATIC
+  ENUM_VALUE(RTF_STATIC);
+#endif
+#ifdef RTF_PROTO1
+  ENUM_VALUE(RTF_PROTO1);
+#endif
+#ifdef RTF_PROTO2
+  ENUM_VALUE(RTF_PROTO2);
+#endif
+#ifdef RTF_WASCLONED
+  ENUM_VALUE(RTF_WASCLONED);
+#endif
+#ifdef RTF_PRCLONING
+  ENUM_VALUE(RTF_PRCLONING);
+#endif
+#ifdef RTF_PROTO3
+  ENUM_VALUE(RTF_PROTO3);
+#endif
+#ifdef RTF_BLACKHOLE
+  ENUM_VALUE(RTF_BLACKHOLE);
+#endif
+#ifdef RTF_BROADCAST
+  ENUM_VALUE(RTF_BROADCAST);
+#endif
+#ifdef RTF_IFSCOPE
+  ENUM_VALUE(RTF_IFSCOPE);
+#endif
+#ifdef RTF_IFREF
+  ENUM_VALUE(RTF_IFREF);
+#endif
+#ifdef RTF_PROXY
+  ENUM_VALUE(RTF_PROXY);
+#endif
+#ifdef RTF_ROUTER
+  ENUM_VALUE(RTF_ROUTER);
+#endif
+#ifdef RTF_GLOBAL
+  ENUM_VALUE(RTF_GLOBAL);
+#endif
+
+  return exports;
+}
+#endif  // __linux__ || __APPLE__
+
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("LinkLayerType", InitLinkLayerType(env, Napi::Object::New(env)));
+  exports.Set("RouteFlags", InitRouteFlags(env, Napi::Object::New(env)));
   return exports;
 }
 
 #undef ENUM_VALUE
 #undef ENUM_VALUE_MANUAL
 
-}
+} // namespace OverTheWire::Enums
