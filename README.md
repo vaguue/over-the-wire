@@ -26,15 +26,41 @@ npm install over-the-wire --save
 ```
 
 ## Getting started
-This program demonstrates the library's API capabilities by performing a practical network task: it identifies the default gateway and sends ICMP echo requests (pings) to it, while capturing all network traffic in a pcap file for analysis.
+This example shows a Node.js implementation of traceroute built with nothing but the Node.js standard library and the over-the-wire API.
+The code is kind of oversimplified, it as a minimal, self-contained demo of the key abstractions in the library:
+- Discover the active default gateway
+- craft and send ICMP Echo packets hop-by-hop
+- Capture the entire exchange to a pcap/pcapng file for later inspection.
 ```javascript
+const net = require('node:net');
 const os = require('node:os');
 const fs = require('node:fs');
 
 const otw = require('over-the-wire');
 
-async function pingGateway(iface, ifaceData) {
+function getMyIp(iface, targetIp) {
+  const family = net.isIP(targetIp) == 6 ? 'IPv6' : 'IPv4';
+  return os.networkInterfaces()?.[iface]?.find(e => e.family == family)?.address;
+}
+
+async function traceroute(targetIp) {
   const { Pcap, Packet } = otw;
+
+  // ARP and Routing info
+  const [
+    { iface, ip: gatewayIp, family },
+    arpTable,
+  ] = await Promise.all([
+    otw.system.gatewayFor(targetIp),
+    otw.system.getArpTable(),
+  ]);
+
+  if (family != 'AF_INET') {
+    console.error('Unsupported family');
+    process.exit(0);
+  }
+
+  const gatewayMac = arpTable[iface].find(e => e.ipAddr == gatewayIp).hwAddr;
 
   // Listen for all ICMP requests
   const dev = new Pcap.LiveDevice({
@@ -50,33 +76,17 @@ async function pingGateway(iface, ifaceData) {
   const dump = Pcap.createWriteStream({ format: 'pcapng' });
   dump.pipe(fs.createWriteStream('dump.pcapng'));
 
-  // Print packet info
-  dev.on('data', pkt => {
-    if (pkt.layers.IPv4) {
-      console.log(`[*] ${pkt.layers.IPv4.src} -> ${pkt.layers.IPv4.dst} (${pkt.layers.ICMP.type})`);
-    }
-    dump.write(pkt);
-  });
+  const myIp = getMyIp(iface, targetIp);
+  const path = [];
 
-  // ARP and Routing tables
-  const [arpTable, routingTable] = await Promise.all([
-    otw.system.getArpTable(),
-    otw.system.getRoutingTable(),
-  ])
-    .then(res => res.map(e => e[iface]))
-  ;
-  
-  const myIp = ifaceData.address;
-  const gatewayIp = routingTable.find(e => e.destination == 'default').gateway;
-  const gatewayMac = arpTable.find(e => e.ipAddr == gatewayIp).hwAddr;
+  let ttl = 1;
 
+  //Send ICMP packet with a specified TTL
   let sequence = 1;
-
-  setInterval(() => {
-    // Create and inject a packet
+  const ping = (timeToLive) => {
     const pkt = new Packet({ iface: dev.iface })
                     .Ethernet({ dst: gatewayMac })
-                    .IPv4({ src: myIp, dst: gatewayIp })
+                    .IPv4({ src: myIp, dst: targetIp, timeToLive })
                     .ICMP({ 
                       type: 8,
                       code: 0,
@@ -84,18 +94,57 @@ async function pingGateway(iface, ifaceData) {
                       sequence,
                     });
     dev.write(pkt);
-
     sequence++;
-  }, 1e3);
+  };
+
+  // Print packet info
+  dev.on('data', pkt => {
+    try {
+      // Uncomment for debugging
+      //console.log(`[*] ${pkt.layers.IPv4.src} -> ${pkt.layers.IPv4.dst} (${pkt.layers.ICMP.type}), ttl: ${ttl}, [${path.join()}]`);
+      if (pkt.layers.ICMP && pkt.layers.IPv4.dst == myIp) {
+        const srcIp = pkt.layers.IPv4.src;
+
+        if (pkt.layers.ICMP.type == 0) {
+          path.push(targetIp);
+          console.log('[*] Traced path');
+          console.log([...new Set(path)].map(e => `- ${e}`).join('\n'));
+          process.exit(0);
+        }
+        else {
+          if (path[path.length - 1] != srcIp) {
+            path.push(srcIp);
+            ttl++;
+          }
+          ping(ttl);
+
+          const fixedTtl = ttl;
+
+          // Just in case there is no response
+          let tid = setInterval(() => {
+            if (ttl == fixedTtl) {
+              ping(ttl);
+            }
+            else {
+              clearInterval(tid);
+            }
+          }, 2e2);
+        }
+      }
+      
+      //Saving all captured traffic
+      dump.write(pkt);
+    } catch(err) {
+      console.error(err);
+      process.exit(1);
+    }
+  });
+
+  setTimeout(() => ping(ttl), 1e3);
 }
 
-// Using Node.js to get the default gateway
-const [[iface, [data]]] = Object.entries(os.networkInterfaces())
-  .map(e => [e[0], e[1].filter(e => e.family == 'IPv4' && !e.internal)])
-  .filter(e => e[1].length > 0)
-;
-
-pingGateway(iface, data).catch(console.error);
+// google.com's IP
+traceroute('172.217.168.174').catch(console.error);
 ```
 
 ## Documentation

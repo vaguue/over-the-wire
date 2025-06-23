@@ -4,101 +4,47 @@
 
 namespace OverTheWire::Routing {
 
-static uint32_t forgemask(uint32_t a) {
-  uint32_t m;
+std::string routename4(uint32_t in) {
+  char *cp;
+  std::string line;
+  line.resize(MAXHOSTNAMELEN);
+  struct hostent *hp;
 
-  if (IN_CLASSA(a)) {
-    m = IN_CLASSA_NET;
+  cp = 0;
+  if (cp) {
+    strlcpy(line.data(), cp, line.size());
+  } else {
+    in = ntohl(in);
+    return (std::stringstream{} << C(in >> 24) << "." << C(in >> 16) << "." << C(in >> 8) << "." << C(in)).str();
   }
-  else if (IN_CLASSB(a)) {
-    m = IN_CLASSB_NET;
-  }
-  else {
-    m = IN_CLASSC_NET;
-  }
-  return (m);
-}
-
-static void domask(char *dst, uint32_t addr, uint32_t mask) {
-  int b, i;
-
-  if (!mask || (forgemask(addr) == mask)) {
-    *dst = '\0';
-    return;
-  }
-  i = 0;
-  for (b = 0; b < 32; b++)
-    if (mask & (1 << b)) {
-      int bb;
-
-      i = b;
-      for (bb = b+1; bb < 32; bb++)
-        if (!(mask & (1 << bb))) {
-          i = -1;  /* noncontig */
-          break;
-        }
-      break;
-    }
-  if (i == -1) {
-    snprintf(dst, sizeof(dst), "&0x%x", mask);
-  }
-  else {
-    snprintf(dst, sizeof(dst), "/%d", 32-i);
-  }
-}
-
-/*
- * Return the name of the network whose address is given.
- * The address is assumed to be that of a net or subnet, not a host.
- */
-static std::string netname(uint32_t in, uint32_t mask) {
-  char *cp = 0;
-  static char line[MAXHOSTNAMELEN];
-  struct netent *np = 0;
-  uint32_t net, omask, dmask;
-  uint32_t i;
-
-  i = ntohl(in);
-  dmask = forgemask(i);
-  omask = mask;
-  if (cp)
-    strlcpy(line, cp, sizeof(line));
-  else {
-    switch (dmask) {
-    case IN_CLASSA_NET:
-      if ((i & IN_CLASSA_HOST) == 0) {
-        snprintf(line, sizeof(line), "%u", C(i >> 24));
-        break;
-      }
-      /* FALLTHROUGH */
-    case IN_CLASSB_NET:
-      if ((i & IN_CLASSB_HOST) == 0) {
-        snprintf(line, sizeof(line), "%u.%u",
-          C(i >> 24), C(i >> 16));
-        break;
-      }
-      /* FALLTHROUGH */
-    case IN_CLASSC_NET:
-      if ((i & IN_CLASSC_HOST) == 0) {
-        snprintf(line, sizeof(line), "%u.%u.%u",
-          C(i >> 24), C(i >> 16), C(i >> 8));
-        break;
-      }
-      /* FALLTHROUGH */
-    default:
-      snprintf(line, sizeof(line), "%u.%u.%u.%u",
-        C(i >> 24), C(i >> 16), C(i >> 8), C(i));
-      break;
-    }
-  }
-  domask(line+strlen(line), i, omask);
   return (line);
 }
 
-static std::string netname6(struct sockaddr_in6 *sa6, struct sockaddr *sam) {
-  static thread_local char line[MAXHOSTNAMELEN];
+uint32_t masklen4(uint32_t in) {
+  return __builtin_popcount(ntohl(in));
+}
+
+static std::string routename6(struct sockaddr_in6 *sa6) {
+  std::string line;
+  line.resize(MAXHOSTNAMELEN);
+  int flag = NI_WITHSCOPEID;
+  /* use local variable for safety */
+  struct sockaddr_in6 sa6_local = {sizeof(sa6_local), AF_INET6, };
+
+  sa6_local.sin6_addr = sa6->sin6_addr;
+  sa6_local.sin6_scope_id = sa6->sin6_scope_id;
+
+  flag |= NI_NUMERICHOST;
+
+  getnameinfo((struct sockaddr *)&sa6_local, sa6_local.sin6_len,
+        line.data(), line.size(), NULL, 0, flag);
+
+  return std::string{line.c_str()};
+}
+
+static uint32_t masklen6(struct sockaddr_in6 *sa6, struct sockaddr *sam) {
   u_char *lim;
-  int masklen, illegal = 0, flag = NI_WITHSCOPEID;
+  uint32_t masklen, illegal = 0, flag = NI_WITHSCOPEID;
   struct in6_addr *mask = sam ? &((struct sockaddr_in6 *)sam)->sin6_addr : 0;
 
   if (sam && sam->sa_len == 0) {
@@ -138,86 +84,46 @@ static std::string netname6(struct sockaddr_in6 *sa6, struct sockaddr *sam) {
          break;
       }
     }
-    if (illegal)
-      fprintf(stderr, "illegal prefixlen\n");
+    if (illegal) {
+      //fprintf(stderr, "illegal prefixlen\n");
+    }
   } else {
     masklen = 128;
   }
   if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sa6->sin6_addr))
-    return "default" ;
-
-  flag |= NI_NUMERICHOST;
-  getnameinfo((struct sockaddr *)sa6, sa6->sin6_len, line, sizeof(line),
-        NULL, 0, flag);
-
-  snprintf(&line[strlen(line)], sizeof(line) - strlen(line), "/%d", masklen);
-
-  return line;
-}
-
-std::string routename(uint32_t in) {
-  char *cp;
-  std::string line;
-  line.resize(MAXHOSTNAMELEN);
-  struct hostent *hp;
-
-  cp = 0;
-  if (cp) {
-    strlcpy(line.data(), cp, line.size());
-  } else {
-    in = ntohl(in);
-    snprintf(line.data(), line.size(), "%u.%u.%u.%u",
-        C(in >> 24), C(in >> 16), C(in >> 8), C(in));
-  }
-  return (line);
-}
-
-static std::string routename6(struct sockaddr_in6 *sa6) {
-  std::string line;
-  line.resize(MAXHOSTNAMELEN);
-  int flag = NI_WITHSCOPEID;
-  /* use local variable for safety */
-  struct sockaddr_in6 sa6_local = {sizeof(sa6_local), AF_INET6, };
-
-  sa6_local.sin6_addr = sa6->sin6_addr;
-  sa6_local.sin6_scope_id = sa6->sin6_scope_id;
+    return 0;
 
   flag |= NI_NUMERICHOST;
 
-  getnameinfo((struct sockaddr *)&sa6_local, sa6_local.sin6_len,
-        line.data(), line.size(), NULL, 0, flag);
-
-  return line;
+  return masklen;
 }
 
-static std::string pSockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags) {
+static std::tuple<std::string, std::string, uint32_t> pSockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags) {
   char workbuf[128]; 
   char* cplim;
   char* cp = workbuf;
+
   std::string str;
+  std::string family = "AF_UNSPEC";
 
   switch(sa->sa_family) {
     case AF_INET: {
       struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+      struct sockaddr_in *min = (struct sockaddr_in *)mask;
 
       if ((sin->sin_addr.s_addr == INADDR_ANY) &&
         mask &&
         (ntohl(((struct sockaddr_in *)mask)->sin_addr.s_addr) == 0L || mask->sa_len == 0)) {
-        strcpy(cp, "default");
+        return {"AF_INET", "default", 0};
       }
       else if (flags & RTF_HOST) {
-        str = routename(sin->sin_addr.s_addr);
-        cp = str.data();
+        return {"AF_INET", routename4(sin->sin_addr.s_addr), 32};
       }
-      else if (mask) {
-        str = netname(sin->sin_addr.s_addr,
-            ntohl(((struct sockaddr_in *)mask)->
-            sin_addr.s_addr));
-        cp = str.data();
+      else if (min) {
+        return {"AF_INET", routename4(sin->sin_addr.s_addr), masklen4(min->sin_addr.s_addr)};
       }
       else {
-        str = netname(sin->sin_addr.s_addr, 0L);
-        cp = str.data();
+        return {"AF_INET", routename4(sin->sin_addr.s_addr), 0};
       }
       break;
     }
@@ -239,21 +145,19 @@ static std::string pSockaddr(struct sockaddr *sa, struct sockaddr *mask, int fla
       }
 
       if (flags & RTF_HOST) {
-        str = routename6(sa6);
-        cp = str.data();
+        return {"AF_INET6", routename6(sa6), 128};
       }
       else if (mask) {
-        str = netname6(sa6, mask);
-        cp = str.data();
+        return {"AF_INET6", routename6(sa6), masklen6(sa6, mask)};
       }
       else {
-        str = netname6(sa6, NULL);
-        cp = str.data();
+        return {"AF_INET6", routename6(sa6), masklen6(sa6, NULL)};
       }
       break;
     }
 
     case AF_LINK: {
+      family = "AF_LINK";
       struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
 
       if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
@@ -299,7 +203,7 @@ static std::string pSockaddr(struct sockaddr *sa, struct sockaddr *mask, int fla
     }
   }
 
-  return cp;
+  return {family, cp, 0};
 }
 
 static void getRtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info) {
@@ -358,11 +262,15 @@ void save(routing_table_t& table, struct rt_msghdr2* rtm) {
 
   RoutingRecord rec;
 
-  rec.destination = pSockaddr(&addr.u_sa, &mask.u_sa, rtm->rtm_flags);
+  std::string tmp;
 
-  rec.gateway = pSockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST);
+  std::tie(tmp, rec.destination, rec.prefixLength) = pSockaddr(&addr.u_sa, &mask.u_sa, rtm->rtm_flags);
+
+  std::tie(rec.family, rec.gateway, tmp) = pSockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST);
 
   rec.flags = pFlags(rtm->rtm_flags);
+
+  rec.metric = rtm->rtm_rmx.rmx_hopcount;
 
   if (rtm->rtm_index != lastindex) {
     if_indextoname(rtm->rtm_index, ifname);

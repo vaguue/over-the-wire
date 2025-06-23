@@ -10,8 +10,10 @@
 namespace OverTheWire::Routing {
   struct RoutingRecord {
     std::string destination;
+    uint32_t prefixLength;
+    uint32_t metric = 0;
     std::string gateway;
-    std::string mask;
+    std::string family;
     std::vector<std::string> flags;
   };
 
