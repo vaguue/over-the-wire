@@ -1,0 +1,121 @@
+name: "build"
+
+on:
+  push:
+    branches:
+      - test
+
+jobs:
+  build:
+    name: "Build"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install coreutils for macOS
+        if: matrix.os == 'macos-latest'
+        run: brew install coreutils
+
+      - name: Install Zip
+        if: matrix.os == 'windows-latest'
+        run: choco install zip
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install libpcap on Ubuntu
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04-arm'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpcap-dev
+
+      - name: Install libpcap on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install libpcap
+
+      - name: Install npcap on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install wget --no-progress
+          mkdir -p npcap
+          wget "https://npcap.com/dist/npcap-sdk-1.13.zip"
+          unzip npcap-sdk-1.13.zip -d npcap
+        shell: bash
+
+      - name: Install npcap on Windows (step 2)
+        if: matrix.os == 'windows-latest'
+        run: |
+          set NPCAP_FILE=npcap-0.96.exe
+          curl -L https://npcap.com/dist/%NPCAP_FILE% --output %NPCAP_FILE%
+          %NPCAP_FILE% /S /winpcap_mode
+          xcopy C:\Windows\System32\Npcap\*.dll C:\Windows\System32
+          xcopy C:\Windows\SysWOW64\Npcap\*.dll C:\Windows\SysWOW64
+        shell: cmd
+
+      - name: Submodule update
+        run: git submodule update --init --recursive
+        shell: bash
+
+      - name: Build and Test (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          ls "$(pwd)/npcap"
+          PCAP_ROOT="$(pwd)/npcap" npm i
+          PCAP_ROOT="$(pwd)/npcap" npm run build
+          node --test test/liveDevice.test.js test/arpTable.test.js test/routing.test.js
+        shell: bash
+
+      - name: Build and Test
+        if: matrix.os != 'windows-latest'
+        run: |
+          npm i
+          npm run build
+          npm run test
+        shell: bash
+
+      - name: Prebuild (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          ls "$(pwd)/npcap"
+          PCAP_ROOT="$(pwd)/npcap" npm run precompile
+          ls prebuilds
+          zip -r prebuilds-${{ matrix.os }}.zip prebuilds
+        shell: bash
+
+      - name: Prebuild
+        if: matrix.os != 'windows-latest'
+        run: |
+          npm run precompile
+          ls prebuilds
+        shell: bash
+
+      - name: ls
+        run: ls
+        shell: bash
+
+  alpine:
+    name: "Build Alpine"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Submodule update
+        run: git submodule update --init --recursive
+        shell: bash
+
+      - name: Prebuild
+        run: |
+          docker buildx build . --output prebuilds
+          ls prebuilds
