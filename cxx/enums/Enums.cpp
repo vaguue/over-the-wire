@@ -204,7 +204,9 @@ Napi::Object InitRouteFlags(Napi::Env env, Napi::Object exports) {
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("LinkLayerType", InitLinkLayerType(env, Napi::Object::New(env)));
+#if defined(__linux__) || defined(__APPLE__)
   exports.Set("RouteFlags", InitRouteFlags(env, Napi::Object::New(env)));
+#endif  // __linux__ || __APPLE__
   return exports;
 }
 
