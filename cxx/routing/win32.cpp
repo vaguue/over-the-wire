@@ -4,7 +4,7 @@
 
 namespace OverTheWire::Routing {
 
-std::tuple<std::string, routing_table_t> fromSys() {
+std::pair<std::string, routing_table_t> fromSys() {
   routing_table_t res{};
 
   DWORD retval;
