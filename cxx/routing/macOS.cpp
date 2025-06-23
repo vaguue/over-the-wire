@@ -98,12 +98,13 @@ static uint32_t masklen6(struct sockaddr_in6 *sa6, struct sockaddr *sam) {
   return masklen;
 }
 
-static std::pair<std::string, uint32_t> pSockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags) {
+static std::tuple<std::string, std::string, uint32_t> pSockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags) {
   char workbuf[128]; 
   char* cplim;
   char* cp = workbuf;
 
   std::string str;
+  std::string family = "AF_UNSPEC";
 
   switch(sa->sa_family) {
     case AF_INET: {
@@ -113,16 +114,16 @@ static std::pair<std::string, uint32_t> pSockaddr(struct sockaddr *sa, struct so
       if ((sin->sin_addr.s_addr == INADDR_ANY) &&
         mask &&
         (ntohl(((struct sockaddr_in *)mask)->sin_addr.s_addr) == 0L || mask->sa_len == 0)) {
-        return {"default", 0};
+        return {"AF_INET", "default", 0};
       }
       else if (flags & RTF_HOST) {
-        return {routename4(sin->sin_addr.s_addr), 32};
+        return {"AF_INET", routename4(sin->sin_addr.s_addr), 32};
       }
       else if (min) {
-        return {routename4(sin->sin_addr.s_addr), masklen4(min->sin_addr.s_addr)};
+        return {"AF_INET", routename4(sin->sin_addr.s_addr), masklen4(min->sin_addr.s_addr)};
       }
       else {
-        return {routename4(sin->sin_addr.s_addr), 0};
+        return {"AF_INET", routename4(sin->sin_addr.s_addr), 0};
       }
       break;
     }
@@ -144,18 +145,19 @@ static std::pair<std::string, uint32_t> pSockaddr(struct sockaddr *sa, struct so
       }
 
       if (flags & RTF_HOST) {
-        return {routename6(sa6), 128};
+        return {"AF_INET6", routename6(sa6), 128};
       }
       else if (mask) {
-        return {routename6(sa6), masklen6(sa6, mask)};
+        return {"AF_INET6", routename6(sa6), masklen6(sa6, mask)};
       }
       else {
-        return {routename6(sa6), masklen6(sa6, NULL)};
+        return {"AF_INET6", routename6(sa6), masklen6(sa6, NULL)};
       }
       break;
     }
 
     case AF_LINK: {
+      family = "AF_LINK";
       struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
 
       if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
@@ -201,7 +203,7 @@ static std::pair<std::string, uint32_t> pSockaddr(struct sockaddr *sa, struct so
     }
   }
 
-  return {cp, 0};
+  return {family, cp, 0};
 }
 
 static void getRtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info) {
@@ -260,11 +262,11 @@ void save(routing_table_t& table, struct rt_msghdr2* rtm) {
 
   RoutingRecord rec;
 
-  std::tie(rec.destination, rec.prefixLength) = pSockaddr(&addr.u_sa, &mask.u_sa, rtm->rtm_flags);
-
   std::string tmp;
 
-  std::tie(rec.gateway, tmp) = pSockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST);
+  std::tie(tmp, rec.destination, rec.prefixLength) = pSockaddr(&addr.u_sa, &mask.u_sa, rtm->rtm_flags);
+
+  std::tie(rec.family, rec.gateway, tmp) = pSockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST);
 
   rec.flags = pFlags(rtm->rtm_flags);
 

@@ -4,7 +4,7 @@
 
 namespace OverTheWire::Routing {
 
-std::pair<std::string, routing_table_t> fromSys() {
+std::tuple<std::string, routing_table_t> fromSys() {
   routing_table_t res{};
 
   DWORD retval;
@@ -19,12 +19,13 @@ std::pair<std::string, routing_table_t> fromSys() {
   for (int idx = 0; idx < routes->NumEntries; idx++) {
     route = routes->Table + idx;
 
-    // chatGPT
     WCHAR wname[IF_MAX_STRING_SIZE + 1] = L"";
     ULONG wlen = IF_MAX_STRING_SIZE;
     if (ConvertInterfaceLuidToNameW(&route->InterfaceLuid, wname, wlen) != NO_ERROR)
         continue;
-    std::string iface = WideCharToUTF8(wname);
+
+    char iface[IF_MAX_STRING_SIZE * 2 + 1];
+    WideCharToMultiByte(CP_UTF8, 0, wname, -1, iface, sizeof(iface), NULL, NULL);
 
     auto& vec = res[iface];
 
@@ -46,6 +47,16 @@ std::pair<std::string, routing_table_t> fromSys() {
 
     auto& nextHop = route->NextHop;
 
+    if (nextHop.si_family == AF_INET) {
+      rec.family = "AF_INET";
+    }
+    else if (nextHop.si_family == AF_INET6) {
+      rec.family = "AF_INET6";
+    }
+    else if (nextHop.si_family == AF_UNSPEC) {
+      rec.family = "AF_UNSPEC";
+    }
+
     bool onLink = (nextHop.si_family == AF_UNSPEC);
     if (!onLink)
         uv_inet_ntop(nextHop.si_family,
@@ -61,6 +72,7 @@ std::pair<std::string, routing_table_t> fromSys() {
     vec.push_back(rec);
   }
 
+  FreeMibTable(routes);
   return {"", res};
 }
 

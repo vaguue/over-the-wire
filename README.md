@@ -48,12 +48,17 @@ async function traceroute(targetIp) {
 
   // ARP and Routing info
   const [
-    { iface, ip: gatewayIp },
+    { iface, ip: gatewayIp, family },
     arpTable,
   ] = await Promise.all([
     otw.system.gatewayFor(targetIp),
     otw.system.getArpTable(),
   ]);
+
+  if (family != 'AF_INET') {
+    console.error('Unsupported family');
+    process.exit(0);
+  }
 
   const gatewayMac = arpTable[iface].find(e => e.ipAddr == gatewayIp).hwAddr;
 
