@@ -2,7 +2,7 @@
   <img src='assets/s1.svg' width='180' alt='Hacker spider'>
 </p>
 
-
+СЕВА ТЫ КАК ТАМ ЕПТА
 # Over-the-wire [![GitHub license](https://img.shields.io/github/license/vaguue/over-the-wire?style=flat)](https://github.com/vaguue/over-the-wire/blob/main/LICENSE) [![npm](https://img.shields.io/npm/v/over-the-wire)](https://www.npmjs.com/package/over-the-wire) ![Development Status](https://img.shields.io/badge/status-in_development-orange)
 
 *The project is currently under active development.*
