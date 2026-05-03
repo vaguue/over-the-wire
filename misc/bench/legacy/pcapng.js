@@ -13,15 +13,15 @@ const {
   BT_EPB,
   BT_SPB,
   constants,
-} = require('#lib/pcapFile/structs').pcapng;
+} = require('./structs').pcapng;
 
 const defaults = require('#lib/defaults');
 
-const { PcapNGReader } = require('../../lib/pcapFile/pcapng/readers');
+const { PcapNGReader } = require('./pcapng/readers');
 
-const { additionalLength } = require('../../lib/pcapFile/pcapng/const');
+const { additionalLength } = require('./pcapng/const');
 
-const Tsresol = require('../../lib/pcapFile/pcapng/tsresol');
+const Tsresol = require('./pcapng/tsresol');
 
 const { Packet } = require('#lib/packet');
 

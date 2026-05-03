@@ -1,14 +1,14 @@
 const { alignOffset } = require('struct-compile');
 
 const { Packet } = require('#lib/packet');
-const { BlockReader, BufferReader } = require('#lib/pcapFile/reader');
+const { BlockReader, BufferReader } = require('../../reader');
 const { pick } = require('#lib/pick');
 
 const { OptionReader } = require('./option');
 
 const { blockTrailerLength, blockHeaderLength, additionalLength } = require('../const');
 
-const { constants } = require('#lib/pcapFile/structs').pcapng;
+const { constants } = require('../../structs').pcapng;
 
 const Tsresol = require('../tsresol');
 

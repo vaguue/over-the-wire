@@ -1,4 +1,4 @@
-const { BlockReader } = require('#lib/pcapFile/reader');
+const { BlockReader } = require('../../reader');
 
 const { OptionReader } = require('./option');
 const { blockTrailerLength, blockHeaderLength, additionalLength } = require('../const');
@@ -8,7 +8,7 @@ const {
   PCAP_NG_VERSION_MINOR,
   BYTE_ORDER_MAGIC,
   BYTE_ORDER_MAGIC_SWAP,
-} = require('#lib/pcapFile/structs').pcapng;
+} = require('../../structs').pcapng;
 
 class SectionBlockReader extends BlockReader {
   type = 'section-header';

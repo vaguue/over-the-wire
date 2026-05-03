@@ -15,7 +15,7 @@ const os = require('node:os');
 const { Readable, Writable } = require('node:stream');
 const { pipeline } = require('node:stream/promises');
 
-const legacy = require('./pcap.legacy');
+const legacy = require('./legacy/pcap');
 const next   = require('../../lib/pcapFile/pcap');
 
 const SAMPLE_PATH = path.resolve(__dirname, '../../test/data/example1.pcap');

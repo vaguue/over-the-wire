@@ -12,7 +12,7 @@ const os = require('node:os');
 const { Readable, Writable } = require('node:stream');
 const { pipeline } = require('node:stream/promises');
 
-const legacy = require('./pcapng.legacy');
+const legacy = require('./legacy/pcapng');
 const next   = require('../../lib/pcapFile/pcapng');
 
 const SAMPLE_PATH = path.resolve(__dirname, '../../test/data/example2.pcapng');

@@ -13,7 +13,7 @@ const {
   BT_EPB,
   BT_SPB,
   constants,
-} = require('#lib/pcapFile/structs').pcapng;
+} = require('../structs').pcapng;
 
 const defaults = require('#lib/defaults');
 

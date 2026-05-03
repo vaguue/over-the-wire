@@ -1,4 +1,4 @@
-const { structs } = require('#lib/pcapFile/structs').pcapng;
+const { structs } = require('../structs').pcapng;
 
 const blockTrailerLength = structs[0].BlockTrailer.prototype.config.length;
 const blockHeaderLength = structs[0].BlockHeader.prototype.config.length;

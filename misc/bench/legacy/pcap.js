@@ -9,9 +9,9 @@ const {
   BYTE_ORDER_MAGIC_SWAPPED,
   BYTE_ORDER_MAGIC_NANO,
   BYTE_ORDER_MAGIC_SWAPPED_NANO,
-} = require('../../lib/pcapFile/structs').pcap;
+} = require('./structs').pcap;
 
-const { BlockReader, BufferReader } = require('../../lib/pcapFile/reader');
+const { BlockReader, BufferReader } = require('./reader');
 
 const { TimeStamp } = require('#lib/timestamp');
 

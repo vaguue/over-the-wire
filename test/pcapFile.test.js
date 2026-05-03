@@ -11,7 +11,7 @@ const { createReadStream, createWriteStream } = require('#lib/pcapFile/index');
 const { Packet } = require('#lib/packet');
 const { fromNumber } = require('#lib/buffer');
 
-const Tsresol = require('#lib/pcapFile/pcapng/tsresol');
+const Tsresol = require('#lib/pcapFile/tsresol');
 const { TimeStamp } = require('#lib/timestamp');
 
 test('Tsresol', t => {

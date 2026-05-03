@@ -1,6 +1,6 @@
 const { alignOffset } = require('struct-compile');
 
-const { BlockReader, BufferReader } = require('#lib/pcapFile/reader');
+const { BlockReader, BufferReader } = require('../../reader');
 
 class OptionReader extends BlockReader {
   constructor(...args) {

@@ -1,11 +1,11 @@
-const { BlockReader } = require('#lib/pcapFile/reader');
+const { BlockReader } = require('../../reader');
 
 const {
   BT_SHB,
   BT_IDB,
   BT_EPB,
   BT_SPB,
-} = require('#lib/pcapFile/structs').pcapng;
+} = require('../../structs').pcapng;
 
 const { SectionBlockReader } = require('./sectionBlock');
 const { InterfaceDescriptionBlockReader } = require('./interfaceDescription');

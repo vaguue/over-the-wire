@@ -1,4 +1,4 @@
-const { BlockReader } = require('#lib/pcapFile/reader');
+const { BlockReader } = require('../../reader');
 
 const { OptionReader } = require('./option');
 const { blockTrailerLength, blockHeaderLength, additionalLength } = require('../const');

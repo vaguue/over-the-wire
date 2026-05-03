@@ -1,4 +1,4 @@
-const { BlockReader, BufferReader } = require('#lib/pcapFile/reader');
+const { BlockReader, BufferReader } = require('../../reader');
 const { blockTrailerLength, blockHeaderLength, additionalLength } = require('../const');
 
 class EmptyReader extends BlockReader {

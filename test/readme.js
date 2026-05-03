@@ -67,7 +67,7 @@ async function traceroute(targetIp) {
   dev.on('data', pkt => {
     try {
       // Uncomment for debugging
-      //console.log(`[*] ${pkt.layers.IPv4.src} -> ${pkt.layers.IPv4.dst} (${pkt.layers.ICMP.type}), ttl: ${ttl}, [${path.join()}]`);
+      console.log(`[*] ${pkt.layers.IPv4.src} -> ${pkt.layers.IPv4.dst} (${pkt.layers.ICMP.type}), ttl: ${ttl}, [${path.join()}]`);
       if (pkt.layers.ICMP && pkt.layers.IPv4.dst == myIp) {
         const srcIp = pkt.layers.IPv4.src;
 
@@ -110,6 +110,4 @@ async function traceroute(targetIp) {
 }
 
 // google.com's IP
-//traceroute('139.47.22.33').catch(console.error);
-// local IP
-traceroute('192.168.1.131').catch(console.error);
+traceroute('8.8.8.8').catch(console.error);

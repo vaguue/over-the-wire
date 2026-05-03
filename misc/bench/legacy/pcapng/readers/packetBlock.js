@@ -1,4 +1,4 @@
-const { BlockReader } = require('#lib/pcapFile/reader');
+const { BlockReader } = require('../../reader');
 
 class PacketBlockReader extends BlockReader {
   constructor(...args) {
