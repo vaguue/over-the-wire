@@ -13,7 +13,7 @@ static char* lladdr(struct sockaddr_dl *sdl) {
   cp = (char *)LLADDR(sdl);
   if ((n = sdl->sdl_alen) > 0) {
     while (--n >= 0) {
-      p += snprintf(buf + p, bufsize - p, "%x%s", *cp++ & 0xff, n > 0 ? ":" : "");
+      p += snprintf(buf + p, bufsize - p, "%02x%s", *cp++ & 0xff, n > 0 ? ":" : "");
     }
   }
   return (buf);
