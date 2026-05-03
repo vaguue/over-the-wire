@@ -77,17 +77,18 @@ async function traceroute(targetIp) {
   dump.pipe(fs.createWriteStream('dump.pcapng'));
 
   const myIp = getMyIp(iface, targetIp);
+  const myMac = dev.iface.mac;
   const path = [];
 
   let ttl = 1;
-
-  //Send ICMP packet with a specified TTL
   let sequence = 1;
+
+  // Send ICMP echo request with a specified TTL
   const ping = (timeToLive) => {
     const pkt = new Packet({ iface: dev.iface })
-                    .Ethernet({ dst: gatewayMac })
+                    .Ethernet({ src: myMac, dst: gatewayMac })
                     .IPv4({ src: myIp, dst: targetIp, timeToLive })
-                    .ICMP({ 
+                    .ICMP({
                       type: 8,
                       code: 0,
                       id: Math.floor(Math.random() * 65535),
@@ -97,11 +98,12 @@ async function traceroute(targetIp) {
     sequence++;
   };
 
-  // Print packet info
+  // Re-ping with the same TTL if there's no progress (handles the very first
+  // hop too, where no reply has been received yet).
+  setInterval(() => ping(ttl), 200);
+
   dev.on('data', pkt => {
     try {
-      // Uncomment for debugging
-      //console.log(`[*] ${pkt.layers.IPv4.src} -> ${pkt.layers.IPv4.dst} (${pkt.layers.ICMP.type}), ttl: ${ttl}, [${path.join()}]`);
       if (pkt.layers.ICMP && pkt.layers.IPv4.dst == myIp) {
         const srcIp = pkt.layers.IPv4.src;
 
@@ -111,28 +113,13 @@ async function traceroute(targetIp) {
           console.log([...new Set(path)].map(e => `- ${e}`).join('\n'));
           process.exit(0);
         }
-        else {
-          if (path[path.length - 1] != srcIp) {
-            path.push(srcIp);
-            ttl++;
-          }
+        else if (path[path.length - 1] != srcIp) {
+          path.push(srcIp);
+          ttl++;
           ping(ttl);
-
-          const fixedTtl = ttl;
-
-          // Just in case there is no response
-          let tid = setInterval(() => {
-            if (ttl == fixedTtl) {
-              ping(ttl);
-            }
-            else {
-              clearInterval(tid);
-            }
-          }, 2e2);
         }
       }
-      
-      //Saving all captured traffic
+
       dump.write(pkt);
     } catch(err) {
       console.error(err);
@@ -140,7 +127,7 @@ async function traceroute(targetIp) {
     }
   });
 
-  setTimeout(() => ping(ttl), 1e3);
+  ping(ttl);
 }
 
 // google.com's IP
