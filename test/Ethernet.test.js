@@ -1,7 +1,6 @@
 const { strict: assert } = require('node:assert');
 const test = require('node:test');
 
-const { extendAt, shrinkAt } = require('#lib/buffer');
 const { Ethernet } = require('#lib/layers/Ethernet');
 
 test('Ethernet', async (t) => {

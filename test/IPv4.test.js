@@ -1,19 +1,11 @@
 const { strict: assert } = require('node:assert');
 const test = require('node:test');
 
-const { extendAt, shrinkAt } = require('#lib/buffer');
 const { IPv4 } = require('#lib/layers/IPv4');
 
 test('IPv4', async (t) => {
   const buf = Buffer.from('450000730000400040068cd2c0a80167cebd1ce6e33d5debb394ef8d', 'hex');
-  const ip = new IPv4(buf, {
-    shrinkAt(...args) {
-      return shrinkAt(buf, ...args);
-    },
-    extendAt(...args) {
-      return extendAt(buf, ...args);
-    },
-  });
+  const ip = new IPv4(buf);
 
   assert.deepEqual(
     ip.toObject(),
@@ -45,26 +37,24 @@ test('IPv4', async (t) => {
   ip.dst = '192.168.1.1';
   assert.equal(ip.dst, '192.168.1.1');
 
-  let options = [
+  const optionsA = [
     { type: 1, recLength: 4, value: Buffer.from([0xaa, 0xaa, 0xaa, 0xaa]) },
     { type: 2, recLength: 2, value: Buffer.from([0xbb, 0xbb]) },
     { type: 0, recLength: 0, value: Buffer.from([]) }
   ];
 
-  ip.options = options;
+  const ipA = new IPv4({ ...ip.toObject(), options: optionsA });
+  assert.deepEqual([...ipA.options], optionsA);
+  assert.equal(ipA.length, 32);
 
-  assert.deepEqual([...ip.options], options);
-  assert.equal(ip.length, 32);
-
-  options = [
+  const optionsB = [
     { type: 1, recLength: 4, value: Buffer.from([0xaa, 0xaa, 0xaa, 0xaa]) },
     { type: 0, recLength: 0, value: Buffer.from([]) }
   ];
 
-  ip.options = options;
+  const ipB = new IPv4({ ...ip.toObject(), options: optionsB });
+  assert.deepEqual([...ipB.options], optionsB);
 
-  assert.deepEqual([...ip.options], options);
-
-  assert.deepEqual(ip.toObject(), new IPv4(ip.toObject()).toObject());
-  assert.deepEqual(new IPv4(ip.toObject()).buffer, ip.buffer);
+  assert.deepEqual(ipB.toObject(), new IPv4(ipB.toObject()).toObject());
+  assert.deepEqual(new IPv4(ipB.toObject()).buffer, ipB.buffer);
 });

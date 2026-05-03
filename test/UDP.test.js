@@ -1,19 +1,11 @@
 const { strict: assert } = require('node:assert');
 const test = require('node:test');
 
-const { extendAt, shrinkAt } = require('#lib/buffer');
 const { UDP } = require('#lib/layers/UDP');
 
 test('UDP', async (t) => {
-  
   const buf = Buffer.from('01bbfbda001f096845785986219a31c939c38f0093b888f6b9de8ceaa67f61', 'hex');
   const opts = {
-    shrinkAt(...args) {
-      return shrinkAt(buf, ...args);
-    },
-    extendAt(...args) {
-      return extendAt(buf, ...args);
-    },
     prev: {
       src: '188.114.96.7',
       dst: '172.20.10.6',

@@ -1,7 +1,6 @@
 const { strict: assert } = require('node:assert');
 const test = require('node:test');
 
-const { extendAt, shrinkAt } = require('#lib/buffer');
 const { ARP } = require('#lib/layers/ARP');
 
 test('Arp', async (t) => {
