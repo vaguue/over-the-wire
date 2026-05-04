@@ -22,9 +22,7 @@ include_directories(${CMAKE_JS_INC})
 
 project (over-the-wire)
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-  add_compile_options(-Wno-error=vla-cxx-extension)
-endif()
+add_compile_options(-Wno-error=vla)
 
 if (WIN32)
   add_compile_options(/WX-)
