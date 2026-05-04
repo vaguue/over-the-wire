@@ -14,8 +14,11 @@ const tsRepBuf = Buffer.from('0e007cda1a2b000100010000000000000000000000000000',
 
 function roundtrip(buf, Cls = ICMP) {
   const parsed = new Cls(buf);
+  console.log('parsed', parsed);
   const obj = parsed.toObject();
+  console.log('obj', obj);
   const reparsed = new Cls(obj);
+  console.log('reparsed', reparsed);
   if (Buffer.compare(parsed.buffer.slice(0, reparsed.buffer.length), reparsed.buffer)) {
     console.log('roundtrip', obj, parsed.buffer.slice(0, reparsed.buffer.length), reparsed.buffer, reparsed.toObject());
   }
@@ -78,9 +81,11 @@ test('ICMP Parameter Problem', async () => {
   assert.ok(icmp.isParameterProblem);
   assert.equal(icmp.typeName, 'ParameterProblem');
   const obj = icmp.toObject();
+  console.log('ICMPParamProblemHeader obj', obj);
   assert.equal(obj.isParameterProblem, true);
   assert.equal(obj.typeName, 'ParameterProblem');
   roundtrip(paramProblemBuf);
+  console.log('ICMPParamProblemHeader ok')
 });
 
 test('ICMP Timestamp Request', async () => {
