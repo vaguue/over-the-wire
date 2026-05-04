@@ -1,6 +1,6 @@
 {
   "source": {
-    "include": ["lib", "lib/layers"],
+    "include": ["lib", "lib/layers", "lib/pcapFile/index.js"],
     "exclude": ["lib/checks"],
     "includePattern": ".js$",
     "excludePattern": "(node_modules/|docs)"
@@ -9,5 +9,6 @@
     "destination": "./docs",
     "template": "node_modules/clean-jsdoc-theme",
     "readme": "./README.md"
-  }
+  },
+  "plugins": ["jsdoc-plugins/packet-methods"]
 }
