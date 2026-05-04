@@ -13,12 +13,12 @@
   },
   "author": "Seva D. <sabrinarempel7@gmail.com>",
   "scripts": {
-    "install": "prebuild-install -r node || cmake-js compile",
-    "rebuild-debug": "cmake-js compile -D",
-    "build-debug": "cmake-js build -D",
-    "rebuild": "cmake-js compile",
-    "precompile": "prebuild --backend cmake-js -r node -t 18.0.0 -t 20.0.0 -t 22.0.0 -t 23.0.0",
-    "build": "cmake-js build",
+    "install": "prebuild-install -r node || cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake-js compile",
+    "rebuild-debug": "cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake-js compile -D",
+    "build-debug": "cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake-js build -D",
+    "rebuild": "cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake-js compile",
+    "precompile": "cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 prebuild --backend cmake-js -r node -t 18.0.0 -t 20.0.0 -t 22.0.0 -t 23.0.0",
+    "build": "cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake-js build",
     "test": "node --test test/*.test.js",
     "test-cov-text": "node --test --experimental-test-coverage test/*.test.js",
     "test-cov": "node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=lcov.info test/*.test.js",
@@ -62,6 +62,7 @@
   "devDependencies": {
     "clean-jsdoc-theme": "^4.3.0",
     "cmake-js": "^7.3.0",
+    "cross-env": "^10.1.0",
     "jsdoc": "^4.0.4"
   }
 }
