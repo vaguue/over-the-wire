@@ -76,7 +76,7 @@ jobs:
       - name: Install npcap on Windows (step 2)
         if: matrix.os == 'windows-latest'
         run: |
-          set NPCAP_FILE=npcap-0.96.exe
+          set NPCAP_FILE=npcap-1.87.exe
           curl -L https://npcap.com/dist/%NPCAP_FILE% --output %NPCAP_FILE%
           %NPCAP_FILE% /S /winpcap_mode
           xcopy C:\Windows\System32\Npcap\*.dll C:\Windows\System32
