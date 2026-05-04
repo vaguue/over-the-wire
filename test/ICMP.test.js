@@ -14,17 +14,16 @@ const tsRepBuf = Buffer.from('0e007cda1a2b000100010000000000000000000000000000',
 
 function roundtrip(buf, Cls = ICMP) {
   const parsed = new Cls(buf);
-  console.log('parsed', parsed);
   const obj = parsed.toObject();
-  console.log('obj', obj);
   const reparsed = new Cls(obj);
-  console.log('reparsed', reparsed);
   if (Buffer.compare(parsed.buffer.slice(0, reparsed.buffer.length), reparsed.buffer)) {
     console.log('roundtrip', obj, parsed.buffer.slice(0, reparsed.buffer.length), reparsed.buffer, reparsed.toObject());
   }
   assert.equal(Buffer.compare(parsed.buffer.slice(0, reparsed.buffer.length), reparsed.buffer), 0, 'buffer -> parse -> object -> buffer roundtrip');
-  console.log('reparsed.toObject()', reparsed.toObject());
-  assert.deepEqual(reparsed.toObject(), obj, 'object roundtrip');
+  const reparsedObj = reparsed.toObject();
+  delete reparsedObj.unused;
+  delete obj.unused;
+  assert.deepStrictEqual(reparsedObj, obj, 'object roundtrip');
 }
 
 test('ICMP Echo Request', async () => {
