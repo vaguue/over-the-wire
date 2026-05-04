@@ -23,6 +23,7 @@ function roundtrip(buf, Cls = ICMP) {
     console.log('roundtrip', obj, parsed.buffer.slice(0, reparsed.buffer.length), reparsed.buffer, reparsed.toObject());
   }
   assert.equal(Buffer.compare(parsed.buffer.slice(0, reparsed.buffer.length), reparsed.buffer), 0, 'buffer -> parse -> object -> buffer roundtrip');
+  console.log('reparsed.toObject()', reparsed.toObject());
   assert.deepEqual(reparsed.toObject(), obj, 'object roundtrip');
 }
 
