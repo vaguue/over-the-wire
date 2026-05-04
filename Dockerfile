@@ -1,3 +1,4 @@
+#trigger rebuild
 FROM node:22.14.0-alpine3.21 AS build
 RUN sed -i 's/https/http/' /etc/apk/repositories
 RUN apk add --no-cache \
