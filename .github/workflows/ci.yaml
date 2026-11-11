@@ -64,7 +64,7 @@ jobs:
           brew update
           brew install libpcap
 
-      - name: Install npcap on Windows
+      - name: Install Npcap SDK on Windows
         if: matrix.os == 'windows-latest'
         run: |
           choco install wget --no-progress
@@ -73,14 +73,28 @@ jobs:
           unzip npcap-sdk-1.13.zip -d npcap
         shell: bash
 
-      - name: Install npcap on Windows (step 2)
+      # Npcap OEM is the only edition with a silent installer (/S). The download
+      # link is private: it lives in the NPCAP_OEM_URL repository secret and must
+      # never be written to this file or printed to the log.
+      - name: Install Npcap OEM on Windows
         if: matrix.os == 'windows-latest'
+        env:
+          NPCAP_OEM_URL: ${{ secrets.NPCAP_OEM_URL }}
         run: |
-          set NPCAP_FILE=npcap-1.87.exe
-          curl -L https://npcap.com/dist/%NPCAP_FILE% --output %NPCAP_FILE%
-          %NPCAP_FILE% /S /winpcap_mode
-          xcopy C:\Windows\System32\Npcap\*.dll C:\Windows\System32
-          xcopy C:\Windows\SysWOW64\Npcap\*.dll C:\Windows\SysWOW64
+          @echo off
+          if "%NPCAP_OEM_URL%"=="" (
+            echo ::error::The NPCAP_OEM_URL secret is not set
+            exit /b 1
+          )
+          curl -sSfL "%NPCAP_OEM_URL%" --output "%RUNNER_TEMP%\npcap-oem.exe" || exit /b 1
+          start /wait "" "%RUNNER_TEMP%\npcap-oem.exe" /S /winpcap_mode
+          del "%RUNNER_TEMP%\npcap-oem.exe"
+          if not exist C:\Windows\System32\Npcap\wpcap.dll (
+            echo ::error::Npcap was not installed
+            exit /b 1
+          )
+          xcopy /Y C:\Windows\System32\Npcap\*.dll C:\Windows\System32
+          xcopy /Y C:\Windows\SysWOW64\Npcap\*.dll C:\Windows\SysWOW64
         shell: cmd
 
       - name: Submodule update
