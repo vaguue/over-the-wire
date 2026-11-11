@@ -238,3 +238,98 @@ test('Tshark check', async (t) => {
     assert.equal(stdoutOrig, stdoutResult);
   }
 });
+
+const collect = (stream) => new Promise((resolve, reject) => {
+  const chunks = [];
+  stream.on('data', chunk => chunks.push(chunk));
+  stream.on('end', () => resolve(chunks));
+  stream.on('error', reject);
+});
+
+const ethernetFrame = (size) => Buffer.concat([
+  Buffer.from('aabbccddeeff112233445566' + '0800', 'hex'),
+  Buffer.alloc(size - 14, 0x41),
+]);
+
+test('Pcap timestamps are seconds and microseconds', async () => {
+  const fileHeader = Buffer.alloc(24);
+  fileHeader.writeUInt32LE(0xa1b2c3d4, 0);
+  fileHeader.writeUInt16LE(2, 4);
+  fileHeader.writeUInt16LE(4, 6);
+  fileHeader.writeUInt32LE(65535, 16);
+  fileHeader.writeUInt32LE(1, 20);
+
+  const record = Buffer.alloc(16);
+  record.writeUInt32LE(1700000000, 0);
+  record.writeUInt32LE(500000, 4);
+  record.writeUInt32LE(4, 8);
+  record.writeUInt32LE(4, 12);
+
+  const reader = createReadStream({ format: 'pcap' });
+  const packets = collect(reader);
+  reader.end(Buffer.concat([fileHeader, record, Buffer.from('deadbeef', 'hex')]));
+
+  const [pkt] = await packets;
+  assert.equal(pkt.timestamp.ms, 1700000000500);
+
+  const writer = createWriteStream({ format: 'pcap' });
+  const written = collect(writer);
+  writer.write(pkt);
+  writer.end();
+
+  const file = Buffer.concat(await written);
+  assert.equal(file.readUInt32LE(24), 1700000000);
+  assert.equal(file.readUInt32LE(24 + 4), 500000);
+});
+
+test('Pcap write: snap length is not taken from the interface MTU', async () => {
+  const writer = createWriteStream({ format: 'pcap' });
+  const written = collect(writer);
+
+  writer.write(new Packet({ buffer: ethernetFrame(1514), iface: { linktype: 1, mtu: 1500 } }));
+  writer.write(new Packet({ buffer: ethernetFrame(60), iface: {} }));
+  writer.end();
+
+  const file = Buffer.concat(await written);
+  assert.equal(file.readUInt32LE(16), 65535);
+  assert.equal(file.readUInt32LE(24 + 8), 1514);
+});
+
+test('Pcapng write: raw buffers get an interface description first', async () => {
+  const writer = createWriteStream({ format: 'pcapng' });
+  const written = collect(writer);
+
+  writer.write(ethernetFrame(61));
+  writer.end();
+
+  const file = Buffer.concat(await written);
+  const sectionHeaderLength = file.readUInt32LE(4);
+  assert.equal(file.readUInt32LE(sectionHeaderLength), 1);
+
+  const reader = createReadStream({ format: 'pcapng' });
+  const packets = collect(reader);
+  reader.end(file);
+
+  const [pkt] = await packets;
+  assert.equal(pkt.buffer.length, 61);
+  assert.equal(pkt.linktype, 1);
+});
+
+test('Pcapng write: comments and packets without interface details', async () => {
+  const writer = createWriteStream({ format: 'pcapng' });
+  const written = collect(writer);
+
+  const commented = new Packet({ buffer: ethernetFrame(60), iface: { linktype: 1, name: 'en0' }, comment: 'привет' });
+  writer.write(commented);
+  writer.write(new Packet({ buffer: ethernetFrame(60), iface: {} }));
+  writer.end();
+
+  const reader = createReadStream({ format: 'pcapng' });
+  const packets = collect(reader);
+  reader.end(Buffer.concat(await written));
+
+  const [first, second] = await packets;
+  assert.equal(first.comment, 'привет');
+  assert.equal(first.iface.name, 'en0');
+  assert.equal(second.buffer.length, 60);
+});

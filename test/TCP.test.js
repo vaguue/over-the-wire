@@ -56,3 +56,38 @@ test('TCP', async (t) => {
   assert.deepEqual(new TCP(tcp.toObject()).toObject(), tcp.toObject());
   assert.deepEqual(new TCP(tcp.toObject()).buffer, tcp.buffer);
 });
+
+test('TCP options ending with a single-byte option', () => {
+  const tcp = new TCP({
+    src: 1,
+    dst: 2,
+    options: [
+      { type: 2, recLength: 4, value: Buffer.from([0x05, 0xb4]) },
+      { type: 1 },
+      { type: 1 },
+      { type: 1 },
+      { type: 1 },
+    ],
+  });
+
+  assert.equal(tcp.buffer.length, 28);
+  assert.equal(Object.keys(tcp).includes('headerLength'), false);
+  assert.deepEqual([...new TCP(tcp.buffer, { allocated: 28 }).options], [
+    { type: 2, recLength: 4, value: Buffer.from([0x05, 0xb4]) },
+    { type: 1 },
+    { type: 1 },
+    { type: 1 },
+    { type: 1 },
+  ]);
+});
+
+test('TCP options without an explicit length are padded', () => {
+  const tcp = new TCP({
+    src: 1,
+    dst: 2,
+    options: [{ type: 3, value: Buffer.from([7]) }],
+  });
+
+  assert.equal(tcp.buffer.length, 24);
+  assert.equal(tcp.buffer.subarray(20).toString('hex'), '03030700');
+});

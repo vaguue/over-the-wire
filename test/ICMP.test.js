@@ -111,3 +111,23 @@ test('ICMP Timestamp Reply', async () => {
   assert.equal(obj.typeName, 'TimestampReply');
   roundtrip(tsRepBuf);
 });
+
+test('ICMP echo without a timestamp payload', () => {
+  const icmp = new ICMP(Buffer.from('0000ffff' + '12340001', 'hex'));
+  const obj = icmp.toObject();
+
+  assert.equal(icmp.length, 8);
+  assert.equal(obj.id, 0x1234);
+  assert.equal(obj.sequence, 1);
+  assert.equal(obj.timestamp, undefined);
+});
+
+test('ICMP with a truncated tail', () => {
+  const echo = new ICMP(Buffer.from('0800ffff' + '12', 'hex'));
+  assert.equal(echo.length, 5);
+  assert.equal(echo.toObject().id, undefined);
+
+  const unreachable = new ICMP(Buffer.from('0301ffff' + '0000', 'hex'));
+  assert.equal(unreachable.toObject().typeName, 'DestinationUnreachable');
+  assert.equal(unreachable.toObject().nextHopMTU, undefined);
+});

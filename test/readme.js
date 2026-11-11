@@ -51,9 +51,9 @@ async function traceroute(targetIp) {
   let sequence = 1;
   const ping = (timeToLive) => {
     const pkt = new Packet({ iface: dev.iface })
-                    .Ethernet({ dst: gatewayMac })
-                    .IPv4({ src: myIp, dst: targetIp, timeToLive })
-                    .ICMP({ 
+                    .ethernet({ dst: gatewayMac })
+                    .ipv4({ src: myIp, dst: targetIp, timeToLive })
+                    .icmp({ 
                       type: 8,
                       code: 0,
                       id: Math.floor(Math.random() * 65535),

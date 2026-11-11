@@ -155,9 +155,9 @@ function buildIPv4Chain(n) {
   let acc = 0;
   for (let i = 0; i < n; i++) {
     const pkt = new Packet({ iface: defaults })
-      .Ethernet({ src: 'aa:bb:cc:dd:ee:ff', dst: '11:22:33:44:55:66' })
-      .IPv4({ src: '10.0.0.1', dst: '10.0.0.2', protocol: 6 })
-      .Payload({ data: Buffer.from('hello world') });
+      .ethernet({ src: 'aa:bb:cc:dd:ee:ff', dst: '11:22:33:44:55:66' })
+      .ipv4({ src: '10.0.0.1', dst: '10.0.0.2', protocol: 6 })
+      .payload({ data: Buffer.from('hello world') });
     acc += pkt.buffer.length;
   }
   const ms = elapsedMs(t0);
@@ -169,9 +169,9 @@ function buildIPv6Chain(n) {
   let acc = 0;
   for (let i = 0; i < n; i++) {
     const pkt = new Packet({ iface: defaults })
-      .Ethernet({ src: 'aa:bb:cc:dd:ee:ff', dst: '11:22:33:44:55:66' })
-      .IPv6({ src: '2001:db8::1', dst: '2001:db8::2', nextHeader: 59 })
-      .Payload({ data: Buffer.from('hello world') });
+      .ethernet({ src: 'aa:bb:cc:dd:ee:ff', dst: '11:22:33:44:55:66' })
+      .ipv6({ src: '2001:db8::1', dst: '2001:db8::2', nextHeader: 59 })
+      .payload({ data: Buffer.from('hello world') });
     acc += pkt.buffer.length;
   }
   const ms = elapsedMs(t0);

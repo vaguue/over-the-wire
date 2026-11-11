@@ -35,3 +35,15 @@ test('TimeStamp', async (t) => {
   assert.ok(now.compare(TimeStamp.now()) < 0);
   assert.equal(now.compare(now.clone()), 0);
 });
+
+test('TimeStamp with fractional seconds', () => {
+  const ts = new TimeStamp({ s: 1.5 });
+
+  assert.equal(ts.ns, 1500000000n);
+  assert.equal(ts.compare(new TimeStamp({ ms: 1500 })), 0);
+  assert.equal(ts.compare(new TimeStamp({ ms: 1501 })), -1);
+  assert.deepEqual(ts.packedIn({ s: true, ns: true }), { s: 1, ns: 500000000 });
+
+  assert.equal(typeof TimeStamp.now('s').ns, 'bigint');
+  assert.equal(new TimeStamp({ s: 2n, ns: 5n }).ns, 2000000005n);
+});

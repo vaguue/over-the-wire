@@ -13,3 +13,13 @@ test('Address family', async (t) => {
   updateDomain(obj, '192.168.1.1');
   assert.equal(obj.domain, socket.AF_INET);
 });
+
+test('SockAddr ip can be read and reassigned', () => {
+  const { SockAddr } = require('#lib/socket');
+
+  const addr = new SockAddr({ ip: '1.2.3.4', port: 80 });
+  assert.equal(addr.ip, '1.2.3.4');
+
+  addr.ip = '5.6.7.8';
+  assert.equal(addr.ip, '5.6.7.8');
+});

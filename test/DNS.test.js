@@ -323,3 +323,22 @@ test('Packet dispatches Ethernet -> IPv4 -> UDP -> DNS via port 53', async () =>
   assert.deepEqual(chain, ['Ethernet', 'IPv4', 'UDP', 'DNS']);
   assert.deepEqual(pkt.layers.DNS.questions, [{ name: 'example.com', type: 1, class: 1 }]);
 });
+
+test('DNS toObject on a malformed message', () => {
+  const notDns = Buffer.alloc(20, 0xff);
+  const pkt = new Packet({ iface: { linktype: 1 } })
+    .ethernet({})
+    .ipv4({ src: '10.0.0.1', dst: '10.0.0.2' })
+    .udp({ src: 40000, dst: 53 })
+    .payload({ data: notDns });
+
+  const parsed = new Packet({ buffer: pkt.buffer, iface: { linktype: 1 } });
+
+  assert.deepEqual(Object.keys(parsed.layers), ['Ethernet', 'IPv4', 'UDP', 'DNS']);
+  assert.throws(() => parsed.layers.DNS.questions, /DNS:/);
+
+  const obj = parsed.toObject().layers.DNS;
+  assert.deepEqual(obj.questions, []);
+  assert.deepEqual(obj.answers, []);
+  assert.equal(obj.qdCount, 0xffff);
+});

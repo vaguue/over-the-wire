@@ -66,3 +66,14 @@ test('Packet dispatches Ethernet -> IPv4 -> GRE -> IPv4', async () => {
 
   assert.deepEqual(chain, ['Ethernet', 'IPv4', 'GRE', 'IPv4']);
 });
+
+test('GRE build leaves the caller data untouched', () => {
+  const data = { key: 5 };
+  const pkt = new Packet({ iface: { linktype: 1 } })
+    .ethernet({})
+    .ipv4({ src: '10.0.0.1', dst: '10.0.0.2' })
+    .gre(data);
+
+  assert.equal(pkt.layers.GRE.key, 5);
+  assert.deepEqual(data, { key: 5 });
+});

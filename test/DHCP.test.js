@@ -51,16 +51,53 @@ test('DHCP create with options', async () => {
     bootFilename: 'my-bootfile',
     magicNumber: 1669485411,
     options: [
-      { type: 1 },
-      { type: 1 },
-      { type: 8, recLength: 10, value: Buffer.from([0x52, 0xd3, 0xc6, 0x50, 0xdd, 0x04, 0xcd, 0xd6]) }
+      { type: 53, value: Buffer.from([1]) },
+      { type: 55, value: Buffer.from([1, 3, 6]) },
+      { type: 255 },
     ],
   });
 
   dhcp.clientIpAddress = '42.42.42.42';
   dhcp.yourIpAddress = '1.2.3.4';
 
-  const targetBuf = Buffer.from([1, 1, 6, 0, 222, 173, 190, 239, 0, 0, 0, 0, 42, 42, 42, 42, 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 34, 51, 68, 85, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 109, 121, 45, 115, 101, 114, 118, 101, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 109, 121, 45, 98, 111, 111, 116, 102, 105, 108, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 99, 130, 83, 99, 1, 1, 8, 10, 82, 211, 198, 80, 221, 4, 205, 214]);
+  const targetBuf = Buffer.from([1, 1, 6, 0, 222, 173, 190, 239, 0, 0, 0, 0, 42, 42, 42, 42, 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 34, 51, 68, 85, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 109, 121, 45, 115, 101, 114, 118, 101, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 109, 121, 45, 98, 111, 111, 116, 102, 105, 108, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 99, 130, 83, 99, 53, 1, 1, 55, 3, 1, 3, 6, 255]);
 
   assert.equal(Buffer.compare(dhcp.buffer, targetBuf), 0);
 }); 
+
+test('DHCP options are parsed back', () => {
+  const dhcp = new DHCP({
+    opCode: 1,
+    magicNumber: 0x63825363,
+    options: [
+      { type: 53, value: Buffer.from([1]) },
+      { type: 255 },
+    ],
+  });
+
+  const reparsed = new DHCP(dhcp.buffer);
+
+  assert.equal(reparsed.length, 240 + 4);
+  assert.deepEqual([...reparsed.options], [
+    { type: 53, recLength: 1, value: Buffer.from([1]) },
+    { type: 255 },
+  ]);
+  assert.deepEqual(Object.keys(reparsed).includes('headerLength'), false);
+});
+
+test('DHCP inside a packet', () => {
+  const { Packet } = require('#lib/packet');
+
+  const pkt = new Packet({ iface: { linktype: 1 } })
+    .ethernet({})
+    .ipv4({ src: '0.0.0.0', dst: '255.255.255.255' })
+    .udp({ src: 68, dst: 67 })
+    .dhcp({ opCode: 1, magicNumber: 0x63825363, options: [{ type: 53, value: Buffer.from([1]) }, { type: 255 }] });
+
+  assert.equal(pkt.buffer.length, 14 + 20 + 8 + 244);
+  assert.equal(pkt.layers.UDP.totalLength, 8 + 244);
+
+  const parsed = new Packet({ buffer: pkt.buffer, iface: { linktype: 1 } });
+  assert.deepEqual(Object.keys(parsed.layers), ['Ethernet', 'IPv4', 'UDP', 'DHCP']);
+  assert.equal(parsed.layers.DHCP.options.next().value.type, 53);
+});

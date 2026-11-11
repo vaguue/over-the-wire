@@ -86,9 +86,9 @@ async function traceroute(targetIp) {
   // Send ICMP echo request with a specified TTL
   const ping = (timeToLive) => {
     const pkt = new Packet({ iface: dev.iface })
-                    .Ethernet({ src: myMac, dst: gatewayMac })
-                    .IPv4({ src: myIp, dst: targetIp, timeToLive })
-                    .ICMP({
+                    .ethernet({ src: myMac, dst: gatewayMac })
+                    .ipv4({ src: myIp, dst: targetIp, timeToLive })
+                    .icmp({
                       type: 8,
                       code: 0,
                       id: Math.floor(Math.random() * 65535),
