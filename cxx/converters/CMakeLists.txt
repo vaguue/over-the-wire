@@ -1,9 +1,9 @@
 set(Converters_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/Converters.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Converters.cxx"
 )
 
 set(Converters_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/Converters.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Converters.h"
 )
 
 source_group("Source Files\\Converters" FILES ${Converters_SRC})

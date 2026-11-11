@@ -1,9 +1,9 @@
 set(ENUMS_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/Enums.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Enums.cxx"
 )
 
 set(ENUMS_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/Enums.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Enums.h"
 )
 
 source_group("Source Files\\Enums" FILES ${ENUMS_SRC})

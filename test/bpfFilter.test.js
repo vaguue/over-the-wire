@@ -31,3 +31,14 @@ test('BPF filter', async (t) => {
   assert.ok(!new BpfFilter('ip src 127.0.0.1').match(pkt));
   console.timeEnd('negative match ip');
 });
+
+test('BPF filter with an explicit link type', () => {
+  const { LinkLayerType } = require('#lib/enums');
+
+  const rawIp = pktBuf().subarray(14);
+  const filter = new BpfFilter('tcp port 52622');
+
+  assert.ok(filter.match(pktBuf()));
+  assert.ok(filter.match(rawIp, [0, 0], LinkLayerType.LINKTYPE_IPV4));
+  assert.ok(!filter.match(pktBuf(), [0, 0], LinkLayerType.LINKTYPE_IPV4));
+});

@@ -1,9 +1,9 @@
 set(CHECKSUMS_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/Checksums.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Checksums.cxx"
 )
 
 set(CHECKSUMS_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/Checksums.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Checksums.h"
 )
 
 source_group("Source Files\\Checksums" FILES ${CHECKSUMS_SRC})

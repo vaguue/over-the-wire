@@ -1,9 +1,9 @@
 set(ERROR_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/Error.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Error.cxx"
 )
 
 set(ERROR_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/Error.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Error.h"
 )
 
 source_group("Source Files\\Error" FILES ${ERROR_SRC})

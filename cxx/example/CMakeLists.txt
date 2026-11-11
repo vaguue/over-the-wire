@@ -1,9 +1,9 @@
 set(EXAMPLE_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/Example.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Example.cxx"
 )
 
 set(EXAMPLE_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/Example.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Example.h"
 )
 
 source_group("Source Files\\Example" FILES ${EXAMPLE_SRC})

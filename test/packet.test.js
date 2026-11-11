@@ -318,3 +318,68 @@ test('Packet building: a single VLAN tag uses 802.1Q', t => {
   assert.equal(pkt.layers.Ethernet.type, 0x8100);
   assert.equal(pkt.layers.Vlan.etherType, 0x0800);
 });
+
+const internetChecksumIsValid = (...buffers) => {
+  const bytes = Buffer.concat(buffers);
+  const padded = bytes.length % 2 === 0 ? bytes : Buffer.concat([bytes, Buffer.alloc(1)]);
+  let sum = 0;
+
+  for (let offset = 0; offset < padded.length; offset += 2) {
+    sum += padded.readUInt16BE(offset);
+  }
+
+  while (sum > 0xffff) {
+    sum = (sum & 0xffff) + (sum >>> 16);
+  }
+
+  return sum === 0xffff;
+};
+
+test('Packet building: ICMP checksum covers the payload', t => {
+  for (const data of ['abc', 'abcd', '']) {
+    const pkt = base()
+      .icmp({ type: 8, id: 1, sequence: 2 })
+      .payload({ data: Buffer.from(data) });
+
+    assert.ok(internetChecksumIsValid(pkt.buffer.subarray(14 + 20)), `payload "${data}"`);
+  }
+});
+
+test('Packet building: ICMPv6 checksum', t => {
+  const pkt = new Packet({ iface: { linktype: 1 } })
+    .ethernet({})
+    .ipv6({ src: '2001:db8::1', dst: '2001:db8::2' })
+    .icmpv6({ type: 128, id: 1, sequence: 2 })
+    .payload({ data: Buffer.from('abc') });
+
+  const message = pkt.buffer.subarray(14 + 40);
+  const pseudoHeader = Buffer.alloc(40);
+  pkt.buffer.copy(pseudoHeader, 0, 14 + 8, 14 + 40);
+  pseudoHeader.writeUInt32BE(message.length, 32);
+  pseudoHeader[39] = 58;
+
+  assert.notEqual(pkt.layers.ICMPv6.checksum, 0);
+  assert.ok(internetChecksumIsValid(pseudoHeader, message));
+  assert.equal(pkt.layers.IPv6.nextHeader, 58);
+});
+
+test('Packet building: recalculating a checksum ignores the old value', t => {
+  const pkt = base().udp({ src: 1, dst: 2 }).payload({ data: Buffer.from('abc') });
+  const { checksum: ipChecksum } = pkt.layers.IPv4;
+  const { checksum: udpChecksum } = pkt.layers.UDP;
+
+  pkt.layers.IPv4.calculateChecksum();
+  pkt.layers.UDP.calculateChecksum();
+
+  assert.equal(pkt.layers.IPv4.checksum, ipChecksum);
+  assert.equal(pkt.layers.UDP.checksum, udpChecksum);
+});
+
+test('Packet building: a transport layer without an IP layer below it', t => {
+  const pkt = new Packet({ iface: { linktype: 1 } })
+    .ethernet({})
+    .udp({ src: 1, dst: 2 });
+
+  assert.equal(pkt.buffer.length, 14 + 8);
+  assert.equal(pkt.layers.UDP.checksum, 0);
+});

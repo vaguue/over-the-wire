@@ -1,9 +1,9 @@
 set(BPF_FILTER_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/BpfFilter.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/BpfFilter.cxx"
 )
 
 set(BPF_FILTER_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/BpfFilter.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/BpfFilter.h"
 )
 
 source_group("Source Files\\BpfFilter" FILES ${BPF_FILTER_SRC})

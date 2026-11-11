@@ -1,9 +1,9 @@
 set(PCAP_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/Pcap.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/PcapDevice.cxx"
 )
 
 set(PCAP_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/Pcap.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/PcapDevice.h"
 )
 
 source_group("Source Files\\Pcap" FILES ${PCAP_SRC})

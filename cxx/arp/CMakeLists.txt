@@ -1,10 +1,10 @@
 set(ARP_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/Arp.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Platform.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Arp.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Platform.cxx"
 )
 
 set(ARP_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/Arp.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Arp.h"
 )
 
 source_group("Source Files\\Arp" FILES ${ARP_SRC})

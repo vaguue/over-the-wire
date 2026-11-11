@@ -1,10 +1,10 @@
 set(ROUTING_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/Routing.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Platform.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Routing.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Platform.cxx"
 )
 
 set(ROUTING_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/Routing.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Routing.h"
 )
 
 source_group("Source Files\\Routing" FILES ${ROUTING_SRC})

@@ -1,18 +1,20 @@
 set(SOCKET_SRC
-  "${CMAKE_CURRENT_SOURCE_DIR}/Socket.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Packets.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/InputPackets.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/SockAddr.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Enums/Enums.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Socket.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Packets.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/InputPackets.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/SockAddr.cxx"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Enums/Enums.cxx"
 )
 
 set(SOCKET_HDR
-  "${CMAKE_CURRENT_SOURCE_DIR}/Socket.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Packets.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/InputPackets.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/SockAddr.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/SockAddr.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Enums/Enums.hpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Socket.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Backend.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Address.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Packets.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/InputPackets.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/SockAddr.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/SockAddr.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Enums/Enums.h"
 )
 
 source_group("Source Files\\Socket" FILES ${SOCKET_SRC})

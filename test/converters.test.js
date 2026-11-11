@@ -16,3 +16,13 @@ test('Address family', async (t) => {
   assert.equal(ntohs(htons(0xAABB)), 0xAABB);
   assert.equal(ntohl(htonl(0xAABB)), 0xAABB);
 });
+
+test('inetNtop rejects malformed input', () => {
+  const { inetNtop } = require('#lib/converters');
+  const { AF_INET, AF_INET6 } = require('#lib/socket');
+
+  assert.throws(() => inetNtop(AF_INET, Buffer.from([1, 2])), /too short/);
+  assert.throws(() => inetNtop(AF_INET6, Buffer.from([1, 2, 3, 4])), /too short/);
+  assert.throws(() => inetNtop(AF_INET, 'not an address'), /Buffer/);
+  assert.equal(inetNtop(AF_INET, Buffer.from([10, 0, 0, 1])), '10.0.0.1');
+});
