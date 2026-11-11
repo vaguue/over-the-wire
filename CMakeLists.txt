@@ -22,9 +22,8 @@ include_directories(${CMAKE_JS_INC})
 
 project (over-the-wire)
 
-add_compile_options(-Wno-error=vla)
-
 if (NOT MSVC)
+  add_compile_options(-Wno-error=vla)
   add_compile_options(-Wno-error=deprecated)
 endif()
 
