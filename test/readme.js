@@ -1,113 +1,58 @@
-import net from 'node:net';
-import os from 'node:os';
 import fs from 'node:fs';
+import dns from 'node:dns/promises';
 
 import otw from '../lib/index.js';
 
-function getMyIp(iface, targetIp) {
-  const family = net.isIP(targetIp) == 6 ? 'IPv6' : 'IPv4';
-  return os.networkInterfaces()?.[iface]?.find(e => e.family == family)?.address;
-}
+const ECHO_REQUEST = 8;
+const ECHO_REPLY = 0;
+const TIME_EXCEEDED = 11;
+const MAX_HOPS = 30;
+const ANSWER_TIMEOUT_MS = 1000;
 
-async function traceroute(targetIp) {
-  const { Pcap, Packet } = otw;
+const traceroute = async (host) => {
+  const { address: target } = await dns.lookup(host, { family: 4 });
 
-  // ARP and Routing info
-  const [
-    { iface, ip: gatewayIp, family },
-    arpTable,
-  ] = await Promise.all([
-    otw.system.gatewayFor(targetIp),
-    otw.system.getArpTable(),
-  ]);
+  const wire = otw();
+  const capture = await wire.capture(wire.filter().icmp());
 
-  if (family != 'AF_INET') {
-    console.error('Unsupported family');
-    process.exit(0);
+  const dump = otw.Pcap.createWriteStream({ format: 'pcapng' });
+  dump.pipe(fs.createWriteStream('traceroute.pcapng'));
+  capture.pipe(dump);
+
+  const id = Math.floor(Math.random() * 0xffff);
+
+  console.log(`traceroute to ${host} (${target}), ${MAX_HOPS} hops max`);
+
+  for (let timeToLive = 1; timeToLive <= MAX_HOPS; timeToLive++) {
+    const probe = await wire.packet()
+      .ipv4({ dst: target, timeToLive })
+      .icmp({ type: ECHO_REQUEST, id, sequence: timeToLive });
+
+    const addressedToUs = wire.filter()
+      .ipv4({ dst: probe.layers.IPv4.src })
+      .icmp({ type: [ECHO_REPLY, TIME_EXCEEDED] });
+
+    const sentAt = Date.now();
+    capture.write(probe);
+    const answer = await capture.expect(addressedToUs, { timeout: ANSWER_TIMEOUT_MS });
+
+    if (answer === null) {
+      console.log(`${timeToLive}  *`);
+      continue;
+    }
+
+    console.log(`${timeToLive}  ${answer.layers.IPv4.src}  ${Date.now() - sentAt} ms`);
+
+    if (answer.layers.ICMP.type === ECHO_REPLY) {
+      break;
+    }
   }
 
-  const gatewayMac = arpTable[iface].find(e => e.ipAddr == gatewayIp).hwAddr;
+  capture.destroy();
+  dump.end();
+};
 
-  // Listen for all ICMP requests
-  const dev = new Pcap.LiveDevice({
-    iface,
-    direction: 'inout',
-    filter: 'icmp',
-  });
-
-  // Get info about interface
-  console.log('[*] Using interface: ', dev.iface);
-
-  // Save captured packets to a pcapng file
-  const dump = Pcap.createWriteStream({ format: 'pcapng' });
-  dump.pipe(fs.createWriteStream('dump.pcapng'));
-
-  const myIp = getMyIp(iface, targetIp);
-  const path = [];
-
-  let ttl = 1;
-
-  //Send ICMP packet with a specified TTL
-  let sequence = 1;
-  const ping = (timeToLive) => {
-    const pkt = new Packet({ iface: dev.iface })
-                    .ethernet({ dst: gatewayMac })
-                    .ipv4({ src: myIp, dst: targetIp, timeToLive })
-                    .icmp({ 
-                      type: 8,
-                      code: 0,
-                      id: Math.floor(Math.random() * 65535),
-                      sequence,
-                    });
-    dev.write(pkt);
-    sequence++;
-  };
-
-  // Print packet info
-  dev.on('data', pkt => {
-    try {
-      // Uncomment for debugging
-      console.log(`[*] ${pkt.layers.IPv4.src} -> ${pkt.layers.IPv4.dst} (${pkt.layers.ICMP.type}), ttl: ${ttl}, [${path.join()}]`);
-      if (pkt.layers.ICMP && pkt.layers.IPv4.dst == myIp) {
-        const srcIp = pkt.layers.IPv4.src;
-
-        if (pkt.layers.ICMP.type == 0) {
-          path.push(targetIp);
-          console.log('[*] Traced path');
-          console.log([...new Set(path)].map(e => `- ${e}`).join('\n'));
-          process.exit(0);
-        }
-        else {
-          if (path[path.length - 1] != srcIp) {
-            path.push(srcIp);
-            ttl++;
-          }
-          ping(ttl);
-
-          const fixedTtl = ttl;
-
-          // Just in case there is no response
-          let tid = setInterval(() => {
-            if (ttl == fixedTtl) {
-              ping(ttl);
-            }
-            else {
-              clearInterval(tid);
-            }
-          }, 2e2);
-        }
-      }
-      
-      //Saving all captured traffic
-      dump.write(pkt);
-    } catch(err) {
-      console.error(err);
-      process.exit(1);
-    }
-  });
-
-  setTimeout(() => ping(ttl), 1e3);
-}
-
-// google.com's IP
-traceroute('8.8.8.8').catch(console.error);
+traceroute(process.argv[2] ?? '8.8.8.8').catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

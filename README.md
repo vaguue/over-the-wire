@@ -26,113 +26,70 @@ npm install over-the-wire --save
 ```
 
 ## Getting started
-This example shows a Node.js implementation of traceroute built with nothing but the Node.js standard library and the over-the-wire API.
-The code is kind of oversimplified, it as a minimal, self-contained demo of the key abstractions in the library:
-- Discover the active default gateway
-- craft and send ICMP Echo packets hop-by-hop
-- Capture the entire exchange to a pcap/pcapng file for later inspection.
+This is traceroute, written with the Node.js standard library and over-the-wire. Each probe is described from the IP layer up; the interface, the source addresses and the gateway's link-layer address are filled in the way the host would send it. The script waits for each answer with a timeout and saves the whole exchange to a pcapng file.
+
 ```javascript
-import net from 'node:net';
-import os from 'node:os';
 import fs from 'node:fs';
+import dns from 'node:dns/promises';
 
 import otw from 'over-the-wire';
 
-function getMyIp(iface, targetIp) {
-  const family = net.isIP(targetIp) == 6 ? 'IPv6' : 'IPv4';
-  return os.networkInterfaces()?.[iface]?.find(e => e.family == family)?.address;
-}
+const ECHO_REQUEST = 8;
+const ECHO_REPLY = 0;
+const TIME_EXCEEDED = 11;
+const MAX_HOPS = 30;
+const ANSWER_TIMEOUT_MS = 1000;
 
-async function traceroute(targetIp) {
-  const { Pcap, Packet } = otw;
+const traceroute = async (host) => {
+  const { address: target } = await dns.lookup(host, { family: 4 });
 
-  // ARP and Routing info
-  const [
-    { iface, ip: gatewayIp, family },
-    arpTable,
-  ] = await Promise.all([
-    otw.system.gatewayFor(targetIp),
-    otw.system.getArpTable(),
-  ]);
+  const wire = otw();
+  const capture = await wire.capture(wire.filter().icmp());
 
-  if (family != 'AF_INET') {
-    console.error('Unsupported family');
-    process.exit(0);
+  const dump = otw.Pcap.createWriteStream({ format: 'pcapng' });
+  dump.pipe(fs.createWriteStream('traceroute.pcapng'));
+  capture.pipe(dump);
+
+  const id = Math.floor(Math.random() * 0xffff);
+
+  console.log(`traceroute to ${host} (${target}), ${MAX_HOPS} hops max`);
+
+  for (let timeToLive = 1; timeToLive <= MAX_HOPS; timeToLive++) {
+    const probe = await wire.packet()
+      .ipv4({ dst: target, timeToLive })
+      .icmp({ type: ECHO_REQUEST, id, sequence: timeToLive });
+
+    const addressedToUs = wire.filter()
+      .ipv4({ dst: probe.layers.IPv4.src })
+      .icmp({ type: [ECHO_REPLY, TIME_EXCEEDED] });
+
+    const sentAt = Date.now();
+    capture.write(probe);
+    const answer = await capture.expect(addressedToUs, { timeout: ANSWER_TIMEOUT_MS });
+
+    if (answer === null) {
+      console.log(`${timeToLive}  *`);
+      continue;
+    }
+
+    console.log(`${timeToLive}  ${answer.layers.IPv4.src}  ${Date.now() - sentAt} ms`);
+
+    if (answer.layers.ICMP.type === ECHO_REPLY) {
+      break;
+    }
   }
 
-  const gatewayMac = arpTable[iface].find(e => e.ipAddr == gatewayIp).hwAddr;
+  capture.destroy();
+  dump.end();
+};
 
-  // Listen for all ICMP requests
-  const dev = new Pcap.LiveDevice({
-    iface,
-    direction: 'inout',
-    filter: 'icmp',
-  });
-
-  // Get info about interface
-  console.log('[*] Using interface: ', dev.iface);
-
-  // Save captured packets to a pcapng file
-  const dump = Pcap.createWriteStream({ format: 'pcapng' });
-  dump.pipe(fs.createWriteStream('dump.pcapng'));
-
-  const myIp = getMyIp(iface, targetIp);
-  const myMac = dev.iface.mac;
-  const path = [];
-
-  let ttl = 1;
-  let sequence = 1;
-
-  // Send ICMP echo request with a specified TTL
-  const ping = (timeToLive) => {
-    const pkt = new Packet({ iface: dev.iface })
-                    .ethernet({ src: myMac, dst: gatewayMac })
-                    .ipv4({ src: myIp, dst: targetIp, timeToLive })
-                    .icmp({
-                      type: 8,
-                      code: 0,
-                      id: Math.floor(Math.random() * 65535),
-                      sequence,
-                    });
-    dev.write(pkt);
-    sequence++;
-  };
-
-  // Re-ping with the same TTL if there's no progress (handles the very first
-  // hop too, where no reply has been received yet).
-  setInterval(() => ping(ttl), 200);
-
-  dev.on('data', pkt => {
-    try {
-      if (pkt.layers.ICMP && pkt.layers.IPv4.dst == myIp) {
-        const srcIp = pkt.layers.IPv4.src;
-
-        if (pkt.layers.ICMP.type == 0) {
-          path.push(targetIp);
-          console.log('[*] Traced path');
-          console.log([...new Set(path)].map(e => `- ${e}`).join('\n'));
-          process.exit(0);
-        }
-        else if (path[path.length - 1] != srcIp) {
-          path.push(srcIp);
-          ttl++;
-          ping(ttl);
-        }
-      }
-
-      dump.write(pkt);
-    } catch(err) {
-      console.error(err);
-      process.exit(1);
-    }
-  });
-
-  ping(ttl);
-}
-
-// google.com's IP
-traceroute('172.217.168.174').catch(console.error);
+traceroute(process.argv[2] ?? '8.8.8.8').catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});
 ```
+
+Capturing needs the same privileges as tcpdump, so run it with `sudo` unless your user can already open capture devices.
 
 ### Building packets the way the host would send them
 
