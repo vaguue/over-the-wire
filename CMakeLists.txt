@@ -24,6 +24,10 @@ project (over-the-wire)
 
 add_compile_options(-Wno-error=vla)
 
+if (NOT MSVC)
+  add_compile_options(-Wno-error=deprecated)
+endif()
+
 if (WIN32)
   add_compile_options(/WX-)
   add_definitions(-D_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS=1)
