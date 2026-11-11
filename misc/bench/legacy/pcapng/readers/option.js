@@ -1,6 +1,6 @@
-const { alignOffset } = require('struct-compile');
+import { alignOffset } from 'struct-compile';
 
-const { BlockReader, BufferReader } = require('../../reader');
+import { BlockReader, BufferReader } from '../../reader.js';
 
 class OptionReader extends BlockReader {
   constructor(...args) {
@@ -44,4 +44,5 @@ class OptionReader extends BlockReader {
   }
 };
 
-module.exports = { OptionReader };
+export { OptionReader };
+export default { OptionReader };

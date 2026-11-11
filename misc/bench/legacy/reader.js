@@ -62,4 +62,5 @@ class BufferReader {
   }
 }
 
-module.exports = { BlockReader, BufferReader };
+export { BlockReader, BufferReader };
+export default { BlockReader, BufferReader };

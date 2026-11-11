@@ -1,8 +1,8 @@
-const { alignOffset } = require('struct-compile');
+import { alignOffset } from 'struct-compile';
 
-const { BlockReader, BufferReader } = require('../../reader');
+import { BlockReader, BufferReader } from '../../reader.js';
 
-const { blockTrailerLength, blockHeaderLength, additionalLength } = require('../const');
+import { blockTrailerLength, blockHeaderLength, additionalLength } from '../const.js';
 
 class SimplePacketBlockReader extends BlockReader {
   push = true;
@@ -41,4 +41,5 @@ class SimplePacketBlockReader extends BlockReader {
   }
 }
 
-module.exports = { SimplePacketBlockReader };
+export { SimplePacketBlockReader };
+export default { SimplePacketBlockReader };

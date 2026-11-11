@@ -1,8 +1,11 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { defaultFamily, updateDomain } = require('#lib/af');
-const { socket } = require('#lib/bindings');
+import { defaultFamily, updateDomain } from '#lib/af';
+import bindings from '#lib/bindings';
+const { socket } = bindings;
+import socketModule from '#lib/socket';
+const { SockAddr } = socketModule;
 
 test('Address family', async (t) => {
   assert.equal(defaultFamily('192.168.1.1'), socket.AF_INET);
@@ -15,7 +18,6 @@ test('Address family', async (t) => {
 });
 
 test('SockAddr ip can be read and reassigned', () => {
-  const { SockAddr } = require('#lib/socket');
 
   const addr = new SockAddr({ ip: '1.2.3.4', port: 80 });
   assert.equal(addr.ip, '1.2.3.4');

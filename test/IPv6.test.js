@@ -1,9 +1,9 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const defaults = require('#lib/defaults');
-const { IPv6 } = require('#lib/layers/IPv6');
-const { Packet } = require('#lib/packet');
+import defaults from '#lib/defaults';
+import { IPv6 } from '#lib/layers/IPv6';
+import { Packet } from '#lib/packet';
 
 test('IPv6 parse, toObject and roundtrip', async () => {
   // 40-byte IPv6 header: v=6, tc=0, fl=0, payloadLen=32, nextHeader=6 (TCP), hopLimit=64

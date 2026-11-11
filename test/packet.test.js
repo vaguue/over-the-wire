@@ -1,8 +1,8 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const defaults = require('#lib/defaults');
-const { Packet } = require('#lib/packet');
+import defaults from '#lib/defaults';
+import { Packet } from '#lib/packet';
 
 const pktBuf = () => 
   Buffer.from('424242424242424242424242080045000034000040004006a79ac0a80165a5162c06cd8e5debee16992ebea89919801008000d1200000101080a52d3c650dd04cdd6', 'hex');

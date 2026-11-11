@@ -1,9 +1,9 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const defaults = require('#lib/defaults');
-const { NTP } = require('#lib/layers/NTP');
-const { Packet } = require('#lib/packet');
+import defaults from '#lib/defaults';
+import { NTP } from '#lib/layers/NTP';
+import { Packet } from '#lib/packet';
 
 test('NTP zeroed buffer', async () => {
   const ntp = new NTP(Buffer.alloc(48));

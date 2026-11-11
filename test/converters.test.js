@@ -1,8 +1,10 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { inetPton, inetNtop, htonl, ntohl, htons, ntohs } = require('#lib/converters');
-const socket = require('#lib/socket');
+import converters from '#lib/converters';
+const { inetPton, inetNtop, htonl, ntohl, htons, ntohs } = converters;
+import socket from '#lib/socket';
+const { AF_INET, AF_INET6 } = socket;
 
 test('Address family', async (t) => {
   const ipv4 = '192.168.1.1';
@@ -18,8 +20,6 @@ test('Address family', async (t) => {
 });
 
 test('inetNtop rejects malformed input', () => {
-  const { inetNtop } = require('#lib/converters');
-  const { AF_INET, AF_INET6 } = require('#lib/socket');
 
   assert.throws(() => inetNtop(AF_INET, Buffer.from([1, 2])), /too short/);
   assert.throws(() => inetNtop(AF_INET6, Buffer.from([1, 2, 3, 4])), /too short/);

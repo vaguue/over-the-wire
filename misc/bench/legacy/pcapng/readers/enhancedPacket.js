@@ -1,16 +1,17 @@
-const { alignOffset } = require('struct-compile');
+import { alignOffset } from 'struct-compile';
 
-const { Packet } = require('#lib/packet');
-const { BlockReader, BufferReader } = require('../../reader');
-const { pick } = require('#lib/pick');
+import { Packet } from '#lib/packet';
+import { BlockReader, BufferReader } from '../../reader.js';
+import { pick } from '#lib/pick';
 
-const { OptionReader } = require('./option');
+import { OptionReader } from './option.js';
 
-const { blockTrailerLength, blockHeaderLength, additionalLength } = require('../const');
+import { blockTrailerLength, blockHeaderLength, additionalLength } from '../const.js';
 
-const { constants } = require('../../structs').pcapng;
+import structs from '../../structs.js';
+const { constants } = structs.pcapng;
 
-const Tsresol = require('../tsresol');
+import Tsresol from '../tsresol.js';
 
 class EnhancedPacketBlockReader extends BlockReader {
   push = true;
@@ -78,4 +79,5 @@ class EnhancedPacketBlockReader extends BlockReader {
   }
 }
 
-module.exports = { EnhancedPacketBlockReader };
+export { EnhancedPacketBlockReader };
+export default { EnhancedPacketBlockReader };

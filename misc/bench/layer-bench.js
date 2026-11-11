@@ -1,5 +1,3 @@
-'use strict';
-
 /*
  * Layer-level microbenchmark.
  *
@@ -31,9 +29,9 @@
  *   BENCH_PARSE_N=2000000 node --expose-gc misc/bench/layer-bench.js
  */
 
-const os = require('node:os');
-const defaults = require('#lib/defaults');
-const { Packet } = require('#lib/packet');
+import os from 'node:os';
+import defaults from '#lib/defaults';
+import { Packet } from '#lib/packet';
 
 const PARSE_N = Number(process.env.BENCH_PARSE_N || 500_000);
 const BUILD_N = Number(process.env.BENCH_BUILD_N || 100_000);

@@ -31,7 +31,22 @@ std::string save(arp_table_t& table, struct sockaddr_dl *sdl, struct sockaddr_in
 
   ArpRecord rec;
   char str[INET6_ADDRSTRLEN];
-  uv_inet_ntop(addr->sin_family, &addr->sin_addr, str, INET6_ADDRSTRLEN);
+  bool isIpv6 = addr->sin_family == AF_INET6;
+
+  if (isIpv6) {
+    in6_addr address = reinterpret_cast<sockaddr_in6*>(addr)->sin6_addr;
+
+    if (IN6_IS_ADDR_LINKLOCAL(&address)) {
+      address.s6_addr[2] = 0;
+      address.s6_addr[3] = 0;
+    }
+
+    uv_inet_ntop(AF_INET6, &address, str, INET6_ADDRSTRLEN);
+  }
+  else {
+    uv_inet_ntop(AF_INET, &addr->sin_addr, str, INET6_ADDRSTRLEN);
+  }
+
   rec.ipAddr = str;
   rec.hwAddr = sdl->sdl_alen ? lladdr(sdl) : "(incomplete)";
   rec.hwType = sdl->sdl_type;
@@ -44,10 +59,14 @@ std::string save(arp_table_t& table, struct sockaddr_dl *sdl, struct sockaddr_in
     rec.flags.push_back("permanent");
   }
 
+  if (isIpv6) {
+    vec.push_back(std::move(rec));
+    return "";
+  }
+
   if (addr->sin_other & SIN_PROXY) {
     rec.flags.push_back("proxy");
   }
-
   if (rtm->rtm_addrs & RTA_NETMASK) {
     addr = (struct sockaddr_inarp *)(SA_SIZE(sdl) + (char *)sdl);
     if (addr->sin_addr.s_addr == 0xffffffff) {

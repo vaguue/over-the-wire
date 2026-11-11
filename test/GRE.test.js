@@ -1,9 +1,9 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const defaults = require('#lib/defaults');
-const { GRE } = require('#lib/layers/GRE');
-const { Packet } = require('#lib/packet');
+import defaults from '#lib/defaults';
+import { GRE } from '#lib/layers/GRE';
+import { Packet } from '#lib/packet';
 
 test('GRE plain header parse', async () => {
   const buf = Buffer.from('00000800', 'hex');

@@ -1,7 +1,7 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { IPv4 } = require('#lib/layers/IPv4');
+import { IPv4 } from '#lib/layers/IPv4';
 
 test('IPv4', async (t) => {
   const buf = Buffer.from('450000730000400040068cd2c0a80167cebd1ce6e33d5debb394ef8d', 'hex');

@@ -1,7 +1,7 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { getRoutingTable } = require('#lib/routing');
+import { getRoutingTable } from '#lib/routing';
 
 test('getRoutingTable', async (t) => {
   const table = await getRoutingTable();

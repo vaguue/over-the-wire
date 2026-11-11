@@ -1,8 +1,8 @@
-const net = require('node:net');
-const os = require('node:os');
-const fs = require('node:fs');
+import net from 'node:net';
+import os from 'node:os';
+import fs from 'node:fs';
 
-const otw = require('..');
+import otw from '../lib/index.js';
 
 function getMyIp(iface, targetIp) {
   const family = net.isIP(targetIp) == 6 ? 'IPv6' : 'IPv4';

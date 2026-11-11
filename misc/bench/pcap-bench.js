@@ -1,5 +1,3 @@
-'use strict';
-
 /*
  * Pcap reader/writer microbenchmark.
  *
@@ -9,14 +7,18 @@
  * peak RSS during each run.
  */
 
-const fs = require('node:fs');
-const path = require('node:path');
-const os = require('node:os');
-const { Readable, Writable } = require('node:stream');
-const { pipeline } = require('node:stream/promises');
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { Readable, Writable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
-const legacy = require('./legacy/pcap');
-const next   = require('../../lib/pcapFile/pcap');
+import legacy from './legacy/pcap.js';
+import next from '../../lib/pcapFile/pcap.js';
+import { fileURLToPath as __fileURLToPath } from 'node:url';
+import { dirname as __pathDirname } from 'node:path';
+
+const __dirname = __pathDirname(__fileURLToPath(import.meta.url));
 
 const SAMPLE_PATH = path.resolve(__dirname, '../../test/data/example1.pcap');
 const TARGET_BYTES = Number(process.env.BENCH_BYTES || 200 * 1024 * 1024); // 200 MiB

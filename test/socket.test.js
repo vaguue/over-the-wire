@@ -1,7 +1,11 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { Socket, SockAddr, AF_INET, SOCK_DGRAM } = require('#lib/socket');
+import socketModule from '#lib/socket';
+const { Socket, SockAddr, AF_INET, SOCK_DGRAM } = socketModule;
+import { SocketStream } from '#lib/socketStream';
+import { Packet } from '#lib/packet';
+import { LinkLayerType } from '#lib/enums';
 
 const LOOPBACK = '127.0.0.1';
 const firstPort = 40000 + (process.pid % 20000);
@@ -73,8 +77,6 @@ test('Socket write needs a destination unless connected', () => {
 });
 
 test('SocketStream: packets over loopback UDP', async () => {
-  const { SocketStream } = require('#lib/socketStream');
-  const { Packet } = require('#lib/packet');
 
   const serverPort = firstPort + 10;
   const clientPort = firstPort + 11;
@@ -141,7 +143,6 @@ test('SocketStream: packets over loopback UDP', async () => {
 });
 
 test('SocketStream: writing without a destination fails that write', async () => {
-  const { SocketStream } = require('#lib/socketStream');
 
   const stream = new SocketStream({ domain: AF_INET, type: SOCK_DGRAM });
   const failure = nextEvent(stream, 'error');
@@ -154,8 +155,6 @@ test('SocketStream: writing without a destination fails that write', async () =>
 });
 
 test('Packets that start at the IP header', () => {
-  const { Packet } = require('#lib/packet');
-  const { LinkLayerType } = require('#lib/enums');
 
   const built = new Packet({ iface: { linktype: 1 } })
     .ethernet({})

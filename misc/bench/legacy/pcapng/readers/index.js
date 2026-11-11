@@ -1,3 +1,4 @@
-const { PcapNGReader } = require('./pcapng');
+import { PcapNGReader } from './pcapng.js';
 
-module.exports = { PcapNGReader };
+export { PcapNGReader };
+export default { PcapNGReader };

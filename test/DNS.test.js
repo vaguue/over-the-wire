@@ -1,9 +1,9 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const defaults = require('#lib/defaults');
-const { DNS } = require('#lib/layers/DNS');
-const { Packet } = require('#lib/packet');
+import defaults from '#lib/defaults';
+import { DNS } from '#lib/layers/DNS';
+import { Packet } from '#lib/packet';
 
 const exampleHex = Buffer.from('example').toString('hex'); // 6578616d706c65
 const comHex = Buffer.from('com').toString('hex');         // 636f6d

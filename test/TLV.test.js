@@ -1,7 +1,7 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { TLV_8, TLVIterator, TLVSerialize, TLVPadding_8 } = require('#lib/layers/TLV');
+import { TLV_8, TLVIterator, TLVSerialize, TLVPadding_8 } from '#lib/layers/TLV';
 
 test('TLV', async (t) => {
   const buf = Buffer.from([0x01, 0x04, 0xAA, 0xAA, 0xAA, 0xAA, 0x02, 0x02, 0xBB, 0xBB]);

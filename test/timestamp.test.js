@@ -1,7 +1,7 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { TimeStamp } = require('#lib/timestamp');
+import { TimeStamp } from '#lib/timestamp';
 
 const closeEqual = (a, b, threshold = 1e-3) => Math.abs(a - b) < threshold;
 

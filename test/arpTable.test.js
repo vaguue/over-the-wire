@@ -1,7 +1,7 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { getArpTable } = require('#lib/arp');
+import { getArpTable } from '#lib/arp';
 
 test('getArpTable', async (t) => {
   const arp = await getArpTable();

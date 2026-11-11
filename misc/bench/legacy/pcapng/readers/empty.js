@@ -1,5 +1,5 @@
-const { BlockReader, BufferReader } = require('../../reader');
-const { blockTrailerLength, blockHeaderLength, additionalLength } = require('../const');
+import { BlockReader, BufferReader } from '../../reader.js';
+import { blockTrailerLength, blockHeaderLength, additionalLength } from '../const.js';
 
 class EmptyReader extends BlockReader {
   type = null;
@@ -25,4 +25,5 @@ class EmptyReader extends BlockReader {
   }
 }
 
-module.exports = { EmptyReader };
+export { EmptyReader };
+export default { EmptyReader };

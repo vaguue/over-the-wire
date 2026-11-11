@@ -1,8 +1,8 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { Ethernet } = require('#lib/layers/Ethernet');
-const { macFromString, macToString } = require('#lib/layers/mac');
+import { Ethernet } from '#lib/layers/Ethernet';
+import { macFromString, macToString } from '#lib/layers/mac';
 
 test('Ethernet', async (t) => {
   const eth = new Ethernet(Buffer.from('1111111111112222222222220800', 'hex'));

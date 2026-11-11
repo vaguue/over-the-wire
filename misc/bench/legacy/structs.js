@@ -1,5 +1,5 @@
-const { compile } = require('struct-compile');
-const { toBE } = require('#lib/struct');
+import { compile } from 'struct-compile';
+import { toBE } from '#lib/struct';
 
 function initPcap() {
   /*
@@ -181,7 +181,8 @@ function initPcapNG() {
   return res;
 };
 
-module.exports = {
-  pcap: initPcap(),
-  pcapng: initPcapNG(),
-};
+const pcap = initPcap();
+const pcapng = initPcapNG();
+
+export { pcap, pcapng };
+export default { pcap, pcapng };

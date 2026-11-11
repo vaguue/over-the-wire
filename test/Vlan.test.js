@@ -1,9 +1,9 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const defaults = require('#lib/defaults');
-const { Vlan } = require('#lib/layers/Vlan');
-const { Packet } = require('#lib/packet');
+import defaults from '#lib/defaults';
+import { Vlan } from '#lib/layers/Vlan';
+import { Packet } from '#lib/packet';
 
 test('Vlan parse and roundtrip', async () => {
   // pcp=3, dei=0, vid=100, etherType=0x0800

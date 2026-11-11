@@ -1,17 +1,18 @@
-const { BlockReader } = require('../../reader');
+import { BlockReader } from '../../reader.js';
 
+import structs from '../../structs.js';
 const {
   BT_SHB,
   BT_IDB,
   BT_EPB,
   BT_SPB,
-} = require('../../structs').pcapng;
+} = structs.pcapng;
 
-const { SectionBlockReader } = require('./sectionBlock');
-const { InterfaceDescriptionBlockReader } = require('./interfaceDescription');
-const { EnhancedPacketBlockReader } = require('./enhancedPacket');
-const { SimplePacketBlockReader } = require('./simplePacket');
-const { EmptyReader } = require('./empty');
+import { SectionBlockReader } from './sectionBlock.js';
+import { InterfaceDescriptionBlockReader } from './interfaceDescription.js';
+import { EnhancedPacketBlockReader } from './enhancedPacket.js';
+import { SimplePacketBlockReader } from './simplePacket.js';
+import { EmptyReader } from './empty.js';
 
 function getBlockReader(inputStream, blockHdr) {
   const { block_type } = blockHdr;
@@ -78,4 +79,5 @@ class PcapNGReader extends BlockReader {
   }
 }
 
-module.exports = { PcapNGReader };
+export { PcapNGReader };
+export default { PcapNGReader };

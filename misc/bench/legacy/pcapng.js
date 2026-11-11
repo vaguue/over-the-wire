@@ -1,7 +1,8 @@
 //TODO more block types
-const { Transform } = require('stream');
-const { alignOffset } = require('struct-compile');
+import { Transform } from 'stream';
+import { alignOffset } from 'struct-compile';
 
+import structsModule from './structs.js';
 const {
   PCAP_NG_VERSION_MAJOR,
   PCAP_NG_VERSION_MINOR,
@@ -13,17 +14,17 @@ const {
   BT_EPB,
   BT_SPB,
   constants,
-} = require('./structs').pcapng;
+} = structsModule.pcapng;
 
-const defaults = require('#lib/defaults');
+import defaults from '#lib/defaults';
 
-const { PcapNGReader } = require('./pcapng/readers');
+import { PcapNGReader } from './pcapng/readers/index.js';
 
-const { additionalLength } = require('./pcapng/const');
+import { additionalLength } from './pcapng/const.js';
 
-const Tsresol = require('./pcapng/tsresol');
+import Tsresol from './pcapng/tsresol.js';
 
-const { Packet } = require('#lib/packet');
+import { Packet } from '#lib/packet';
 
 class PcapNGInputStream extends Transform {
   constructor(opts) {
@@ -322,4 +323,5 @@ class PcapNGOutputStream extends Transform {
   }
 };
 
-module.exports = { PcapNGInputStream, PcapNGOutputStream, constants };
+export { PcapNGInputStream, PcapNGOutputStream, constants };
+export default { PcapNGInputStream, PcapNGOutputStream, constants };

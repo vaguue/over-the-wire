@@ -1,7 +1,7 @@
-const { BlockReader } = require('../../reader');
+import { BlockReader } from '../../reader.js';
 
-const { OptionReader } = require('./option');
-const { blockTrailerLength, blockHeaderLength, additionalLength } = require('../const');
+import { OptionReader } from './option.js';
+import { blockTrailerLength, blockHeaderLength, additionalLength } from '../const.js';
 
 class InterfaceDescriptionBlockReader extends BlockReader {
   type = 'interface-description';
@@ -54,4 +54,5 @@ class InterfaceDescriptionBlockReader extends BlockReader {
   }
 }
 
-module.exports = { InterfaceDescriptionBlockReader };
+export { InterfaceDescriptionBlockReader };
+export default { InterfaceDescriptionBlockReader };

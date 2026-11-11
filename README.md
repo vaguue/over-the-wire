@@ -16,7 +16,7 @@
 
 ## System Requirements
 - Libpcap/WinPcap/Npcap library installed (if Wireshark is installed on your system, you are good to go)
-- Node.js version 16.10.0 or higher recommended
+- Node.js 18 or higher. The package is an ES module: use `import`. `require('over-the-wire')` works on Node.js versions that can load ES modules through `require` (20.19+, 22.12+) and returns the module namespace, so the callable is `require('over-the-wire').default`.
 - C++ compiler, if there are no prebuilt bindings for your system
 
 ## Installation
@@ -32,11 +32,11 @@ The code is kind of oversimplified, it as a minimal, self-contained demo of the 
 - craft and send ICMP Echo packets hop-by-hop
 - Capture the entire exchange to a pcap/pcapng file for later inspection.
 ```javascript
-const net = require('node:net');
-const os = require('node:os');
-const fs = require('node:fs');
+import net from 'node:net';
+import os from 'node:os';
+import fs from 'node:fs';
 
-const otw = require('over-the-wire');
+import otw from 'over-the-wire';
 
 function getMyIp(iface, targetIp) {
   const family = net.isIP(targetIp) == 6 ? 'IPv6' : 'IPv4';
@@ -133,6 +133,71 @@ async function traceroute(targetIp) {
 // google.com's IP
 traceroute('172.217.168.174').catch(console.error);
 ```
+
+### Building packets the way the host would send them
+
+`otw()` returns a context that knows the routing table, the neighbour table and the local interfaces. A packet described through it can be awaited: the interface, the source addresses and the next hop's link-layer address are filled in the way the network stack would, and the Ethernet layer is added when it's left out.
+
+```javascript
+import otw from 'over-the-wire';
+
+const wire = otw();
+
+const pkt = await wire.packet()
+  .ipv4({ dst: '8.8.8.8' })
+  .icmp({ type: 8, id: 1, sequence: 1 });
+
+console.log(pkt.iface.name, pkt.layers.Ethernet.dst, pkt.layers.IPv4.src);
+```
+
+- Anything set explicitly is kept as written.
+- Without `await`, nothing is looked up: `.build()` and `.buffer` give the packet exactly as described, and writing the un-awaited builder to a device sends that.
+- `otw({ iface: 'en0' })` binds the context to one interface. Lookups are cached per context for a few seconds, `wire.flush()` drops them.
+- The link layer follows the interface: Ethernet where there is one, the loopback header on tunnels and loopback interfaces, none where the interface carries bare IP.
+- An unknown next hop is resolved by the host: one empty-handed datagram is sent to it so the kernel performs ARP or neighbour discovery, and the answer is read back from the neighbour table.
+- When something can't be resolved the promise rejects with a `code`: `ENOROUTE`, `ENONEIGHBOUR` (the next hop did not answer) or `ENOADDRESS`.
+- `otw.registerLayer(MyLayer)` adds a protocol to the builders.
+
+### Filters, capturing and waiting for an answer
+
+`wire.filter()` describes packets with the same layer and field names as the packet builder. A filter compiles to a capture filter expression where one exists, and matches parsed packets in process either way.
+
+```javascript
+const handshake = wire.filter()
+  .ipv4({ host: '203.0.113.10' })
+  .udp({ port: 51820 });
+
+handshake.toString();
+// 'ip and ip host 203.0.113.10 and udp and udp port 51820'
+
+handshake.matches(packet);
+```
+
+- Values can be a single value, a list of alternatives, a comparison (`{ lt: 5 }`, `gt`, `lte`, `gte`, `ne`) or a function.
+- `host` and `port` match either direction. TCP flags are matched by name: `.tcp({ flags: { syn: 1, ack: 0 } })`.
+- `.or(other)` and `.not(other)` take a filter or a function describing one; `.raw('...')` embeds a capture filter expression.
+- Fields with no capture filter equivalent still match in process; `filter.expressible` tells which kind a filter is.
+
+Devices and socket streams can wait for a packet. `expect` resolves with the next packet matching a filter, or `null` when the timeout passes. Packets that arrive between two calls are kept, so nothing is missed in between.
+
+```javascript
+const capture = await wire.capture(handshake);
+
+const outgoing = await capture.expect(wire.filter().ipv4({ dst: '203.0.113.10' }), { timeout: 30000 });
+const incoming = await capture.expect(wire.filter().ipv4({ src: '203.0.113.10' }), { timeout: 5000 });
+
+console.log(incoming === null ? 'no reply' : 'answered');
+```
+
+`wire.send(packet)` resolves the packet if it is still a description, writes it to the interface it routes through, and can wait for the answer:
+
+```javascript
+const reply = await wire
+  .send(wire.packet().ipv4({ dst: '203.0.113.10' }).udp({ src: 40000, dst: 51820 }).payload({ data }))
+  .expect(wire.filter().udp({ src: 51820 }), { timeout: 2000 });
+```
+
+`wire.close()` closes the devices opened by `send`.
 
 ## Documentation
 

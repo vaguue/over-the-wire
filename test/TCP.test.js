@@ -1,7 +1,7 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { TCP } = require('#lib/layers/TCP');
+import { TCP } from '#lib/layers/TCP';
 
 test('TCP', async (t) => {
   const buf = Buffer.from('cd8e5debee16992ebea89919801008000d1200000101080a52d3c650dd04cdd6', 'hex');

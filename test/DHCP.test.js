@@ -1,6 +1,7 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
-const { DHCP } = require('#lib/layers/DHCP');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
+import { DHCP } from '#lib/layers/DHCP';
+import { Packet } from '#lib/packet';
 
 const dhcpBuf = Buffer.from([
   0x01, // opCode: BootRequest
@@ -86,7 +87,6 @@ test('DHCP options are parsed back', () => {
 });
 
 test('DHCP inside a packet', () => {
-  const { Packet } = require('#lib/packet');
 
   const pkt = new Packet({ iface: { linktype: 1 } })
     .ethernet({})

@@ -1,8 +1,12 @@
-const path = require('node:path');
-const fs = require('node:fs');
+import path from 'node:path';
+import fs from 'node:fs';
 
-const { createReadStream, createWriteStream } = require('#lib/pcapFile/index');
-const { Packet } = require('#lib/packet');
+import { createReadStream, createWriteStream } from '#lib/pcapFile/index';
+import { Packet } from '#lib/packet';
+import { fileURLToPath as __fileURLToPath } from 'node:url';
+import { dirname as __pathDirname } from 'node:path';
+
+const __dirname = __pathDirname(__fileURLToPath(import.meta.url));
 
 async function stats(pcapFile) {
   console.log('[*] Info from', pcapFile);

@@ -1,19 +1,21 @@
-'use strict';
-
 /*
  * PcapNG reader/writer microbenchmark — same shape as pcap-bench.js, but
  * synthesises a large pcapng by replicating example2.pcapng's bytes after
  * its initial Section/IDB blocks.
  */
 
-const fs = require('node:fs');
-const path = require('node:path');
-const os = require('node:os');
-const { Readable, Writable } = require('node:stream');
-const { pipeline } = require('node:stream/promises');
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { Readable, Writable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
-const legacy = require('./legacy/pcapng');
-const next   = require('../../lib/pcapFile/pcapng');
+import legacy from './legacy/pcapng.js';
+import next from '../../lib/pcapFile/pcapng.js';
+import { fileURLToPath as __fileURLToPath } from 'node:url';
+import { dirname as __pathDirname } from 'node:path';
+
+const __dirname = __pathDirname(__fileURLToPath(import.meta.url));
 
 const SAMPLE_PATH = path.resolve(__dirname, '../../test/data/example2.pcapng');
 const TARGET_BYTES = Number(process.env.BENCH_BYTES || 200 * 1024 * 1024);

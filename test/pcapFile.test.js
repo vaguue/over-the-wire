@@ -1,18 +1,25 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
-const path = require('node:path');
-const fs = require('node:fs');
-const os = require('node:os');
-const { pipeline } = require('node:stream/promises');
-const { createHash, randomUUID } = require('node:crypto');
-const exec = require('util').promisify(require('node:child_process').exec);
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
+import path from 'node:path';
+import fs from 'node:fs';
+import os from 'node:os';
+import { pipeline } from 'node:stream/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { promisify } from 'node:util';
+import { exec as execWithCallback } from 'node:child_process';
 
-const { createReadStream, createWriteStream } = require('#lib/pcapFile/index');
-const { Packet } = require('#lib/packet');
-const { fromNumber } = require('#lib/buffer');
+const exec = promisify(execWithCallback);
 
-const Tsresol = require('#lib/pcapFile/tsresol');
-const { TimeStamp } = require('#lib/timestamp');
+import { createReadStream, createWriteStream } from '#lib/pcapFile/index';
+import { Packet } from '#lib/packet';
+import { fromNumber } from '#lib/buffer';
+
+import Tsresol from '#lib/pcapFile/tsresol';
+import { TimeStamp } from '#lib/timestamp';
+import { fileURLToPath as __fileURLToPath } from 'node:url';
+import { dirname as __pathDirname } from 'node:path';
+
+const __dirname = __pathDirname(__fileURLToPath(import.meta.url));
 
 test('Tsresol', t => {
   const now = TimeStamp.now();

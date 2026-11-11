@@ -1,7 +1,7 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { ARP } = require('#lib/layers/ARP');
+import { ARP } from '#lib/layers/ARP';
 
 test('Arp', async (t) => {
   const arp = new ARP(Buffer.from('0001080006040001424242424242c0a80182000000000000c0a80102', 'hex'));

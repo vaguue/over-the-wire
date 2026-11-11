@@ -1,8 +1,8 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { ICMPv6 } = require('#lib/layers/ICMPv6');
-const { ICMPv6Types } = require('#lib/layers/enums');
+import { ICMPv6 } from '#lib/layers/ICMPv6';
+import { ICMPv6Types } from '#lib/layers/enums';
 
 const echoReqBuf = Buffer.from('80007cda1a2b00010001000000000000', 'hex');
 const echoRepBuf = Buffer.from('81007cda1a2b00010001000000000000', 'hex');

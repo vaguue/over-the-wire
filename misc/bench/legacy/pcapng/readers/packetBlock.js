@@ -1,4 +1,4 @@
-const { BlockReader } = require('../../reader');
+import { BlockReader } from '../../reader.js';
 
 class PacketBlockReader extends BlockReader {
   constructor(...args) {
@@ -6,4 +6,5 @@ class PacketBlockReader extends BlockReader {
   }
 }
 
-module.exports = { PacketBlockReader };
+export { PacketBlockReader };
+export default { PacketBlockReader };

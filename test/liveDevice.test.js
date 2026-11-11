@@ -1,9 +1,9 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
-const os = require('node:os');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
+import os from 'node:os';
 
-const { LiveDevice } = require('#lib/liveDevice');
-const { Packet } = require('#lib/packet');
+import { LiveDevice } from '#lib/liveDevice';
+import { Packet } from '#lib/packet';
 
 test('LiveDevice', (t) => {
   const [ifaceName] = Object.entries(os.networkInterfaces()).find(([name, data]) => {

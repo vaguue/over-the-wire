@@ -1,5 +1,6 @@
-const { Transform } = require('stream');
+import { Transform } from 'stream';
 
+import structs from './structs.js';
 const {
   PcapFileHeader,
   PacketHeader,
@@ -9,15 +10,15 @@ const {
   BYTE_ORDER_MAGIC_SWAPPED,
   BYTE_ORDER_MAGIC_NANO,
   BYTE_ORDER_MAGIC_SWAPPED_NANO,
-} = require('./structs').pcap;
+} = structs.pcap;
 
-const { BlockReader, BufferReader } = require('./reader');
+import { BlockReader, BufferReader } from './reader.js';
 
-const { TimeStamp } = require('#lib/timestamp');
+import { TimeStamp } from '#lib/timestamp';
 
-const defaults = require('#lib/defaults');
+import defaults from '#lib/defaults';
 
-const { Packet } = require('#lib/packet');
+import { Packet } from '#lib/packet';
 
 class PcapReader extends BlockReader {
   constructor(...args) {
@@ -182,4 +183,5 @@ class PcapOutputStream extends Transform {
   }
 };
 
-module.exports = { PcapInputStream, PcapOutputStream };
+export { PcapInputStream, PcapOutputStream };
+export default { PcapInputStream, PcapOutputStream };

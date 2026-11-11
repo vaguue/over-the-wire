@@ -1,4 +1,4 @@
-const { TimeStamp } = require('#lib/timestamp');
+import { TimeStamp } from '#lib/timestamp';
 
 const _defaultResol = 1e6;
 
@@ -46,4 +46,5 @@ function parse(tsresol, { timestamp_high, timestamp_low }, defaultResol = _defau
   return res;
 }
 
-module.exports = { serialize, parse };
+export { serialize, parse };
+export default { serialize, parse };

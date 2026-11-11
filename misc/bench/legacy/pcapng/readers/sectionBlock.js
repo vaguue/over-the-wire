@@ -1,14 +1,15 @@
-const { BlockReader } = require('../../reader');
+import { BlockReader } from '../../reader.js';
 
-const { OptionReader } = require('./option');
-const { blockTrailerLength, blockHeaderLength, additionalLength } = require('../const');
+import { OptionReader } from './option.js';
+import { blockTrailerLength, blockHeaderLength, additionalLength } from '../const.js';
 
+import structs from '../../structs.js';
 const {
   PCAP_NG_VERSION_MAJOR,
   PCAP_NG_VERSION_MINOR,
   BYTE_ORDER_MAGIC,
   BYTE_ORDER_MAGIC_SWAP,
-} = require('../../structs').pcapng;
+} = structs.pcapng;
 
 class SectionBlockReader extends BlockReader {
   type = 'section-header';
@@ -71,4 +72,5 @@ class SectionBlockReader extends BlockReader {
   }
 }
 
-module.exports = { SectionBlockReader };
+export { SectionBlockReader };
+export default { SectionBlockReader };

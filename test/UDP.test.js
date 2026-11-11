@@ -1,7 +1,7 @@
-const { strict: assert } = require('node:assert');
-const test = require('node:test');
+import { strict as assert } from 'node:assert';
+import test from 'node:test';
 
-const { UDP } = require('#lib/layers/UDP');
+import { UDP } from '#lib/layers/UDP';
 
 test('UDP', async (t) => {
   const buf = Buffer.from('01bbfbda001f096845785986219a31c939c38f0093b888f6b9de8ceaa67f61', 'hex');
