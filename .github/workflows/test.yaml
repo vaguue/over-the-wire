@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
+        os: [ubuntu-latest, windows-2022, macos-latest, ubuntu-24.04-arm]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -22,7 +22,7 @@ jobs:
         run: brew install coreutils
 
       - name: Install Zip
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: choco install zip
 
       - name: Set up Python
@@ -43,7 +43,7 @@ jobs:
           brew install libpcap
 
       - name: Install Npcap SDK on Windows
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           choco install wget --no-progress
           mkdir -p npcap
@@ -55,7 +55,7 @@ jobs:
       # link is private: it lives in the NPCAP_OEM_URL repository secret and must
       # never be written to this file or printed to the log.
       - name: Install Npcap OEM on Windows
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         env:
           NPCAP_OEM_URL: ${{ secrets.NPCAP_OEM_URL }}
         run: |
@@ -80,7 +80,7 @@ jobs:
         shell: bash
 
       - name: Build and Test (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           ls "$(pwd)/npcap"
           PCAP_ROOT="$(pwd)/npcap" npm i
@@ -89,7 +89,7 @@ jobs:
         shell: bash
 
       - name: Build and Test
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2022'
         run: |
           npm i
           npm run build
@@ -97,7 +97,7 @@ jobs:
         shell: bash
 
       - name: Prebuild (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           ls "$(pwd)/npcap"
           PCAP_ROOT="$(pwd)/npcap" npm run precompile
@@ -106,7 +106,7 @@ jobs:
         shell: bash
 
       - name: Prebuild
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2022'
         run: |
           npm run precompile
           ls prebuilds

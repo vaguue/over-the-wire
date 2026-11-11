@@ -131,3 +131,11 @@ test('ICMP with a truncated tail', () => {
   assert.equal(unreachable.toObject().typeName, 'DestinationUnreachable');
   assert.equal(unreachable.toObject().nextHopMTU, undefined);
 });
+
+test('ICMP Parameter Problem toObject holds plain values', () => {
+  const obj = new ICMP(paramProblemBuf).toObject();
+
+  assert.deepEqual(obj.unused, [0, 0, 0]);
+  assert.equal(obj.errorOctetPointer, 4);
+  assert.doesNotThrow(() => JSON.stringify(obj));
+});
