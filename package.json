@@ -4,6 +4,9 @@
   "description": "Network inspection library for Node",
   "type": "module",
   "main": "lib/index.js",
+  "bin": {
+    "otw": "bin/otw.js"
+  },
   "exports": {
     ".": "./lib/index.js",
     "./package.json": "./package.json"
@@ -61,6 +64,7 @@
     "cxx_modules",
     "cxx",
     "assets",
+    "bin",
     "lib",
     "test",
     "recipes"

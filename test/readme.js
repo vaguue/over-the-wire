@@ -1,11 +1,8 @@
 import fs from 'node:fs';
 import dns from 'node:dns/promises';
 
-import otw from '../lib/index.js';
+import otw, { icmp } from 'over-the-wire';
 
-const ECHO_REQUEST = 8;
-const ECHO_REPLY = 0;
-const TIME_EXCEEDED = 11;
 const MAX_HOPS = 30;
 const ANSWER_TIMEOUT_MS = 1000;
 
@@ -26,11 +23,11 @@ const traceroute = async (host) => {
   for (let timeToLive = 1; timeToLive <= MAX_HOPS; timeToLive++) {
     const probe = await wire.packet()
       .ipv4({ dst: target, timeToLive })
-      .icmp({ type: ECHO_REQUEST, id, sequence: timeToLive });
+      .icmp({ type: icmp.ECHO_REQUEST, id, sequence: timeToLive });
 
     const addressedToUs = wire.filter()
       .ipv4({ dst: probe.layers.IPv4.src })
-      .icmp({ type: [ECHO_REPLY, TIME_EXCEEDED] });
+      .icmp({ type: [icmp.ECHO_REPLY, icmp.TIME_EXCEEDED] });
 
     const sentAt = Date.now();
     capture.write(probe);
@@ -43,7 +40,7 @@ const traceroute = async (host) => {
 
     console.log(`${timeToLive}  ${answer.layers.IPv4.src}  ${Date.now() - sentAt} ms`);
 
-    if (answer.layers.ICMP.type === ECHO_REPLY) {
+    if (answer.layers.ICMP.type === icmp.ECHO_REPLY) {
       break;
     }
   }

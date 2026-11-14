@@ -1,7 +1,7 @@
 `arping`: ask who has an address on the local network and print the hardware address that answers.
 
 ```javascript
-import otw from 'over-the-wire';
+import otw, { arp, ethernet } from 'over-the-wire';
 
 const target = process.argv[2];
 
@@ -12,10 +12,10 @@ const { mac, ipv4 } = wire.addresses(iface);
 const capture = await wire.capture({ iface, filter: wire.filter().arp() });
 
 const request = wire.packet({ iface })
-  .ethernet({ src: mac, dst: 'ff:ff:ff:ff:ff:ff' })
-  .arp({ opcode: 'who-has', hardwareSrc: mac, protocolSrc: ipv4, protocolDst: target });
+  .ethernet({ src: mac, dst: ethernet.BROADCAST })
+  .arp({ opcode: arp.WHO_HAS, hardwareSrc: mac, protocolSrc: ipv4, protocolDst: target });
 
-const reply = wire.filter().arp({ opcode: 'is-at', protocolSrc: target });
+const reply = wire.filter().arp({ opcode: arp.IS_AT, protocolSrc: target });
 
 const sentAt = process.hrtime.bigint();
 capture.write(request);

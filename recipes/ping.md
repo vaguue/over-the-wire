@@ -1,10 +1,8 @@
 `ping`: ICMP echo requests, one per second, with the round-trip time of each answer.
 
 ```javascript
-import otw from 'over-the-wire';
+import otw, { icmp } from 'over-the-wire';
 
-const ECHO_REQUEST = 8;
-const ECHO_REPLY = 0;
 const COUNT = 4;
 
 const target = process.argv[2] ?? '8.8.8.8';
@@ -18,11 +16,11 @@ let received = 0;
 for (let sequence = 1; sequence <= COUNT; sequence++) {
   const request = await wire.packet()
     .ipv4({ dst: target })
-    .icmp({ type: ECHO_REQUEST, id, sequence });
+    .icmp({ type: icmp.ECHO_REQUEST, id, sequence });
 
   const reply = wire.filter()
     .ipv4({ src: target })
-    .icmp({ type: ECHO_REPLY });
+    .icmp({ type: icmp.ECHO_REPLY });
 
   const sentAt = process.hrtime.bigint();
   capture.write(request);

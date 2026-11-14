@@ -47,11 +47,8 @@ This is traceroute, written with the Node.js standard library and over-the-wire.
 import fs from 'node:fs';
 import dns from 'node:dns/promises';
 
-import otw from 'over-the-wire';
+import otw, { icmp } from 'over-the-wire';
 
-const ECHO_REQUEST = 8;
-const ECHO_REPLY = 0;
-const TIME_EXCEEDED = 11;
 const MAX_HOPS = 30;
 const ANSWER_TIMEOUT_MS = 1000;
 
@@ -72,11 +69,11 @@ const traceroute = async (host) => {
   for (let timeToLive = 1; timeToLive <= MAX_HOPS; timeToLive++) {
     const probe = await wire.packet()
       .ipv4({ dst: target, timeToLive })
-      .icmp({ type: ECHO_REQUEST, id, sequence: timeToLive });
+      .icmp({ type: icmp.ECHO_REQUEST, id, sequence: timeToLive });
 
     const addressedToUs = wire.filter()
       .ipv4({ dst: probe.layers.IPv4.src })
-      .icmp({ type: [ECHO_REPLY, TIME_EXCEEDED] });
+      .icmp({ type: [icmp.ECHO_REPLY, icmp.TIME_EXCEEDED] });
 
     const sentAt = Date.now();
     capture.write(probe);
@@ -89,7 +86,7 @@ const traceroute = async (host) => {
 
     console.log(`${timeToLive}  ${answer.layers.IPv4.src}  ${Date.now() - sentAt} ms`);
 
-    if (answer.layers.ICMP.type === ECHO_REPLY) {
+    if (answer.layers.ICMP.type === icmp.ECHO_REPLY) {
       break;
     }
   }
@@ -111,13 +108,13 @@ Capturing needs the same privileges as tcpdump, so run it with `sudo` unless you
 `otw()` returns a context that knows the routing table, the neighbour table and the local interfaces. A packet described through it can be awaited: the interface, the source addresses and the next hop's link-layer address are filled in the way the network stack would, and the Ethernet layer is added when it's left out.
 
 ```javascript
-import otw from 'over-the-wire';
+import otw, { icmp } from 'over-the-wire';
 
 const wire = otw();
 
 const pkt = await wire.packet()
   .ipv4({ dst: '8.8.8.8' })
-  .icmp({ type: 8, id: 1, sequence: 1 });
+  .icmp({ type: icmp.ECHO_REQUEST, id: 1, sequence: 1 });
 
 console.log(pkt.iface.name, pkt.layers.Ethernet.dst, pkt.layers.IPv4.src);
 ```
@@ -170,6 +167,47 @@ const reply = await wire
 ```
 
 `wire.close()` closes the devices opened by `send`.
+
+### Protocol constants
+
+Every protocol has a lowercase namespace with the numbers its fields take, so a script never has to declare them:
+
+```javascript
+import otw, { icmp, dns, tcp, ethernet, arp } from 'over-the-wire';
+
+wire.packet().ipv4({ dst }).icmp({ type: icmp.ECHO_REQUEST });
+wire.filter().icmp({ type: [icmp.ECHO_REPLY, icmp.TIME_EXCEEDED] });
+wire.packet().ipv4({ dst }).udp({ src: 40000, dst: dns.PORT }).dns({ questions: [{ name, type: dns.TYPE_A }] });
+wire.packet().ethernet({ dst: ethernet.BROADCAST }).arp({ opcode: arp.WHO_HAS, protocolDst: dst });
+```
+
+`otw docs` lists the protocols, `otw docs icmp` prints the fields and constants of one.
+
+## The `otw` command
+
+The package installs a command called `otw`. Without a global install it runs as `npx over-the-wire`.
+
+```
+otw [options]                    start the interactive shell
+otw [options] <file> [args...]   run a script
+otw docs [protocol]              describe a protocol: fields, constants, filter support
+
+-i, --iface <name>               interface to use, otherwise chosen by the routing table
+```
+
+In the shell and in a script run through `otw`, `wire` and the protocol namespaces are global, and `import ... from 'over-the-wire'` resolves to the installed package, so the recipes run unchanged with `otw ping.js 8.8.8.8`.
+
+The shell awaits what you type: a packet description is resolved and printed, a send is delivered.
+
+```
+otw> wire.p().ipv4({ dst: '8.8.8.8' }).icmp()
+<Packet en0 | 50 bytes | Ethernet 5c:e9:1e:9d:fc:40 > 84:aa:9c:af:3f:71 / IPv4 192.168.1.36 > 8.8.8.8 / ICMP>
+otw> wire.s(_).ex(wire.f().icmp({ type: icmp.ECHO_REPLY }))
+<Packet en0 | 50 bytes | Ethernet 84:aa:9c:af:3f:71 > 5c:e9:1e:9d:fc:40 / IPv4 8.8.8.8 > 192.168.1.36 / ICMP>
+otw> .docs icmp
+```
+
+Short names for typing: `wire.p()` is `wire.packet()`, `wire.f()` is `wire.filter()`, `wire.c()` is `wire.capture()`, `wire.s()` is `wire.send()`, and `.ex()` on a send is `.expect()`.
 
 ## Documentation
 

@@ -1,28 +1,25 @@
 `dig`: a DNS query built packet by packet and sent straight to a resolver, with the answer section printed.
 
 ```javascript
-import otw from 'over-the-wire';
-
-const TYPE_A = 1;
-const DNS_PORT = 53;
+import otw, { dns } from 'over-the-wire';
 
 const name = process.argv[2] ?? 'example.com';
 const resolver = process.argv[3] ?? '8.8.8.8';
 
 const wire = otw();
-const capture = await wire.capture(wire.filter().udp({ port: DNS_PORT }));
+const capture = await wire.capture(wire.filter().udp({ port: dns.PORT }));
 
 const id = Math.floor(Math.random() * 0xffff);
 const sourcePort = 40000 + Math.floor(Math.random() * 20000);
 
 const query = await wire.packet()
   .ipv4({ dst: resolver })
-  .udp({ src: sourcePort, dst: DNS_PORT })
-  .dns({ id, rd: 1, questions: [{ name, type: TYPE_A }] });
+  .udp({ src: sourcePort, dst: dns.PORT })
+  .dns({ id, rd: 1, questions: [{ name, type: dns.TYPE_A }] });
 
 const response = wire.filter()
   .ipv4({ src: resolver })
-  .udp({ src: DNS_PORT, dst: sourcePort })
+  .udp({ src: dns.PORT, dst: sourcePort })
   .dns({ id });
 
 const sentAt = Date.now();
