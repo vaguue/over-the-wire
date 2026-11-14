@@ -26,11 +26,16 @@ npm install over-the-wire --save
 ```
 
 ## Recipes
-Short scripts for common tasks, in [`recipes/`](./recipes) and as the first chapter of the [documentation](https://vaguue.github.io/over-the-wire/):
+Familiar tools rewritten as short scripts, and a few everyday tasks. They live in [`recipes/`](./recipes) and are the first chapter of the [documentation](https://vaguue.github.io/over-the-wire/):
 
+- [`ping`](./recipes/ping.md)
+- [`traceroute`](./recipes/traceroute.md)
+- [`dig`](./recipes/dig.md)
+- [`arping`](./recipes/arping.md)
+- [`tcpdump`](./recipes/tcpdump.md)
+- [`nmap -sS`](./recipes/syn-scan.md)
 - [Did my handshake get an answer?](./recipes/handshake-answered.md)
 - [Send a packet and wait for the reply](./recipes/send-and-wait.md)
-- [Traceroute](./recipes/traceroute.md)
 - [Capture traffic into a pcapng file](./recipes/capture-to-file.md)
 - [Read a capture file](./recipes/read-capture-file.md)
 - [Craft a packet byte for byte](./recipes/craft-by-hand.md)

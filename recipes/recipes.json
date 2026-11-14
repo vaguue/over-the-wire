@@ -1,8 +1,35 @@
 {
-  "handshake-answered": { "title": "Did my handshake get an answer?" },
-  "send-and-wait": { "title": "Send a packet and wait for the reply" },
-  "traceroute": { "title": "Traceroute" },
-  "capture-to-file": { "title": "Capture traffic into a pcapng file" },
-  "read-capture-file": { "title": "Read a capture file" },
-  "craft-by-hand": { "title": "Craft a packet byte for byte" }
+  "ping": {
+    "title": "ping"
+  },
+  "traceroute": {
+    "title": "traceroute"
+  },
+  "dig": {
+    "title": "dig"
+  },
+  "arping": {
+    "title": "arping"
+  },
+  "tcpdump": {
+    "title": "tcpdump"
+  },
+  "syn-scan": {
+    "title": "nmap -sS"
+  },
+  "handshake-answered": {
+    "title": "Did my handshake get an answer?"
+  },
+  "send-and-wait": {
+    "title": "Send a packet and wait for the reply"
+  },
+  "capture-to-file": {
+    "title": "Capture traffic into a pcapng file"
+  },
+  "read-capture-file": {
+    "title": "Read a capture file"
+  },
+  "craft-by-hand": {
+    "title": "Craft a packet byte for byte"
+  }
 }

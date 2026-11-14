@@ -1,4 +1,4 @@
-One probe per hop, each awaited with a timeout, the whole exchange saved to a file.
+`traceroute`: one probe per hop, each awaited with a timeout, the whole exchange saved to a file.
 
 ```javascript
 import fs from 'node:fs';
