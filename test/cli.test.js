@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { Wire, protocols } from '#lib/index';
-import { parseArguments, packageVersion } from '#lib/cli/main';
+import { main, packageVersion } from '#lib/cli/main';
 import { renderDocs } from '#lib/cli/docs';
 import { startRepl } from '#lib/cli/repl';
 import { banner } from '#lib/cli/logo';
@@ -19,17 +19,42 @@ const run = (...args) => {
   return spawnSync(process.execPath, [command, ...args], { encoding: 'utf8' });
 };
 
-test('arguments before the first positional belong to otw, the rest to the script', () => {
-  assert.deepEqual(parseArguments(['-i', 'en0', 'script.js', '-i', 'x', '--help']), {
-    iface: 'en0',
-    help: false,
-    version: false,
-    positionals: ['script.js', '-i', 'x', '--help'],
-  });
+const recordingHandlers = () => {
+  const calls = [];
 
-  assert.equal(parseArguments(['--iface=eth0']).iface, 'eth0');
-  assert.throws(() => parseArguments(['--nope']), { code: 'EUSAGE' });
-  assert.throws(() => parseArguments(['-i']), { code: 'EUSAGE' });
+  return {
+    calls,
+    openShell: (request) => {
+      calls.push(['shell', request]);
+    },
+    runScript: (request) => {
+      calls.push(['script', request]);
+    },
+    printDocs: (request) => {
+      calls.push(['docs', request]);
+    },
+  };
+};
+
+test('arguments before the first positional belong to otw, the rest to the script', async () => {
+  const handlers = recordingHandlers();
+
+  await main(['-i', 'en0', 'script.js', '8.8.8.8', '-i', 'x', '--help', '--count=4'], handlers);
+  await main(['--iface=eth0'], handlers);
+  await main([], handlers);
+  await main(['docs', 'icmp'], handlers);
+  await main(['docs'], handlers);
+
+  assert.deepEqual(handlers.calls, [
+    ['script', { iface: 'en0', file: 'script.js', scriptArguments: ['8.8.8.8', '-i', 'x', '--help', '--count=4'] }],
+    ['shell', { iface: 'eth0' }],
+    ['shell', { iface: null }],
+    ['docs', { protocol: 'icmp' }],
+    ['docs', { protocol: undefined }],
+  ]);
+
+  await assert.rejects(main(['--nope'], handlers), { code: 'EUSAGE' });
+  await assert.rejects(main(['-i'], handlers), { code: 'EUSAGE' });
 });
 
 test('docs describe every protocol', () => {
@@ -81,7 +106,7 @@ test('a script run through otw gets wire, the constants, its own arguments and t
       iface: wire.iface,
       inherited: otw().iface,
       sameNamespace: imported === icmp,
-      built: wire.p().ipv4({ src: '10.0.0.1', dst: '10.0.0.2' }).icmp({ type: icmp.ECHO_REQUEST }).buffer.length,
+      built: wire.p.ipv4({ src: '10.0.0.1', dst: '10.0.0.2' }).icmp({ type: icmp.ECHO_REQUEST }).buffer.length,
     }));
   `);
 
@@ -126,7 +151,7 @@ test('the shell settles what is typed before printing it', async () => {
 
   Wire.defaults.iface = null;
 
-  for (const name of ['wire', 'otw', 'docs', 'icmp', 'dns', 'tcp', 'udp']) {
+  for (const name of ['wire', 'otw', 'docs', 'pcap', 'icmp', 'dns', 'tcp', 'udp']) {
     delete globalThis[name];
   }
 });
