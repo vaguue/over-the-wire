@@ -1,9 +1,11 @@
 import { strict as assert } from 'node:assert';
 import test from 'node:test';
 
-import otw, { Packet, FilterBuilder, protocols, describeProtocol, icmp, icmpv6, dns, tcp, udp, arp, ethernet, ipv4, ipv6 } from '#lib/index';
+import otw, { Packet, PacketBuilder, FilterBuilder, Pcap, pcap, protocols, registerLayer, icmp, icmpv6, dns, tcp, udp, arp, ethernet, ipv4, ipv6 } from '#lib/index';
 import { layers } from '#lib/layers/index';
-import { protocolFor, constantName } from '#lib/protocols';
+import { protocolFor } from '#lib/protocols';
+import { makeLayer, attach, constantName } from '#lib/layers/define';
+import { renderDocs } from '#lib/cli/docs';
 
 const ETHERNET = { linktype: 1 };
 
@@ -79,26 +81,70 @@ test('protocols are found by namespace or layer name', () => {
   assert.equal(protocolFor('nothing'), null);
 });
 
-test('describeProtocol adds a namespace for a custom layer', () => {
-  const namespace = describeProtocol({
-    name: 'testproto',
-    layer: 'Payload',
-    title: 'Test protocol',
-    summary: 'Only here for the test.',
-    constants: [{ title: 'Kinds', field: 'kind', values: { KIND_ONE: 1 } }],
+test('a registered layer is described by its struct comments', () => {
+  const { Layer } = makeLayer('Heartbeat', `
+    //@NE Heartbeat, made up for the test. Tells the other side we are alive.
+    struct HeartbeatHeader {
+      // What is being said, one of heartbeat.KIND_*.
+      uint8_t kind;
+      //@LE Counter that grows with every beat.
+      uint16_t counter:12;
+      uint8_t reserved[3];
+    } __attribute__(packed);
+  `);
+
+  attach.docs(Layer, {
+    fields: { age: 'Read only: seconds since the first beat.' },
+    constants: [{ title: 'Kinds', field: 'kind', values: { KIND_PING: 1, KIND_PONG: 2 } }],
   });
 
-  assert.equal(namespace.KIND_ONE, 1);
-  assert.equal(protocols.testproto.namespace, namespace);
+  registerLayer(Layer);
 
-  delete protocols.testproto;
+  const described = protocols.heartbeat;
+
+  assert.equal(described.title, 'Heartbeat, made up for the test');
+  assert.equal(described.summary, 'Tells the other side we are alive.');
+  assert.deepEqual(described.fields, [
+    { name: 'kind', type: 'uint8_t', description: 'What is being said, one of heartbeat.KIND_*.' },
+    { name: 'counter', type: 'uint16_t:12', description: 'Counter that grows with every beat.' },
+    { name: 'reserved', type: 'uint8_t[3]', description: '' },
+    { name: 'age', type: 'computed', description: 'Read only: seconds since the first beat.' },
+  ]);
+  assert.deepEqual(described.namespace, { KIND_PING: 1, KIND_PONG: 2 });
+  assert.match(renderDocs('heartbeat'), /heartbeat\.KIND_PONG\s+2/);
+
+  delete protocols.heartbeat;
+});
+
+test('a layer without comments is still described from its struct', () => {
+  const { Layer } = makeLayer('Bare', `
+    struct BareHeader {
+      uint32_t value;
+    };
+  `);
+
+  registerLayer(Layer);
+
+  assert.equal(protocols.bare.title, 'Bare');
+  assert.deepEqual(protocols.bare.fields, [{ name: 'value', type: 'uint32_t', description: '' }]);
+  assert.deepEqual(protocols.bare.namespace, {});
+
+  delete protocols.bare;
+});
+
+test('pcap is the lowercase name of the capture file and device namespace', () => {
+  assert.equal(pcap, Pcap);
+  assert.equal(otw.pcap, otw.Pcap);
 });
 
 test('short names are the same functions as the long ones', () => {
   const wire = otw();
 
-  assert.equal(wire.p, wire.packet);
-  assert.equal(wire.f, wire.filter);
+  assert.ok(wire.p instanceof PacketBuilder);
+  assert.notEqual(wire.p, wire.p);
+  assert.ok(wire.f instanceof FilterBuilder);
+  assert.equal(wire.p.ipv4({ src: '10.0.0.1', dst: '10.0.0.2' }).udp({ src: 1, dst: 2 }).buffer.length, 28);
+  assert.equal(String(wire.f.icmp({ type: icmp.ECHO_REPLY })), 'icmp and icmp[icmptype] = 0');
   assert.equal(wire.c, wire.capture);
   assert.equal(wire.s, wire.send);
 
