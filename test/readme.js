@@ -12,7 +12,7 @@ const traceroute = async (host) => {
   const wire = otw();
   const capture = await wire.capture(wire.filter().icmp());
 
-  const dump = otw.Pcap.createWriteStream({ format: 'pcapng' });
+  const dump = otw.pcap.createWriteStream({ format: 'pcapng' });
   dump.pipe(fs.createWriteStream('traceroute.pcapng'));
   capture.pipe(dump);
 

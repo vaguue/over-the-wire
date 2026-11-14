@@ -5,7 +5,7 @@ import otw from 'over-the-wire';
 const wire = otw({ iface: 'en0' });
 
 const capture = await wire.capture(wire.filter().tcp({ port: 443 }));
-const file = otw.Pcap.createWriteStream({ format: 'pcapng' });
+const file = otw.pcap.createWriteStream({ format: 'pcapng' });
 
 capture.pipe(file).pipe(fs.createWriteStream('https.pcapng'));
 

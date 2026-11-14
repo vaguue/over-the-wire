@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import otw from 'over-the-wire';
 
 const packets = fs.createReadStream('https.pcapng')
-  .pipe(otw.Pcap.createReadStream({ format: 'pcapng' }));
+  .pipe(otw.pcap.createReadStream({ format: 'pcapng' }));
 
 const handshakes = new otw.FilterBuilder().tcp({ flags: { syn: 1, ack: 0 } });
 

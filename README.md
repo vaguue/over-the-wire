@@ -58,7 +58,7 @@ const traceroute = async (host) => {
   const wire = otw();
   const capture = await wire.capture(wire.filter().icmp());
 
-  const dump = otw.Pcap.createWriteStream({ format: 'pcapng' });
+  const dump = otw.pcap.createWriteStream({ format: 'pcapng' });
   dump.pipe(fs.createWriteStream('traceroute.pcapng'));
   capture.pipe(dump);
 
@@ -183,6 +183,8 @@ wire.packet().ethernet({ dst: ethernet.BROADCAST }).arp({ opcode: arp.WHO_HAS, p
 
 `otw docs` lists the protocols, `otw docs icmp` prints the fields and constants of one.
 
+Both come from the layer itself: the comments in its struct describe the protocol and its fields, and one `attach.docs(Layer, { constants })` call lists the constants. A layer added with `otw.registerLayer(MyLayer)` gets its namespace in `otw.protocols` and its `otw docs` page the same way.
+
 ## The `otw` command
 
 The package installs a command called `otw`. Without a global install it runs as `npx over-the-wire`.
@@ -200,14 +202,14 @@ In the shell and in a script run through `otw`, `wire` and the protocol namespac
 The shell awaits what you type: a packet description is resolved and printed, a send is delivered.
 
 ```
-otw> wire.p().ipv4({ dst: '8.8.8.8' }).icmp()
+otw> wire.p.ipv4({ dst: '8.8.8.8' }).icmp()
 <Packet en0 | 50 bytes | Ethernet 5c:e9:1e:9d:fc:40 > 84:aa:9c:af:3f:71 / IPv4 192.168.1.36 > 8.8.8.8 / ICMP>
-otw> wire.s(_).ex(wire.f().icmp({ type: icmp.ECHO_REPLY }))
+otw> wire.s(_).ex(wire.f.icmp({ type: icmp.ECHO_REPLY }))
 <Packet en0 | 50 bytes | Ethernet 84:aa:9c:af:3f:71 > 5c:e9:1e:9d:fc:40 / IPv4 8.8.8.8 > 192.168.1.36 / ICMP>
 otw> .docs icmp
 ```
 
-Short names for typing: `wire.p()` is `wire.packet()`, `wire.f()` is `wire.filter()`, `wire.c()` is `wire.capture()`, `wire.s()` is `wire.send()`, and `.ex()` on a send is `.expect()`.
+Short names for typing: `wire.p` is `wire.packet()`, `wire.f` is `wire.filter()`, `wire.c()` is `wire.capture()`, `wire.s()` is `wire.send()`, and `.ex()` on a send is `.expect()`.
 
 ## Documentation
 
