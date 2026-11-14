@@ -62,7 +62,8 @@
     "cxx",
     "assets",
     "lib",
-    "test"
+    "test",
+    "recipes"
   ],
   "devDependencies": {
     "clean-jsdoc-theme": "^4.3.0",

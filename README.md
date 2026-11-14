@@ -25,6 +25,16 @@
 npm install over-the-wire --save
 ```
 
+## Recipes
+Short scripts for common tasks, in [`recipes/`](./recipes) and as the first chapter of the [documentation](https://vaguue.github.io/over-the-wire/):
+
+- [Did my handshake get an answer?](./recipes/handshake-answered.md)
+- [Send a packet and wait for the reply](./recipes/send-and-wait.md)
+- [Traceroute](./recipes/traceroute.md)
+- [Capture traffic into a pcapng file](./recipes/capture-to-file.md)
+- [Read a capture file](./recipes/read-capture-file.md)
+- [Craft a packet byte for byte](./recipes/craft-by-hand.md)
+
 ## Getting started
 This is traceroute, written with the Node.js standard library and over-the-wire. Each probe is described from the IP layer up; the interface, the source addresses and the gateway's link-layer address are filled in the way the host would send it. The script waits for each answer with a timeout and saves the whole exchange to a pcapng file.
 
