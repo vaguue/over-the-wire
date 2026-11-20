@@ -127,6 +127,31 @@ const runsScriptsWithADefaultExport = async (command) => {
     assert.equal(refused.status, 1);
     assert.equal(refused.stdout, '');
     assert.match(refused.stderr, /elsewhere\.mjs supports plan9, this system is/);
+
+    const bare = path.join(directory, 'arping.mjs');
+
+    fs.writeFileSync(bare, [
+      'function arping(wire, args) {',
+      "  const probe = wire.packet().ipv4({ src: '10.0.0.1', dst: args[0] }).icmp();",
+      '  console.log(JSON.stringify({ target: args[0], iface: wire.iface, bytes: probe.buffer.length, hasNamespace: typeof icmp }));',
+      '}',
+      "arping.options = { supported_os: ['linux', 'mac'] };",
+    ].join('\n'));
+
+    const ranBare = await runCommand(command, ['-i', 'lo0', bare, '--', '8.8.8.8']);
+
+    assert.equal(ranBare.status, 0, ranBare.stderr);
+    assert.deepEqual(JSON.parse(ranBare.stdout), { target: '8.8.8.8', iface: 'lo0', bytes: 36, hasNamespace: 'object' });
+
+    const bareElsewhere = path.join(directory, 'nowhere.mjs');
+
+    fs.writeFileSync(bareElsewhere, 'function nowhere() { console.log("ran"); }\nnowhere.options = { supported_os: ["plan9"] };\n');
+
+    const refusedBare = await runCommand(command, [bareElsewhere]);
+
+    assert.equal(refusedBare.status, 1);
+    assert.equal(refusedBare.stdout, '');
+    assert.match(refusedBare.stderr, /nowhere\.mjs supports plan9, this system is/);
   });
 };
 

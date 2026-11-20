@@ -13,6 +13,7 @@ fail() {
 case "$(uname -s)" in
   Linux) system="linux" ;;
   Darwin) system="macos" ;;
+  CYGWIN* | MINGW* | MSYS* | Windows_NT) fail "On Windows, download otw-windows-x64.exe from $RELEASES and install Npcap (https://npcap.com) for capture. Or, with Node.js: npm install --global over-the-wire" ;;
   *) fail "There is no standalone otw for $(uname -s). With Node.js installed: npm install --global over-the-wire" ;;
 esac
 
