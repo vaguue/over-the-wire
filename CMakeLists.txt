@@ -67,8 +67,8 @@ if(PCAP_ROOT)
 endif()
 
 if(DEFINED ENV{OVER_THE_WIRE_PORTABLE} AND NOT WIN32 AND NOT APPLE)
-  message("Portable build: libstdc++ and libgcc are linked statically")
-  target_link_options(${PROJECT_NAME} PRIVATE -static-libstdc++ -static-libgcc)
+  message("Portable build: libstdc++ and libgcc are linked statically, symbols are stripped")
+  target_link_options(${PROJECT_NAME} PRIVATE -static-libstdc++ -static-libgcc -s)
 endif()
 
 # PcapPlusPlus
