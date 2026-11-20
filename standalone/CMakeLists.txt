@@ -57,7 +57,7 @@ if(NODE_SOURCE_DIR)
   set_source_files_properties(${NODE_SNAPSHOT} PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
 
   if(APPLE)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${NODE_ARCHIVES} ${NODE_ARCHIVES} "-framework CoreFoundation" "-framework Security")
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${NODE_ARCHIVES} "-framework CoreFoundation" "-framework Security")
   else()
     target_link_libraries(${PROJECT_NAME} PRIVATE -Wl,--start-group ${NODE_ARCHIVES} -Wl,--end-group -pthread -ldl -lm -static-libstdc++ -static-libgcc)
     target_link_options(${PROJECT_NAME} PRIVATE -rdynamic)
