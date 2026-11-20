@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import otw, { Packet, FilterBuilder, http, tcp } from '#lib/index';
+import otw, { Packet, FilterBuilder, http, tcp, sendOverHttp } from '#lib/index';
 import { HTTP } from '#lib/layers/HTTP';
 
 const STARTUP_CAPTURE = path.join(path.dirname(fileURLToPath(import.meta.url)), 'data', 'startup.pcapng');
@@ -209,4 +209,112 @@ test('requests and responses are found in a real capture', async () => {
 
   assert.equal(messages.length, 28);
   assert.deepEqual(messages.slice(0, 2), ['GET /ping', '301 Moved Permanently']);
+});
+
+
+const overASocket = (exchange, port) => {
+  const connection = net.connect(port, '127.0.0.1');
+
+  connection.on('data', (chunk) => {
+    exchange.deliver(chunk);
+  });
+
+  connection.on('end', () => {
+    exchange.end();
+  });
+
+  exchange.requestBytes().then((bytes) => {
+    connection.write(bytes);
+  });
+
+  return connection;
+};
+
+test('the Sans-IO driver produces request bytes and parses the reply over any transport', async () => {
+  const seen = [];
+
+  const server = nodeHttp.createServer((request, response) => {
+    const body = [];
+    request.on('data', (chunk) => {
+      body.push(chunk);
+    });
+    request.on('end', () => {
+      seen.push({ method: request.method, url: request.url, body: Buffer.concat(body).toString() });
+      response.writeHead(201, 'Created', { 'content-type': 'text/plain' });
+      response.end(`answer for ${request.url}`);
+    });
+  });
+
+  await new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', resolve);
+  });
+
+  try {
+    const { port } = server.address();
+
+    const get = otw().http(`http://127.0.0.1:${port}/thing?q=1`, { headers: { host: `127.0.0.1:${port}` } });
+    const requestBytes = await get.requestBytes();
+
+    assert.match(requestBytes.toString(), /^GET \/thing\?q=1 HTTP\/1\.1\r\n/);
+    assert.match(requestBytes.toString(), /connection: close\r\n/);
+
+    const getConnection = overASocket(get, port);
+    const getResponse = await get.response;
+    getConnection.end();
+
+    assert.equal(getResponse.status, 201);
+    assert.equal(getResponse.reason, 'Created');
+    assert.equal(getResponse.httpVersion, '1.1');
+    assert.equal(getResponse.headers['content-type'], 'text/plain');
+    assert.equal(getResponse.body.toString(), 'answer for /thing?q=1');
+
+    const post = sendOverHttp(`http://127.0.0.1:${port}/submit`, {
+      method: 'POST',
+      headers: { host: `127.0.0.1:${port}`, 'content-type': 'text/plain' },
+      body: 'over the wire',
+    });
+
+    const postConnection = overASocket(post, port);
+    const postResponse = await post.response;
+    postConnection.end();
+
+    assert.equal(postResponse.status, 201);
+    assert.equal(postResponse.body.toString(), 'answer for /submit');
+    assert.deepEqual(seen, [
+      { method: 'GET', url: '/thing?q=1', body: '' },
+      { method: 'POST', url: '/submit', body: 'over the wire' },
+    ]);
+  }
+  finally {
+    server.close();
+  }
+});
+
+test('the driver opens no socket of its own: the bytes wait for a transport', async () => {
+  const exchange = otw().http('http://10.0.0.2/never', { headers: { host: '10.0.0.2' } });
+  const requestBytes = await exchange.requestBytes();
+
+  assert.match(requestBytes.toString(), /^GET \/never HTTP\/1\.1\r\n/);
+  assert.equal(exchange.transport.listening, undefined);
+
+  let settled = false;
+  exchange.response.then(() => {
+    settled = true;
+  }, () => {
+    settled = true;
+  });
+
+  await new Promise((resolve) => {
+    setTimeout(resolve, 50);
+  });
+
+  assert.equal(settled, false);
+
+  exchange.deliver(Buffer.from('HTTP/1.1 204 No Content\r\ncontent-length: 0\r\n\r\n'));
+  exchange.end();
+
+  const response = await exchange.response;
+
+  assert.equal(response.status, 204);
+  assert.equal(response.body.length, 0);
 });
