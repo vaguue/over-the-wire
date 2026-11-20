@@ -156,9 +156,8 @@ test('the shell settles what is typed before printing it', async () => {
   }
 });
 
-test('the banner carries the version and the interface', () => {
-  const text = banner({ version: '1.2.3', iface: null });
-
-  assert.ok(text.includes('over-the-wire 1.2.3'));
-  assert.ok(text.includes('chosen by the routing table'));
+test('the banner carries the version, and the interface when one is bound', () => {
+  assert.ok(banner({ version: '1.2.3', iface: null }).includes('over-the-wire 1.2.3'));
+  assert.ok(banner({ version: '1.2.3', iface: 'en0' }).includes('on en0'));
+  assert.ok(!banner({ version: '1.2.3', iface: null }).includes('on '));
 });
