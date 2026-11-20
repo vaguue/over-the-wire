@@ -86,7 +86,7 @@ test('the other messages of the exchange keep their fields', () => {
   const reply = new SSH(new SSH({ type: ssh.MSG_KEX_ECDH_REPLY, hostKey: Buffer.from('key'), publicKey, signature: Buffer.from('signed') }).buffer);
   const goodbye = new SSH(new SSH({ type: ssh.MSG_DISCONNECT, reason: ssh.DISCONNECT_BY_APPLICATION, description: 'done' }).buffer);
   const newKeys = new SSH(new SSH({ type: ssh.MSG_NEWKEYS }).buffer);
-  const unknown = new SSH(new SSH({ type: ssh.MSG_CHANNEL_DATA, data: Buffer.from([1, 2, 3]) }).buffer);
+  const unknown = new SSH(new SSH({ type: ssh.MSG_REQUEST_SUCCESS, data: Buffer.from([1, 2, 3]) }).buffer);
 
   assert.deepEqual(init.publicKey, publicKey);
   assert.equal(reply.hostKey.toString(), 'key');
@@ -96,6 +96,87 @@ test('the other messages of the exchange keep their fields', () => {
   assert.equal(newKeys.buffer.length, 16);
   assert.deepEqual([...unknown.data], [1, 2, 3]);
   assert.equal(goodbye.toObject().typeName, 'DISCONNECT');
+});
+
+test('the header of a binary packet is a struct, absent from what is not a packet', () => {
+  const newKeys = new SSH({ type: ssh.MSG_NEWKEYS });
+
+  assert.equal(newKeys.packetLength, 12);
+  assert.equal(newKeys.paddingLength, 10);
+  assert.equal(newKeys.type, ssh.MSG_NEWKEYS);
+  assert.equal(SSH.prototype.config.length, 6);
+
+  const line = new SSH({ softwareVersion: 'probe_1.0' });
+
+  assert.equal(line.type, undefined);
+  assert.equal(line.packetLength, undefined);
+  assert.deepEqual(Object.keys(line.toObject()), ['isIdentification', 'encrypted', 'complete', 'identification', 'protocolVersion', 'softwareVersion', 'comments']);
+  assert.throws(() => new SSH(Buffer.from('SSH')), /Invalid buffer length/);
+});
+
+test('logging in: the fields after the method follow the method', () => {
+  const login = { type: ssh.MSG_USERAUTH_REQUEST, user: 'deploy', service: 'ssh-connection' };
+  const byPassword = new SSH(new SSH({ ...login, method: 'password', password: 'secret' }).buffer);
+  const askingAboutKey = new SSH({ ...login, method: 'publickey', hasSignature: true, algorithm: 'ssh-ed25519', publicKey: Buffer.from('blob') });
+  const signedRequest = new SSH(new SSH({ ...login, method: 'publickey', hasSignature: true, algorithm: 'ssh-ed25519', publicKey: Buffer.from('blob'), signature: Buffer.from('sig') }).buffer);
+  const refused = new SSH(new SSH({ type: ssh.MSG_USERAUTH_FAILURE, methods: ['publickey', 'password'] }).buffer);
+
+  assert.deepEqual(
+    { user: byPassword.user, service: byPassword.service, method: byPassword.method, password: byPassword.password, changesPassword: byPassword.changesPassword },
+    { user: 'deploy', service: 'ssh-connection', method: 'password', password: 'secret', changesPassword: false },
+  );
+
+  assert.equal(new SSH(askingAboutKey.buffer).signature, undefined);
+  assert.equal(signedRequest.signature.toString(), 'sig');
+  assert.equal(signedRequest.algorithm, 'ssh-ed25519');
+  assert.deepEqual([...signedRequest.payload.subarray(0, askingAboutKey.payload.length)], [...askingAboutKey.payload]);
+  assert.deepEqual(refused.methods, ['publickey', 'password']);
+  assert.equal(refused.partialSuccess, false);
+});
+
+test('channels: a session, a command, its output and its exit status', () => {
+  const open = new SSH(new SSH({ type: ssh.MSG_CHANNEL_OPEN, channelType: 'session', senderChannel: 3, windowSize: 2097152, maximumPacketSize: 32768 }).buffer);
+  const exec = new SSH(new SSH({ type: ssh.MSG_CHANNEL_REQUEST, recipientChannel: 5, request: 'exec', wantReply: true, command: 'uptime' }).buffer);
+  const output = new SSH(new SSH({ type: ssh.MSG_CHANNEL_DATA, recipientChannel: 3, data: Buffer.from('up 12 days') }).buffer);
+  const errors = new SSH(new SSH({ type: ssh.MSG_CHANNEL_EXTENDED_DATA, recipientChannel: 3, dataType: ssh.EXTENDED_DATA_STDERR, data: Buffer.from('oops') }).buffer);
+  const exit = new SSH(new SSH({ type: ssh.MSG_CHANNEL_REQUEST, recipientChannel: 3, request: 'exit-status', exitStatus: 7 }).buffer);
+  const unknownRequest = new SSH(new SSH({ type: ssh.MSG_CHANNEL_REQUEST, recipientChannel: 3, request: 'keepalive@openssh.com', wantReply: true, data: Buffer.from([9]) }).buffer);
+
+  assert.deepEqual(
+    { channelType: open.channelType, senderChannel: open.senderChannel, windowSize: open.windowSize, maximumPacketSize: open.maximumPacketSize },
+    { channelType: 'session', senderChannel: 3, windowSize: 2097152, maximumPacketSize: 32768 },
+  );
+
+  assert.deepEqual({ request: exec.request, wantReply: exec.wantReply, command: exec.command }, { request: 'exec', wantReply: true, command: 'uptime' });
+  assert.equal(output.data.toString(), 'up 12 days');
+  assert.equal(errors.dataType, 1);
+  assert.equal(errors.data.toString(), 'oops');
+  assert.equal(exit.exitStatus, 7);
+  assert.equal(exit.complete, true);
+  assert.deepEqual([...unknownRequest.data], [9]);
+});
+
+test('a packet sealed by an AEAD cipher: padded without the length, taken with its tag', () => {
+  const plain = new SSH({ type: ssh.MSG_SERVICE_REQUEST, service: 'ssh-userauth', blockSize: 16, blockCoversLength: false });
+
+  assert.equal(plain.packetLength % 16, 0);
+  assert.equal(new SSH(plain.buffer).service, 'ssh-userauth');
+  assert.equal(new SSH(plain.buffer).encrypted, false);
+
+  const tag = Buffer.alloc(16, 0xee);
+  const following = new SSH({ type: ssh.MSG_NEWKEYS }).buffer;
+  const stream = Buffer.concat([plain.buffer, tag, following]);
+  const taken = SSH.take(stream, { trailerLength: tag.length });
+
+  assert.deepEqual([...taken.message.buffer], [...plain.buffer]);
+  assert.deepEqual(taken.trailer, tag);
+  assert.deepEqual(taken.rest, following);
+
+  const waiting = SSH.take(stream.subarray(0, plain.buffer.length + 3), { trailerLength: tag.length });
+
+  assert.equal(waiting.message, null);
+  assert.equal(waiting.rest.length, plain.buffer.length + 3);
+  assert.deepEqual(SSH.strings(Buffer.concat([SSH.string('ssh-ed25519'), SSH.string(Buffer.from([1, 2]))])).map(String), ['ssh-ed25519', '\u0001\u0002']);
 });
 
 test('the encodings of the exchange hash', () => {
@@ -134,10 +215,14 @@ test('under TCP every message of a segment is its own layer', () => {
   assert.deepEqual(parsed.layers.SSH[1].kexAlgorithms, ['curve25519-sha256']);
 
   const onAnotherPort = segmentCarrying(new SSH({ softwareVersion: 'elsewhere' }).buffer, { src: 40000, dst: 2222 });
-  assert.equal(onAnotherPort.layers.SSH.softwareVersion, 'elsewhere');
+  assert.deepEqual(Object.keys(onAnotherPort.layers), ['Ethernet', 'IPv4', 'TCP', 'Payload']);
 
-  const binaryOnAnotherPort = segmentCarrying(new SSH(offer).buffer, { src: 40000, dst: 2222 });
-  assert.deepEqual(Object.keys(binaryOnAnotherPort.layers), ['Ethernet', 'IPv4', 'TCP', 'Payload']);
+  const withoutData = new Packet({ iface: ETHERNET })
+    .ethernet()
+    .ipv4({ src: '10.0.0.1', dst: '10.0.0.2' })
+    .tcp({ src: 40000, dst: ssh.PORT, flags: { ack: 1 } });
+
+  assert.equal(new Packet({ buffer: withoutData.buffer, iface: ETHERNET }).layers.SSH, undefined);
 });
 
 test('what cannot be read as a packet is kept as encrypted bytes', () => {
@@ -195,9 +280,11 @@ const freePort = () => {
 const startThrowawayServer = async (directory) => {
   const sshd = SSHD_LOCATIONS.find(location => fs.existsSync(location));
   const hostKey = path.join(directory, 'host_key');
-  const keygen = spawnSync('ssh-keygen', ['-q', '-t', 'ed25519', '-N', '', '-f', hostKey], { encoding: 'utf8' });
+  const userKey = path.join(directory, 'user_key');
+  const strangerKey = path.join(directory, 'stranger_key');
+  const keygen = [hostKey, userKey, strangerKey].map(file => spawnSync('ssh-keygen', ['-q', '-t', 'ed25519', '-N', '', '-f', file], { encoding: 'utf8' }));
 
-  if (sshd === undefined || keygen.status !== 0) {
+  if (sshd === undefined || keygen.some(({ status }) => status !== 0)) {
     return { unavailable: 'sshd and ssh-keygen are needed' };
   }
 
@@ -210,6 +297,9 @@ const startThrowawayServer = async (directory) => {
     '-p', String(port),
     '-o', `ListenAddress=${LOOPBACK}`,
     '-o', 'PidFile=none',
+    '-o', `AuthorizedKeysFile=${userKey}.pub`,
+    '-o', 'StrictModes=no',
+    '-o', 'PasswordAuthentication=no',
   ]);
 
   const log = [];
@@ -234,21 +324,35 @@ const startThrowawayServer = async (directory) => {
 
   const fingerprint = spawnSync('ssh-keygen', ['-lf', `${hostKey}.pub`], { encoding: 'utf8' }).stdout.split(' ')[1];
 
-  return { server, port, fingerprint, log };
+  return { server, port, fingerprint, log, userKey, strangerKey };
 };
 
 const recipeScript = (directory) => {
-  const recipe = fs.readFileSync(path.join(PACKAGE_ROOT, 'recipes', 'ssh-keyscan.md'), 'utf8');
+  const recipe = fs.readFileSync(path.join(PACKAGE_ROOT, 'recipes', 'ssh.md'), 'utf8');
   const [, code] = recipe.match(/```javascript\n([\s\S]*?)```/);
-  const script = path.join(directory, 'ssh-keyscan.mjs');
+  const script = path.join(directory, 'ssh.mjs');
 
   fs.writeFileSync(script, code);
   return script;
 };
 
-test('a real sshd: the recipe exchanges keys with it and verifies its host key', async (t) => {
+const runRecipe = (directory, port, command, env = {}) => {
+  return spawnSync(process.execPath, [
+    path.join(PACKAGE_ROOT, 'bin', 'otw.js'),
+    recipeScript(directory),
+    `${os.userInfo().username}@${LOOPBACK}:${port}`,
+    command,
+  ], {
+    encoding: 'utf8',
+    timeout: 30000,
+    maxBuffer: 16 * 1024 * 1024,
+    env: { ...process.env, ...env },
+  });
+};
+
+test('a real sshd: the recipe logs in, runs a command and prints its output', async (t) => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'otw-ssh-'));
-  const { unavailable, server, port, fingerprint, log } = await startThrowawayServer(directory);
+  const { unavailable, server, port, fingerprint, log, userKey, strangerKey } = await startThrowawayServer(directory);
 
   if (unavailable !== undefined) {
     fs.rmSync(directory, { recursive: true });
@@ -257,24 +361,28 @@ test('a real sshd: the recipe exchanges keys with it and verifies its host key',
   }
 
   try {
-    const scan = spawnSync(process.execPath, [path.join(PACKAGE_ROOT, 'bin', 'otw.js'), recipeScript(directory), LOOPBACK, String(port)], {
-      encoding: 'utf8',
-      timeout: 20000,
-    });
+    const ran = runRecipe(directory, port, 'echo over $((40 + 2)) wires; echo to stderr >&2; exit 7', { SSH_KEY: userKey });
 
-    assert.equal(scan.status, 0, scan.stderr);
+    assert.equal(ran.stdout, 'over 42 wires\n', ran.stderr);
+    assert.equal(ran.status, 7);
 
-    const report = Object.fromEntries(scan.stdout.trim().split('\n').map((line) => {
-      const [, name, value] = line.match(/^(.+?)\s{2,}(.*)$/);
-      return [name, value];
-    }));
+    const [aboutTheServer, ...errorOutput] = ran.stderr.trim().split('\n');
 
-    assert.match(report.server, /^OpenSSH_/);
-    assert.equal(report['host key'], `ssh-ed25519 ${fingerprint}`);
-    assert.equal(report.signature, 'verified');
-    assert.equal(report['new keys'], 'accepted');
-    assert.ok(report.kex.split(' ').includes('curve25519-sha256'));
-    assert.ok(report.ciphers.split(' ').includes('aes128-ctr'));
+    assert.match(aboutTheServer, /^OpenSSH_\S+, host key ssh-ed25519 SHA256:/);
+    assert.ok(aboutTheServer.endsWith(fingerprint));
+    assert.deepEqual(errorOutput, ['to stderr']);
+
+    const large = runRecipe(directory, port, 'head -c 5000000 /dev/zero | tr "\\0" x', { SSH_KEY: userKey });
+
+    assert.equal(large.status, 0, large.stderr);
+    assert.equal(large.stdout.length, 5000000);
+    assert.ok(/^x+$/.test(large.stdout));
+
+    const stranger = runRecipe(directory, port, 'echo never', { SSH_KEY: strangerKey });
+
+    assert.equal(stranger.stdout, '');
+    assert.notEqual(stranger.status, 0);
+    assert.match(stranger.stderr, /Not logged in as .+, the server accepts: publickey/);
 
     await new Promise((resolve) => {
       setTimeout(resolve, 200);
