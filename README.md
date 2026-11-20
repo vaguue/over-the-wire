@@ -34,6 +34,7 @@ Familiar tools rewritten as short scripts, and a few everyday tasks. They live i
 - [`arping`](./recipes/arping.md)
 - [`tcpdump`](./recipes/tcpdump.md)
 - [`nmap -sS`](./recipes/syn-scan.md)
+- [`ssh`: run a command on a server](./recipes/ssh.md)
 - [Did my handshake get an answer?](./recipes/handshake-answered.md)
 - [Send a packet and wait for the reply](./recipes/send-and-wait.md)
 - [Capture traffic into a pcapng file](./recipes/capture-to-file.md)

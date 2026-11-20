@@ -17,6 +17,9 @@
   "syn-scan": {
     "title": "nmap -sS"
   },
+  "ssh": {
+    "title": "ssh: run a command on a server"
+  },
   "handshake-answered": {
     "title": "Did my handshake get an answer?"
   },
