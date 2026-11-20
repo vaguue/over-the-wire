@@ -34,6 +34,7 @@ Familiar tools rewritten as short scripts, and a few everyday tasks. They live i
 - [`arping`](./recipes/arping.md)
 - [`tcpdump`](./recipes/tcpdump.md)
 - [`nmap -sS`](./recipes/syn-scan.md)
+- [Bluetooth Low Energy devices advertising nearby](./recipes/bluetooth-advertisers.md)
 - [Did my handshake get an answer?](./recipes/handshake-answered.md)
 - [Send a packet and wait for the reply](./recipes/send-and-wait.md)
 - [Capture traffic into a pcapng file](./recipes/capture-to-file.md)
@@ -180,6 +181,28 @@ wire.filter().icmp({ type: [icmp.ECHO_REPLY, icmp.TIME_EXCEEDED] });
 wire.packet().ipv4({ dst }).udp({ src: 40000, dst: dns.PORT }).dns({ questions: [{ name, type: dns.TYPE_A }] });
 wire.packet().ethernet({ dst: ethernet.BROADCAST }).arp({ opcode: arp.WHO_HAS, protocolDst: dst });
 ```
+
+### Bluetooth
+
+`otw('bluetooth0')` is a wire for a Bluetooth adapter, named by its capture interface the way `otw('en0')` names an Ethernet one (`otw('hci0')` is accepted as the same adapter, `bluetooth1`/`hci1` for the next). Its packets start at HCI, the interface between a host and its controller:
+
+```javascript
+import otw, { att, hcievent } from 'over-the-wire';
+
+const wire = otw('bluetooth0');
+
+const write = await wire.packet()
+  .hci()
+  .acl({ handle: 0x40 })
+  .l2cap()
+  .att({ opcode: att.WRITE_REQUEST, handle: 0x25, value: Buffer.from([1]) });
+
+const notifications = wire.filter().att({ opcode: att.HANDLE_VALUE_NOTIFICATION });
+```
+
+- Layers: `HCI` (with `HCIDirection` in front in Linux captures), `HCICommand`, `HCIEvent`, `ACL`, `L2CAP`, `ATT`. An `HCIEvent` that reports advertising has `advertisingReports`: address, signal strength, name and raw data of every device heard.
+- Capture files with Bluetooth link types are read and written everywhere.
+- What the system allows differs, and the wire says so instead of failing in a strange way: `wire.supports('capture')`, and a rejection with code `ENOTSUPPORTED` and the reason. Live capture works on Linux (`bluetooth0`), and rejects with `ENODEVICE` when there is no adapter. macOS and Windows give applications no access to HCI. Sending is not available yet on any system: libpcap does not inject on Bluetooth devices, it needs an HCI socket.
 
 `otw docs` lists the protocols, `otw docs icmp` prints the fields and constants of one.
 
