@@ -15,28 +15,33 @@ otw> p = wire.p.ipv4({ dst: 'github.com' }).icmp()
 <Packet eth0 | 50 bytes | Ethernet 8e:72:8c:0e:83:21 > 2a:f8:9a:39:49:72 / IPv4 172.17.0.3 > 4.158.254.48 / ICMP>
 otw> r = wire.s(p).ex()
 <Packet eth0 | 50 bytes | Ethernet 2a:f8:9a:39:49:72 > 8e:72:8c:0e:83:21 / IPv4 4.158.254.48 > 172.17.0.3 / ICMP>
-otw> r.layers.IPv4.src
+otw> r.ipv4.src
 '4.158.254.48'
 ```
 
 1. `wire.p` starts a packet. Only what matters is written: the destination and the kind of message. The shell awaits the description, so the name is looked up, the route is found, and the addresses and the Ethernet layer are filled in the way the host would send it.
 2. `wire.s(p)` sends it and `.ex()` waits for the answer to it: here the echo reply with the same identifier and sequence number.
-3. The answer is a packet too, read layer by layer.
+3. The answer is a packet too, read layer by lowercase layer: `r.ipv4`, `r.icmp`.
 
-The same as a script:
+A ping of your own in a few lines — one echo request a second, each answer timed, the Node.js way:
 
 ```javascript
-import otw from 'over-the-wire';
+import otw, { icmp } from 'over-the-wire';
 
 const wire = otw();
+const host = process.argv[2] ?? 'github.com';
+let sequence = 0;
 
-const reply = await wire
-  .send(wire.packet().ipv4({ dst: 'github.com' }).icmp())
-  .expect();
+setInterval(async () => {
+  const sentAt = Date.now();
+  const reply = await wire
+    .send(wire.packet().ipv4({ dst: host }).icmp({ id: process.pid & 0xffff, sequence: ++sequence }))
+    .expect({ timeout: 1000 });
 
-console.log(reply === null ? 'no answer' : reply.layers.IPv4.src);
-
-wire.close();
+  console.log(reply === null
+    ? `${host} seq=${sequence} timed out`
+    : `${host} seq=${sequence} ${Date.now() - sentAt} ms ttl=${reply.ipv4.timeToLive}`);
+}, 1000);
 ```
 
 The session above is recorded in [`assets/demo.cast`](./assets/demo.cast): `asciinema play assets/demo.cast`.
@@ -252,7 +257,7 @@ In the shell and in a script run through `otw`, `wire` and the protocol namespac
 The shell awaits what you type: a packet description is resolved and printed, a send is delivered. A plain assignment keeps the settled value, so after `r = wire.s(p).ex()` the name `r` is the answer, not a promise. Packets print as a one-line summary, layers as their fields:
 
 ```
-otw> r.layers.Ethernet
+otw> r.ethernet
 Ethernet { dst: '8e:72:8c:0e:83:21', src: '2a:f8:9a:39:49:72', type: 2048 }
 ```
 

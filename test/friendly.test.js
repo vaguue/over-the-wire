@@ -241,8 +241,10 @@ test('the banner shows the logo with or without colours', () => {
   assert.ok(!plain.includes('\x1b['));
   assert.deepEqual(logo().map(row => row.trimEnd()), plain.split('\n').map(line => line.slice(0, SPIDER[0].length).trimEnd()));
   assert.ok(plain.includes('over-the-wire 1.2.3'));
-  assert.ok(plain.includes('interface: en0'));
+  assert.ok(plain.includes('on en0'));
   assert.ok(plain.includes("p = wire.p.ipv4({ dst: 'github.com' }).icmp()"));
+  assert.ok(plain.includes('r.ipv4.src'));
+  assert.ok(!banner({ version: '1.2.3' }).includes('on '));
   assert.ok(painted.includes(RED));
   assert.ok(painted.includes(DIM));
   assert.equal(painted.split('\n').length, SPIDER.length);

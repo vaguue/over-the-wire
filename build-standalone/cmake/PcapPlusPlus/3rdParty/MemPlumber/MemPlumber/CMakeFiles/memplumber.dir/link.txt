@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmemplumber.a CMakeFiles/memplumber.dir/memplumber.cpp.o
-/usr/bin/ranlib libmemplumber.a
