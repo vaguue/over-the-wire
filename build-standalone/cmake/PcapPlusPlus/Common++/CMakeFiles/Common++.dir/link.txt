@@ -1,0 +1,2 @@
+/usr/bin/ar qc libCommon++.a CMakeFiles/Common++.dir/src/GeneralUtils.cpp.o CMakeFiles/Common++.dir/src/IpAddress.cpp.o CMakeFiles/Common++.dir/src/IpUtils.cpp.o CMakeFiles/Common++.dir/src/Logger.cpp.o CMakeFiles/Common++.dir/src/MacAddress.cpp.o CMakeFiles/Common++.dir/src/OUILookup.cpp.o CMakeFiles/Common++.dir/src/PcapPlusPlusVersion.cpp.o CMakeFiles/Common++.dir/src/SystemUtils.cpp.o CMakeFiles/Common++.dir/src/TablePrinter.cpp.o
+/usr/bin/ranlib libCommon++.a

@@ -7,6 +7,40 @@
 
 *The project is currently under active development.*
 
+Packets from JavaScript: describe one, send it, read the answer.
+
+```
+$ sudo otw
+otw> p = wire.p.ipv4({ dst: 'github.com' }).icmp()
+<Packet eth0 | 50 bytes | Ethernet 8e:72:8c:0e:83:21 > 2a:f8:9a:39:49:72 / IPv4 172.17.0.3 > 4.158.254.48 / ICMP>
+otw> r = wire.s(p).ex()
+<Packet eth0 | 50 bytes | Ethernet 2a:f8:9a:39:49:72 > 8e:72:8c:0e:83:21 / IPv4 4.158.254.48 > 172.17.0.3 / ICMP>
+otw> r.layers.IPv4.src
+'4.158.254.48'
+```
+
+1. `wire.p` starts a packet. Only what matters is written: the destination and the kind of message. The shell awaits the description, so the name is looked up, the route is found, and the addresses and the Ethernet layer are filled in the way the host would send it.
+2. `wire.s(p)` sends it and `.ex()` waits for the answer to it: here the echo reply with the same identifier and sequence number.
+3. The answer is a packet too, read layer by layer.
+
+The same as a script:
+
+```javascript
+import otw from 'over-the-wire';
+
+const wire = otw();
+
+const reply = await wire
+  .send(wire.packet().ipv4({ dst: 'github.com' }).icmp())
+  .expect();
+
+console.log(reply === null ? 'no answer' : reply.layers.IPv4.src);
+
+wire.close();
+```
+
+The session above is recorded in [`assets/demo.cast`](./assets/demo.cast): `asciinema play assets/demo.cast`.
+
 ## Overview
 `over-the-wire` is a Node.js packet manipulation library supporting:
 - Packet crafting and parsing
@@ -14,16 +48,19 @@
 - Parsing and serializing pcap and pcapng file formats
 - Creating custom non-TCP/UDP socket instances
 
-## System Requirements
-- Libpcap/WinPcap/Npcap library installed (if Wireshark is installed on your system, you are good to go)
-- Node.js 18 or higher. The package is an ES module: use `import`. `require('over-the-wire')` works on Node.js versions that can load ES modules through `require` (20.19+, 22.12+) and returns the module namespace, so the callable is `require('over-the-wire').default`.
-- C++ compiler, if there are no prebuilt bindings for your system
-
 ## Installation
 
 ```bash
 npm install over-the-wire --save
 ```
+
+`npm install --global over-the-wire` puts the `otw` command on the path; without that it runs as `npx over-the-wire`.
+
+## System Requirements
+- Libpcap/WinPcap/Npcap library installed (if Wireshark is installed on your system, you are good to go)
+- Node.js 18 or higher. The package is an ES module: use `import`. `require('over-the-wire')` works on Node.js versions that can load ES modules through `require` (20.19+, 22.12+) and returns the module namespace, so the callable is `require('over-the-wire').default`.
+- C++ compiler, if there are no prebuilt bindings for your system
+- Capturing and sending need the same privileges as tcpdump, so run with `sudo` unless your user can already open capture devices.
 
 ## Recipes
 Familiar tools rewritten as short scripts, and a few everyday tasks. They live in [`recipes/`](./recipes) and are the first chapter of the [documentation](https://vaguue.github.io/over-the-wire/):
@@ -40,7 +77,7 @@ Familiar tools rewritten as short scripts, and a few everyday tasks. They live i
 - [Read a capture file](./recipes/read-capture-file.md)
 - [Craft a packet byte for byte](./recipes/craft-by-hand.md)
 
-## Getting started
+## A complete script
 This is traceroute, written with the Node.js standard library and over-the-wire. Each probe is described from the IP layer up; the interface, the source addresses and the gateway's link-layer address are filled in the way the host would send it. The script waits for each answer with a timeout and saves the whole exchange to a pcapng file.
 
 ```javascript
@@ -119,6 +156,7 @@ const pkt = await wire.packet()
 console.log(pkt.iface.name, pkt.layers.Ethernet.dst, pkt.layers.IPv4.src);
 ```
 
+- A destination can be a host name: `.ipv4({ dst: 'github.com' })` is looked up when the packet is awaited.
 - Anything set explicitly is kept as written.
 - Without `await`, nothing is looked up: `.build()` and `.buffer` give the packet exactly as described, and writing the un-awaited builder to a device sends that.
 - `otw({ iface: 'en0' })` binds the context to one interface. Lookups are cached per context for a few seconds, `wire.flush()` drops them.
@@ -166,6 +204,18 @@ const reply = await wire
   .expect(wire.filter().udp({ src: 51820 }), { timeout: 2000 });
 ```
 
+Without a filter, `.expect()` waits for the answer to the packet that was sent:
+
+| Sent | Its answer |
+|---|---|
+| ICMP or ICMPv6 echo request | The echo reply with the same identifier and sequence number, from the destination |
+| TCP segment | A segment from the destination between the same two ports |
+| UDP datagram | A datagram from the destination between the same two ports |
+| ARP who-has | The is-at for the address that was asked about |
+| Any other IP packet | A packet from the destination |
+
+An ICMP error report addressed to the sender (unreachable, time exceeded) also counts as the answer to an IP packet.
+
 `wire.close()` closes the devices opened by `send`.
 
 ### Protocol constants
@@ -199,7 +249,12 @@ otw docs [protocol]              describe a protocol: fields, constants, filter 
 
 In the shell and in a script run through `otw`, `wire` and the protocol namespaces are global, and `import ... from 'over-the-wire'` resolves to the installed package, so the recipes run unchanged with `otw ping.js 8.8.8.8`.
 
-The shell awaits what you type: a packet description is resolved and printed, a send is delivered.
+The shell awaits what you type: a packet description is resolved and printed, a send is delivered. A plain assignment keeps the settled value, so after `r = wire.s(p).ex()` the name `r` is the answer, not a promise. Packets print as a one-line summary, layers as their fields:
+
+```
+otw> r.layers.Ethernet
+Ethernet { dst: '8e:72:8c:0e:83:21', src: '2a:f8:9a:39:49:72', type: 2048 }
+```
 
 ```
 otw> wire.p.ipv4({ dst: '8.8.8.8' }).icmp()
