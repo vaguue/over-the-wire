@@ -17,6 +17,9 @@
   "syn-scan": {
     "title": "nmap -sS"
   },
+  "bluetooth-advertisers": {
+    "title": "Bluetooth Low Energy devices advertising nearby"
+  },
   "handshake-answered": {
     "title": "Did my handshake get an answer?"
   },
