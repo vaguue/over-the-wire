@@ -25,6 +25,16 @@
 npm install over-the-wire --save
 ```
 
+### Without Node.js
+
+`otw` also exists as a single binary with Node.js inside, for machines where installing Node.js is not an option:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/vaguue/over-the-wire/main/install.sh | sh
+```
+
+It is the same command with the same API: the shell, the script runner and `otw docs`. `import ... from 'over-the-wire'` resolves to what is inside the binary. `otw update`, or `.update` in the shell, replaces it with the latest release. Linux (glibc 2.28 or newer) and macOS, x64 and arm64. There is no Windows binary: Npcap cannot be redistributed inside one.
+
 ## Recipes
 Familiar tools rewritten as short scripts, and a few everyday tasks. They live in [`recipes/`](./recipes) and are the first chapter of the [documentation](https://vaguue.github.io/over-the-wire/):
 
@@ -193,20 +203,48 @@ The package installs a command called `otw`. Without a global install it runs as
 otw [options]                    start the interactive shell
 otw [options] <file> [args...]   run a script
 otw docs [protocol]              describe a protocol: fields, constants, filter support
+otw update                       replace this otw with the latest release
 
 -i, --iface <name>               interface to use, otherwise chosen by the routing table
 ```
+
+A script can also export a function, in the manner of k6. `otw` builds the wire from its own options and calls the function with it and with the script's arguments: positional ones by index, options by name.
+
+```javascript
+import { icmp } from 'over-the-wire';
+
+export const options = {
+  supported_os: ['linux', 'mac'],
+};
+
+export default async function (wire, args) {
+  const reply = await wire
+    .send(wire.packet().ipv4({ dst: args[0] }).icmp({ type: icmp.ECHO_REQUEST }))
+    .expect(wire.filter().icmp({ type: icmp.ECHO_REPLY }), { timeout: args.timeout ?? 1000 });
+
+  console.log(reply === null ? 'no reply' : 'answered');
+  wire.close();
+}
+```
+
+```
+otw -i en0 script.js -- 8.8.8.8 -timeout 1000
+```
+
+`options.supported_os` lists the systems the script is written for (`linux`, `mac`, `windows`); on any other `otw` refuses to run it.
 
 In the shell and in a script run through `otw`, `wire` and the protocol namespaces are global, and `import ... from 'over-the-wire'` resolves to the installed package, so the recipes run unchanged with `otw ping.js 8.8.8.8`.
 
 The shell awaits what you type: a packet description is resolved and printed, a send is delivered.
 
+The prompt shows the interface the shell works on and its address.
+
 ```
-otw> wire.p.ipv4({ dst: '8.8.8.8' }).icmp()
+otw(en0):192.168.1.36> wire.p.ipv4({ dst: '8.8.8.8' }).icmp()
 <Packet en0 | 50 bytes | Ethernet 5c:e9:1e:9d:fc:40 > 84:aa:9c:af:3f:71 / IPv4 192.168.1.36 > 8.8.8.8 / ICMP>
-otw> wire.s(_).ex(wire.f.icmp({ type: icmp.ECHO_REPLY }))
+otw(en0):192.168.1.36> wire.s(_).ex(wire.f.icmp({ type: icmp.ECHO_REPLY }))
 <Packet en0 | 50 bytes | Ethernet 84:aa:9c:af:3f:71 > 5c:e9:1e:9d:fc:40 / IPv4 8.8.8.8 > 192.168.1.36 / ICMP>
-otw> .docs icmp
+otw(en0):192.168.1.36> .docs icmp
 ```
 
 Short names for typing: `wire.p` is `wire.packet()`, `wire.f` is `wire.filter()`, `wire.c()` is `wire.capture()`, `wire.s()` is `wire.send()`, and `.ex()` on a send is `.expect()`.

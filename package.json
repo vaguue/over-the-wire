@@ -30,7 +30,8 @@
     "test": "node --test test/*.test.js",
     "test-cov-text": "node --test --experimental-test-coverage test/*.test.js",
     "test-cov": "node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=lcov.info test/*.test.js",
-    "generate-docs": "jsdoc --configure jsdoc.json --verbose"
+    "generate-docs": "jsdoc --configure jsdoc.json --verbose",
+    "standalone-bundle": "node scripts/standalone-bundle.js"
   },
   "imports": {
     "#lib/*": "./lib/*.js"
@@ -74,6 +75,7 @@
     "clean-jsdoc-theme": "^4.3.0",
     "cmake-js": "^7.3.0",
     "cross-env": "^10.1.0",
+    "esbuild": "^0.28.2",
     "jsdoc": "^4.0.4"
   }
 }
