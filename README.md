@@ -33,6 +33,7 @@ Familiar tools rewritten as short scripts, and a few everyday tasks. They live i
 - [`dig`](./recipes/dig.md)
 - [`arping`](./recipes/arping.md)
 - [`tcpdump`](./recipes/tcpdump.md)
+- [Watch HTTP requests and responses](./recipes/http.md)
 - [`nmap -sS`](./recipes/syn-scan.md)
 - [Did my handshake get an answer?](./recipes/handshake-answered.md)
 - [Send a packet and wait for the reply](./recipes/send-and-wait.md)
@@ -180,6 +181,28 @@ wire.filter().icmp({ type: [icmp.ECHO_REPLY, icmp.TIME_EXCEEDED] });
 wire.packet().ipv4({ dst }).udp({ src: 40000, dst: dns.PORT }).dns({ questions: [{ name, type: dns.TYPE_A }] });
 wire.packet().ethernet({ dst: ethernet.BROADCAST }).arp({ opcode: arp.WHO_HAS, protocolDst: dst });
 ```
+
+### HTTP
+
+Sending requests is left to `fetch` and `node:http`: they already do connections, TLS, HTTP/2 and bodies. What the library adds is the view from the wire. A TCP segment that starts an HTTP/1.x message is parsed as an `HTTP` layer, on any port:
+
+```javascript
+const capture = await wire.capture(wire.filter().tcp({ port: http.PORT }));
+
+capture.on('data', (packet) => {
+  const message = packet.layers.HTTP;
+
+  if (message?.isRequest) {
+    console.log(message.method, message.headers.host, message.path);
+  }
+});
+
+await fetch('http://example.com/');
+```
+
+- A request has `method`, `path`, `version`; a response has `status`, `reason`, `version`. Both have `headers` by lowercase name, the `body` bytes of that segment, and `complete`, which is false when the header fields continue in the next segment.
+- `wire.filter().http({ status: { gte: 500 } })` matches in the process.
+- `.http({ method, path, headers, body })` after `.tcp()` builds a request, `.http({ status, headers, body })` a response. `Content-Length` and the reason phrase are filled in.
 
 `otw docs` lists the protocols, `otw docs icmp` prints the fields and constants of one.
 
