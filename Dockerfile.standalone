@@ -1,0 +1,43 @@
+FROM almalinux:8 AS libnode
+RUN dnf install -y --enablerepo=powertools \
+  bison \
+  cmake \
+  flex \
+  gcc-toolset-12 \
+  make \
+  python3.11 \
+  xz \
+  && dnf module install -y nodejs:20/common \
+  && dnf clean all
+ENV PATH=/opt/rh/gcc-toolset-12/root/usr/bin:$PATH
+COPY scripts/static-libpcap.sh /tmp/static-libpcap.sh
+RUN /tmp/static-libpcap.sh /opt/libpcap
+COPY standalone/libnode.sh /tmp/libnode.sh
+ARG JOBS=4
+RUN JOBS=$JOBS /tmp/libnode.sh /opt/libnode
+
+FROM libnode AS build
+ENV CMAKE_PREFIX_PATH=/opt/libpcap
+ENV CMAKE_POLICY_VERSION_MINIMUM=3.5
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --ignore-scripts
+COPY . .
+RUN node scripts/standalone-bundle.js
+RUN cmake -S standalone -B build-standalone/cmake -DNODE_SOURCE_DIR=$(ls -d /opt/libnode/node-v*) \
+  && cmake --build build-standalone/cmake -j$(nproc) \
+  && strip build-standalone/cmake/otw \
+  && mkdir /release \
+  && cp build-standalone/cmake/otw /release/otw-linux-$(node -p process.arch)
+RUN ! ldd /release/otw-linux-* | grep -E 'libpcap|libstdc\+\+|libnode'
+
+FROM debian:11-slim AS runs-without-node
+COPY --from=build /release /release
+COPY standalone/smoke.sh /tmp/smoke.sh
+RUN sh /tmp/smoke.sh /release/otw-linux-* > /smoke.log 2>&1 || (cat /smoke.log && false)
+
+FROM build AS verified
+COPY --from=runs-without-node /smoke.log /checks/debian11.log
+
+FROM scratch
+COPY --from=verified /release/ .

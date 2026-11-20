@@ -213,3 +213,117 @@ jobs:
                 data: await fs.readFile(`./prebuilds/${file}`)
               });
             }
+
+  standalone_linux:
+    needs: [draft_release]
+    name: "Standalone binary, Linux"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Submodule update
+        run: git submodule update --init --recursive
+        shell: bash
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build, with the Node.js build cached between runs
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.standalone
+          outputs: type=local,dest=standalone-release
+          cache-from: type=gha,scope=standalone-${{ matrix.os }}
+          cache-to: type=gha,mode=max,scope=standalone-${{ matrix.os }}
+
+      - name: ls
+        run: ls -la standalone-release
+
+      - name: Upload
+        uses: actions/github-script@v2
+        env:
+          RELEASE_ID: ${{ needs.draft_release.outputs.release_id }}
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const release_id = process.env.RELEASE_ID;
+            const fs = require('fs').promises;
+            const { repo: { owner, repo } } = context;
+
+            for (let file of await fs.readdir('standalone-release')) {
+              console.log('uploading', file);
+
+              await github.repos.uploadReleaseAsset({
+                owner, repo,
+                release_id,
+                name: file,
+                data: await fs.readFile(`./standalone-release/${file}`)
+              });
+            }
+
+  standalone_macos:
+    needs: [draft_release]
+    name: "Standalone binary, macOS"
+    strategy:
+      matrix:
+        os: [macos-latest, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '11.0'
+      CMAKE_POLICY_VERSION_MINIMUM: '3.5'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Submodule update
+        run: git submodule update --init --recursive
+        shell: bash
+
+      - name: Node.js build, cached between runs
+        uses: actions/cache@v4
+        with:
+          path: libnode
+          key: libnode-${{ matrix.os }}-${{ hashFiles('standalone/libnode.sh') }}
+
+      - name: Build Node.js as a static library
+        run: standalone/libnode.sh "$PWD/libnode"
+        shell: bash
+
+      - name: Build
+        run: |
+          npm ci --ignore-scripts
+          npm run standalone-bundle
+          cmake -S standalone -B build-standalone/cmake -DNODE_SOURCE_DIR="$(ls -d "$PWD"/libnode/node-v*)"
+          cmake --build build-standalone/cmake -j"$(sysctl -n hw.ncpu)"
+          strip build-standalone/cmake/otw
+          sh standalone/smoke.sh build-standalone/cmake/otw
+          mkdir standalone-release
+          cp build-standalone/cmake/otw "standalone-release/otw-macos-$(node -p process.arch)"
+        shell: bash
+
+      - name: Upload
+        uses: actions/github-script@v2
+        env:
+          RELEASE_ID: ${{ needs.draft_release.outputs.release_id }}
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const release_id = process.env.RELEASE_ID;
+            const fs = require('fs').promises;
+            const { repo: { owner, repo } } = context;
+
+            for (let file of await fs.readdir('standalone-release')) {
+              console.log('uploading', file);
+
+              await github.repos.uploadReleaseAsset({
+                owner, repo,
+                release_id,
+                name: file,
+                data: await fs.readFile(`./standalone-release/${file}`)
+              });
+            }

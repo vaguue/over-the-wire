@@ -10,3 +10,6 @@ notes.txt
 out
 prebuilds
 scr.sh
+build-standalone
+libnode
+Dockerfile.standalone
