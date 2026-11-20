@@ -17,6 +17,7 @@ Napi::Object Socket::Init(Napi::Env env, Napi::Object exports) {
     InstanceMethod<&Socket::setsockopt>("setsockopt", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&Socket::getsockopt>("getsockopt", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceAccessor<&Socket::getBufferSize, &Socket::setBufferSize>("bufferSize"),
+    InstanceAccessor<&Socket::getBlocking>("blocking"),
     //InstanceMethod<&Socket::ioctl>("ioctl", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&Socket::toHuman>(Napi::Symbol::For(env, "nodejs.util.inspect.custom"), static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&Socket::close>("close", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
@@ -38,6 +39,7 @@ static void IoEvent(uv_poll_t* watcher, int status, int revents) {
 
 Socket::Socket(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Socket>{info}, packets{sendFlags, connected} {
   Napi::Env env = info.Env();
+  bool wantsBlocking = false;
   checkLength(info, 1);
   if (info[0].IsObject()) {
     Napi::Object obj = info[0].As<Napi::Object>();
@@ -51,6 +53,10 @@ Socket::Socket(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Socket>{info},
 
     if (obj.Has("bufferSize")) {
       bufferSize = obj.Get("bufferSize").As<Napi::Number>().Uint32Value();
+    }
+
+    if (obj.Has("blocking")) {
+      wantsBlocking = obj.Get("blocking").ToBoolean().Value();
     }
   }
   else {
@@ -69,6 +75,32 @@ Socket::Socket(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Socket>{info},
   }
 
   initSocket(env);
+
+  if (env.IsExceptionPending()) {
+    return;
+  }
+
+  if (wantsBlocking) {
+    blocking = makeBlocking();
+  }
+}
+
+bool Socket::makeBlocking() {
+#ifdef _WIN32
+  return false;
+#else
+  int descriptorFlags = fcntl(pollfd, F_GETFL, 0);
+
+  if (descriptorFlags < 0) {
+    return false;
+  }
+
+  return fcntl(pollfd, F_SETFL, descriptorFlags & ~O_NONBLOCK) == 0;
+#endif
+}
+
+Napi::Value Socket::getBlocking(const Napi::CallbackInfo& info) {
+  return Napi::Boolean::New(info.Env(), blocking);
 }
 
 void Socket::createSocket(Napi::Env env) {
@@ -279,6 +311,16 @@ Napi::Value Socket::toHuman(const Napi::CallbackInfo& info) {
 void Socket::handleIOEvent(int status, int revents) {
   Napi::HandleScope scope{Env()};
 
+  try {
+    emitIOEvent(status, revents);
+  }
+  catch (const Napi::Error& thrownByListener) {
+    napi_fatal_exception(Env(), thrownByListener.Value());
+  }
+}
+
+void Socket::emitIOEvent(int status, int revents) {
+
   Napi::Object self = this->Value().ToObject();
   Napi::Function emit = self.Get("emit").As<Napi::Function>();
 
@@ -375,6 +417,12 @@ bool Socket::processReq(Napi::Env& env, const Napi::Value&& inputBuf, const Napi
 Napi::Value Socket::write(const Napi::CallbackInfo& info) {
   checkLength(info, 1);
   Napi::Env env = info.Env();
+
+  if (!pollWatcher.get()) {
+    Napi::Error::New(env, "Socket is closed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (info[0].IsArray()) {
     Napi::Array ar = info[0].As<Napi::Array>();
     size_t n = ar.Length();
@@ -400,6 +448,25 @@ Napi::Value Socket::write(const Napi::CallbackInfo& info) {
   }
 
   if (!getFlag(UV_WRITABLE)) {
+    SendStatus sentRightAway = packets.send(pollfd);
+
+    if (sentRightAway == SendStatus::ok) {
+      return Napi::Boolean::New(env, true);
+    }
+
+    if (sentRightAway == SendStatus::fail) {
+      std::string sendError = getSystemError();
+
+      if (packets.size() > 0) {
+        setFlag(UV_WRITABLE, true);
+        pollStart();
+        refForWrite();
+      }
+
+      Napi::Error::New(env, sendError).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
+
     setFlag(UV_WRITABLE, true);
     pollStart();
   }
@@ -407,7 +474,7 @@ Napi::Value Socket::write(const Napi::CallbackInfo& info) {
   refForWrite();
   DEBUG_OUTPUT((std::stringstream{} << "writeRefsCount is " << writeRefsCount).str());
 
-  return env.Undefined();
+  return Napi::Boolean::New(env, false);
 }
 
 void Socket::refForRead() {

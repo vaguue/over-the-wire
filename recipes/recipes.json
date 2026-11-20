@@ -2,6 +2,9 @@
   "ping": {
     "title": "ping"
   },
+  "ping-socket": {
+    "title": "ping through a socket, without capture privileges"
+  },
   "traceroute": {
     "title": "traceroute"
   },

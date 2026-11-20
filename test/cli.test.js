@@ -84,6 +84,17 @@ test('docs for icmp show fields, constants and filter support without colour cod
   assert.throws(() => renderDocs('nope'), { code: 'EUNKNOWNPROTOCOL' });
 });
 
+test('docs for socket list what the wire offers and what this system lacks', () => {
+  const page = renderDocs('socket');
+
+  assert.match(page, /\.inet\(\)\s+AF_INET\s+\d+/);
+  assert.match(page, /\.icmp\(\)\s+IPPROTO_ICMP\s+1/);
+  assert.match(page, /\.broadcast\(value\)\s+SOL_SOCKET \/ SO_BROADCAST/);
+  assert.match(page, /\.timeToLive\(value\)\s+IPPROTO_IP \/ IP_TTL, IPPROTO_IPV6 \/ IPV6_UNICAST_HOPS/);
+  assert.ok(page.includes('socket.unsupported'));
+  assert.ok(renderDocs().includes('otw docs socket'));
+});
+
 test('otw docs and otw --version work as a command', () => {
   const docs = run('docs', 'dns');
 

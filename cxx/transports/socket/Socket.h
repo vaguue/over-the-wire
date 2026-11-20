@@ -28,6 +28,7 @@ namespace OverTheWire::Transports::Socket {
     void initSocket(Napi::Env);
     void pollStart();
     void handleIOEvent(int, int);
+    void emitIOEvent(int, int);
     void setFlag(int, bool);
     void close();
     bool getFlag(int);
@@ -44,6 +45,9 @@ namespace OverTheWire::Transports::Socket {
     Napi::Value ioctl(const Napi::CallbackInfo&);
     Napi::Value toHuman(const Napi::CallbackInfo&);
 
+    Napi::Value getBlocking(const Napi::CallbackInfo&);
+    bool makeBlocking();
+
     Napi::Value getBufferSize(const Napi::CallbackInfo&);
     void setBufferSize(const Napi::CallbackInfo&, const Napi::Value&);
 
@@ -53,6 +57,7 @@ namespace OverTheWire::Transports::Socket {
     void unrefForWrite();
 
     bool connected = false;
+    bool blocking = false;
     std::string boundTo = "";
     std::string connectedTo = "";
     int flags = 0;
