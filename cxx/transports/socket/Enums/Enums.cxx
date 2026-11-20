@@ -47,9 +47,99 @@ Napi::Object InitPorts(Napi::Env env, Napi::Object exports) {
 };
 
 
+Napi::Object InitOptions(Napi::Env env, Napi::Object exports) {
+  ENUM_VALUE(SOL_SOCKET);
+  ENUM_VALUE(SO_REUSEADDR);
+  ENUM_VALUE(SO_KEEPALIVE);
+  ENUM_VALUE(SO_BROADCAST);
+  ENUM_VALUE(SO_SNDBUF);
+  ENUM_VALUE(SO_RCVBUF);
+  ENUM_VALUE(SO_ERROR);
+  ENUM_VALUE(SO_TYPE);
+  ENUM_VALUE(IP_TTL);
+  ENUM_VALUE(IP_TOS);
+  ENUM_VALUE(IP_HDRINCL);
+  ENUM_VALUE(IPV6_UNICAST_HOPS);
+  ENUM_VALUE(IPV6_V6ONLY);
+#ifdef SO_REUSEPORT
+  ENUM_VALUE(SO_REUSEPORT);
+#endif
+#ifdef SO_DONTROUTE
+  ENUM_VALUE(SO_DONTROUTE);
+#endif
+#ifdef SO_BINDTODEVICE
+  ENUM_VALUE(SO_BINDTODEVICE);
+#endif
+#ifdef SO_MARK
+  ENUM_VALUE(SO_MARK);
+#endif
+#ifdef SO_PRIORITY
+  ENUM_VALUE(SO_PRIORITY);
+#endif
+#ifdef IP_BOUND_IF
+  ENUM_VALUE(IP_BOUND_IF);
+#endif
+#ifdef IPV6_BOUND_IF
+  ENUM_VALUE(IPV6_BOUND_IF);
+#endif
+#ifdef IP_UNICAST_IF
+  ENUM_VALUE(IP_UNICAST_IF);
+#endif
+#ifdef IPV6_UNICAST_IF
+  ENUM_VALUE(IPV6_UNICAST_IF);
+#endif
+#ifdef IPV6_HDRINCL
+  ENUM_VALUE(IPV6_HDRINCL);
+#endif
+#ifdef IPV6_TCLASS
+  ENUM_VALUE(IPV6_TCLASS);
+#endif
+#ifdef IP_MTU_DISCOVER
+  ENUM_VALUE(IP_MTU_DISCOVER);
+#endif
+#ifdef IP_DONTFRAG
+  ENUM_VALUE(IP_DONTFRAG);
+#endif
+#ifdef IP_DONTFRAGMENT
+  ENUM_VALUE(IP_DONTFRAGMENT);
+#endif
+#ifdef IP_PMTUDISC_DONT
+  ENUM_VALUE(IP_PMTUDISC_DONT);
+#endif
+#ifdef IP_PMTUDISC_DO
+  ENUM_VALUE(IP_PMTUDISC_DO);
+#endif
+#ifdef IP_PMTUDISC_PROBE
+  ENUM_VALUE(IP_PMTUDISC_PROBE);
+#endif
+#ifdef IP_MTU
+  ENUM_VALUE(IP_MTU);
+#endif
+#ifdef IP_RECVERR
+  ENUM_VALUE(IP_RECVERR);
+#endif
+#ifdef IP_RECVTTL
+  ENUM_VALUE(IP_RECVTTL);
+#endif
+#ifdef SO_TIMESTAMP
+  ENUM_VALUE(SO_TIMESTAMP);
+#endif
+#ifdef F_GETFL
+  ENUM_VALUE(F_GETFL);
+  ENUM_VALUE(F_SETFL);
+  ENUM_VALUE(F_GETFD);
+  ENUM_VALUE(F_SETFD);
+  ENUM_VALUE(O_NONBLOCK);
+  ENUM_VALUE(FD_CLOEXEC);
+#endif
+
+  return exports;
+}
+
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   InitPorts(env, exports);
   InitSystemLocal(env, exports);
+  InitOptions(env, exports);
   return exports;
 }
 

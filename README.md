@@ -29,6 +29,7 @@ npm install over-the-wire --save
 Familiar tools rewritten as short scripts, and a few everyday tasks. They live in [`recipes/`](./recipes) and are the first chapter of the [documentation](https://vaguue.github.io/over-the-wire/):
 
 - [`ping`](./recipes/ping.md)
+- [Path MTU with a raw socket (`tracepath`)](./recipes/path-mtu.md)
 - [`traceroute`](./recipes/traceroute.md)
 - [`dig`](./recipes/dig.md)
 - [`arping`](./recipes/arping.md)
@@ -168,6 +169,28 @@ const reply = await wire
 
 `wire.close()` closes the devices opened by `send`.
 
+### Sockets
+
+`wire.socket()` describes a socket the same way `wire.packet()` describes a packet, and opens it when awaited. The system keeps the lower layers: it routes, fills in the IP header and delivers only what is addressed to the socket.
+
+```javascript
+const description = wire.socket().inet().raw().icmp().dontFragment().timeToLive(3).to({ ip: '8.8.8.8' });
+
+if (description.supports()) {
+  const socket = await description;
+  socket.write(wire.packet().icmp({ type: icmp.ECHO_REQUEST, id: 1, sequence: 1 }));
+  const answer = await socket.expect(() => true, { timeout: 1000 });
+}
+```
+
+- The wire decides what can be described: an IP wire offers `inet()`, `inet6()`, `raw()`, `dgram()`, the protocols (`icmp()`, `icmpv6()`, `udp()`, `tcp()`, `gre()`, `rawIp()`, or `protocol(number)`), the options (`broadcast()`, `reuseAddress()`, `timeToLive(64)`, `headerIncluded()`, `dontFragment()`, ...) and the descriptor flags (`blocking()`, `closeOnExec()`).
+- What can be opened is not a table in the library, the wire asks the system: `description.supports()` tries the described family, type and protocol for this process and remembers the answer, `description.availability()` adds the reason (`Operation not permitted` for a raw socket without root), `wire.socketSupport()` lists every combination. `otw docs socket` prints all of it.
+- The numbers are on the wire, not imported: `wire.sockets.SOL_SOCKET`, `wire.sockets.IPPROTO_ICMP`. `.option(level, name, value)` sets anything that has no name, `socket.socket.fcntl(command, value)` any other descriptor flag.
+- An option the system does not have or refuses never throws. The socket opens without it and `socket.unsupported` says which and why: `[{ option: 'reusePort', reason: 'SO_REUSEPORT is not defined on win32' }]`. An option spelled differently per system, like `dontFragment()`, uses the spelling the system has.
+- A socket that cannot exist at all rejects with a `code`: `ENOTSUPPORTED` when the system has no such family, type or protocol, `ESOCKET` when the system refuses to open it.
+- `otw({ iface: 'en0' }).socket()` binds the socket to that interface where the system allows it.
+- The result is a `SocketStream`: a duplex stream of packets with `expect`, `bind`, `connect`. `wire.close()` closes the sockets the wire opened.
+
 ### Protocol constants
 
 Every protocol has a lowercase namespace with the numbers its fields take, so a script never has to declare them:
@@ -204,12 +227,12 @@ The shell awaits what you type: a packet description is resolved and printed, a 
 ```
 otw> wire.p.ipv4({ dst: '8.8.8.8' }).icmp()
 <Packet en0 | 50 bytes | Ethernet 5c:e9:1e:9d:fc:40 > 84:aa:9c:af:3f:71 / IPv4 192.168.1.36 > 8.8.8.8 / ICMP>
-otw> wire.s(_).ex(wire.f.icmp({ type: icmp.ECHO_REPLY }))
+otw> wire.w(_).ex(wire.f.icmp({ type: icmp.ECHO_REPLY }))
 <Packet en0 | 50 bytes | Ethernet 84:aa:9c:af:3f:71 > 5c:e9:1e:9d:fc:40 / IPv4 8.8.8.8 > 192.168.1.36 / ICMP>
 otw> .docs icmp
 ```
 
-Short names for typing: `wire.p` is `wire.packet()`, `wire.f` is `wire.filter()`, `wire.c()` is `wire.capture()`, `wire.s()` is `wire.send()`, and `.ex()` on a send is `.expect()`.
+Short names for typing: `wire.p` is `wire.packet()`, `wire.f` is `wire.filter()`, `wire.s` is `wire.socket()`, `wire.c()` is `wire.capture()`, `wire.w()` is `wire.send()`, and `.ex()` on a send is `.expect()`.
 
 ## Documentation
 

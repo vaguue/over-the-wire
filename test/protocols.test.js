@@ -146,9 +146,10 @@ test('short names are the same functions as the long ones', () => {
   assert.equal(wire.p.ipv4({ src: '10.0.0.1', dst: '10.0.0.2' }).udp({ src: 1, dst: 2 }).buffer.length, 28);
   assert.equal(String(wire.f.icmp({ type: icmp.ECHO_REPLY })), 'icmp and icmp[icmptype] = 0');
   assert.equal(wire.c, wire.capture);
-  assert.equal(wire.s, wire.send);
+  assert.equal(wire.w, wire.send);
+  assert.equal(String(wire.s.inet6().raw().icmpv6()), 'inet6 raw icmpv6');
 
-  const sending = wire.s(new Packet({ iface: ETHERNET }).ethernet());
+  const sending = wire.w(new Packet({ iface: ETHERNET }).ethernet());
 
   assert.equal(sending.ex, sending.expect);
 });

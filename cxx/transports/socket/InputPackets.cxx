@@ -79,7 +79,7 @@ void InputPacketsIterator::read() {
   h.msg_iovlen = 1;
 
   do {
-    nread = recvmsg(parent.fd, &h, 0);
+    nread = recvmsg(parent.fd, &h, MSG_DONTWAIT);
   } while (nread == -1 && errno == EINTR);
 
   if (nread == -1) {
