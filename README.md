@@ -185,7 +185,7 @@ wire.packet().ethernet({ dst: ethernet.BROADCAST }).arp({ opcode: arp.WHO_HAS, p
 
 Both come from the layer itself: the comments in its struct describe the protocol and its fields, and one `attach.docs(Layer, { constants })` call lists the constants. A layer added with `otw.registerLayer(MyLayer)` gets its namespace in `otw.protocols` and its `otw docs` page the same way.
 
-## The `otw` command
+## The `otw` command [IN DEVELOPMENT]
 
 The package installs a command called `otw`. Without a global install it runs as `npx over-the-wire`.
 
