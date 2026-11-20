@@ -10,3 +10,4 @@ notes.txt
 out
 prebuilds
 scr.sh
+Dockerfile.glibc

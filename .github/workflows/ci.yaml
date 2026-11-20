@@ -33,14 +33,16 @@ jobs:
     name: "Build"
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-2022, macos-latest, ubuntu-24.04-arm]
+        os: [ubuntu-latest, windows-2022, macos-latest, macos-15-intel, ubuntu-24.04-arm]
     runs-on: ${{ matrix.os }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '11.0'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install coreutils for macOS
-        if: matrix.os == 'macos-latest'
+        if: runner.os == 'macOS'
         run: brew install coreutils
 
       - name: Install Zip
@@ -59,7 +61,7 @@ jobs:
           sudo apt-get install -y libpcap-dev
 
       - name: Install libpcap on macOS
-        if: matrix.os == 'macos-latest'
+        if: runner.os == 'macOS'
         run: |
           brew update
           brew install libpcap
@@ -128,7 +130,7 @@ jobs:
         shell: bash
 
       - name: Prebuild
-        if: matrix.os != 'windows-2022'
+        if: runner.os == 'macOS'
         run: |
           npm run precompile
           ls prebuilds
@@ -139,6 +141,7 @@ jobs:
         shell: bash
 
       - name: Upload
+        if: runner.os != 'Linux'
         uses: actions/github-script@v2
         env:
           RELEASE_ID: ${{ needs.draft_release.outputs.release_id }}
@@ -166,12 +169,13 @@ jobs:
               });
             }
 
-  alpine:
+  linux:
     needs: [draft_release]
-    name: "Build Alpine"
+    name: "Build Linux prebuilds"
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm]
+        dockerfile: [Dockerfile, Dockerfile.glibc]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -183,7 +187,7 @@ jobs:
 
       - name: Prebuild
         run: |
-          docker buildx build . --output prebuilds
+          docker buildx build -f ${{ matrix.dockerfile }} . --output prebuilds
           ls prebuilds
 
       - name: Upload
