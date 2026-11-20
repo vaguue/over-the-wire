@@ -34,6 +34,7 @@ Familiar tools rewritten as short scripts, and a few everyday tasks. They live i
 - [`arping`](./recipes/arping.md)
 - [`tcpdump`](./recipes/tcpdump.md)
 - [`nmap -sS`](./recipes/syn-scan.md)
+- [`ssh-keyscan`, with the host key verified](./recipes/ssh-keyscan.md)
 - [Did my handshake get an answer?](./recipes/handshake-answered.md)
 - [Send a packet and wait for the reply](./recipes/send-and-wait.md)
 - [Capture traffic into a pcapng file](./recipes/capture-to-file.md)
@@ -180,6 +181,26 @@ wire.filter().icmp({ type: [icmp.ECHO_REPLY, icmp.TIME_EXCEEDED] });
 wire.packet().ipv4({ dst }).udp({ src: 40000, dst: dns.PORT }).dns({ questions: [{ name, type: dns.TYPE_A }] });
 wire.packet().ethernet({ dst: ethernet.BROADCAST }).arp({ opcode: arp.WHO_HAS, protocolDst: dst });
 ```
+
+### SSH
+
+The `SSH` layer is the transport protocol up to the point where encryption starts: the identification line and the packets of the key exchange, one message per layer.
+
+```javascript
+import { layers, ssh } from 'over-the-wire';
+
+const { SSH } = layers;
+
+connection.write(new SSH({ softwareVersion: 'my_client_1.0' }).buffer);
+connection.write(new SSH({ type: ssh.MSG_KEXINIT, kexAlgorithms: ['curve25519-sha256'], serverHostKeyAlgorithms: ['ssh-ed25519'] }).buffer);
+
+const { messages, rest } = SSH.split(receivedSoFar);
+```
+
+- `SSH.split(bytes)` cuts a byte stream into whole messages and the unfinished rest, which is what a client over a TCP connection needs. The [`ssh-keyscan` recipe](./recipes/ssh-keyscan.md) is such a client: it exchanges keys with a server and verifies the host key signature.
+- In a capture the layer is `packet.layers.SSH` under TCP port 22, or on any port for a segment that starts with the identification line. A segment with several messages gives a list.
+- Packets sent after `NEWKEYS` are encrypted: they are kept as bytes with `encrypted: true`.
+- `otw.layers` holds every layer class.
 
 `otw docs` lists the protocols, `otw docs icmp` prints the fields and constants of one.
 
