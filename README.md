@@ -184,12 +184,12 @@ wire.packet().ethernet({ dst: ethernet.BROADCAST }).arp({ opcode: arp.WHO_HAS, p
 
 ### Bluetooth
 
-`otw({ bluetooth: true })` is a wire for a Bluetooth adapter (`otw({ bluetooth: 'hci1' })` for another one). Its packets start at HCI, the interface between a host and its controller:
+`otw('bluetooth0')` is a wire for a Bluetooth adapter, named by its capture interface the way `otw('en0')` names an Ethernet one (`otw('hci0')` is accepted as the same adapter, `bluetooth1`/`hci1` for the next). Its packets start at HCI, the interface between a host and its controller:
 
 ```javascript
 import otw, { att, hcievent } from 'over-the-wire';
 
-const wire = otw({ bluetooth: true });
+const wire = otw('bluetooth0');
 
 const write = await wire.packet()
   .hci()

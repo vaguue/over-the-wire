@@ -1,4 +1,4 @@
-`hcitool lescan`, from a capture: every Bluetooth Low Energy device heard advertising, with its signal strength and name. Give it a capture file, or run it without one on Linux to watch the adapter live.
+`hcitool lescan`, from a capture: every Bluetooth Low Energy device heard advertising, with its signal strength and name. Give it a capture file, or run it without one on Linux to watch the `bluetooth0` adapter live.
 
 ```javascript
 import fs from 'node:fs';
@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import otw from 'over-the-wire';
 
 const file = process.argv[2];
-const wire = otw({ bluetooth: true });
+const wire = otw('bluetooth0');
 
 const fromFile = (path) => {
   const format = path.endsWith('.pcapng') ? 'pcapng' : 'pcap';

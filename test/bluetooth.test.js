@@ -189,15 +189,19 @@ test('filters match Bluetooth layers in the process', () => {
   assert.equal(writesToTheHandle.expressible, false);
 });
 
-test('otw({ bluetooth }) is a wire for a Bluetooth adapter', async () => {
-  const wire = otw({ bluetooth: true });
+test('otw(iface) chooses a wire kind by the interface name', async () => {
+  const wire = otw('bluetooth0');
 
   assert.ok(wire instanceof BluetoothWire);
   assert.equal(wire.adapter, 'hci0');
   assert.equal(wire.iface, 'bluetooth0');
-  assert.equal(otw({ bluetooth: 'hci1' }).iface, 'bluetooth1');
+  assert.equal(otw('hci0').iface, 'bluetooth0');
+  assert.equal(otw('hci1').iface, 'bluetooth1');
+  assert.equal(otw('bluetooth2').adapter, 'hci2');
   assert.ok(!(otw() instanceof BluetoothWire));
-  assert.ok(!(otw({ bluetooth: false }) instanceof BluetoothWire));
+  assert.ok(!(otw('en0') instanceof BluetoothWire));
+  assert.equal(otw('en0').iface, 'en0');
+  assert.ok(!(otw({ iface: 'eth0' }) instanceof BluetoothWire));
 
   const described = wire.packet().hci().acl({ handle: 0x40, packetBoundary: acl.BOUNDARY_FIRST_FLUSHABLE }).l2cap().att({ opcode: att.WRITE_REQUEST, handle: 0x25, value: hex('01 02 03') });
 
@@ -214,7 +218,7 @@ test('what the system cannot do with Bluetooth is a rejection with a reason', as
   const opened = [];
 
   const onLinux = otw({
-    bluetooth: 'hci2',
+    iface: 'hci2',
     system: {
       platform: 'linux',
       openDevice: (options) => {
@@ -233,7 +237,7 @@ test('what the system cannot do with Bluetooth is a rejection with a reason', as
   await assert.rejects(Promise.resolve(onLinux.send(new Packet({ buffer: WRITE_REQUEST, iface: H4 }))), { code: 'ENOTSUPPORTED', message: /HCI socket/ });
 
   const withoutAdapter = otw({
-    bluetooth: true,
+    iface: 'bluetooth0',
     system: {
       platform: 'linux',
       openDevice: () => {
@@ -244,8 +248,8 @@ test('what the system cannot do with Bluetooth is a rejection with a reason', as
 
   await assert.rejects(withoutAdapter.capture(), { code: 'ENODEVICE', message: /No capture device bluetooth0: Could not find device/ });
 
-  const onMac = otw({ bluetooth: true, system: { platform: 'darwin' } });
-  const onWindows = otw({ bluetooth: true, system: { platform: 'win32' } });
+  const onMac = otw({ iface: 'bluetooth0', system: { platform: 'darwin' } });
+  const onWindows = otw({ iface: 'bluetooth0', system: { platform: 'win32' } });
 
   assert.equal(onMac.supports('capture'), false);
   await assert.rejects(onMac.capture(), { code: 'ENOTSUPPORTED', message: /PacketLogger/ });
