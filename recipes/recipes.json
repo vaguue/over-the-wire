@@ -2,8 +2,8 @@
   "ping": {
     "title": "ping"
   },
-  "ping-socket": {
-    "title": "ping through a socket, without capture privileges"
+  "path-mtu": {
+    "title": "Path MTU with a raw socket (tracepath)"
   },
   "traceroute": {
     "title": "traceroute"

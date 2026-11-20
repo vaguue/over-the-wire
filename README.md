@@ -29,7 +29,7 @@ npm install over-the-wire --save
 Familiar tools rewritten as short scripts, and a few everyday tasks. They live in [`recipes/`](./recipes) and are the first chapter of the [documentation](https://vaguue.github.io/over-the-wire/):
 
 - [`ping`](./recipes/ping.md)
-- [`ping` through a socket, without capture privileges](./recipes/ping-socket.md)
+- [Path MTU with a raw socket (`tracepath`)](./recipes/path-mtu.md)
 - [`traceroute`](./recipes/traceroute.md)
 - [`dig`](./recipes/dig.md)
 - [`arping`](./recipes/arping.md)
@@ -174,17 +174,20 @@ const reply = await wire
 `wire.socket()` describes a socket the same way `wire.packet()` describes a packet, and opens it when awaited. The system keeps the lower layers: it routes, fills in the IP header and delivers only what is addressed to the socket.
 
 ```javascript
-const socket = await wire.socket().inet().dgram().icmp().to({ ip: '8.8.8.8' });
+const description = wire.socket().inet().raw().icmp().dontFragment().timeToLive(3).to({ ip: '8.8.8.8' });
 
-socket.write(wire.packet().icmp({ type: icmp.ECHO_REQUEST, id: 1, sequence: 1 }));
-const reply = await socket.expect(() => true, { timeout: 1000 });
+if (description.supports()) {
+  const socket = await description;
+  socket.write(wire.packet().icmp({ type: icmp.ECHO_REQUEST, id: 1, sequence: 1 }));
+  const answer = await socket.expect(() => true, { timeout: 1000 });
+}
 ```
 
-- The wire decides what can be described: an IP wire offers `inet()`, `inet6()`, `raw()`, `dgram()`, the protocols (`icmp()`, `icmpv6()`, `udp()`, `tcp()`, `gre()`, `rawIp()`, or `protocol(number)`) and the options (`broadcast()`, `reuseAddress()`, `reusePort()`, `timeToLive(64)`, `headerIncluded()`, ...). `otw docs socket` lists them with what this system has.
-- The numbers are on the wire, not imported: `wire.sockets.SOL_SOCKET`, `wire.sockets.IPPROTO_ICMP`. `.option(level, name, value)` sets anything that has no name.
-- An option the system does not have or refuses never throws. The socket opens without it and `socket.unsupported` says which and why: `[{ option: 'reusePort', reason: 'SO_REUSEPORT is not defined on win32' }]`.
-- A socket that cannot exist at all rejects with a `code`: `ENOTSUPPORTED` when the system has no such family, type or protocol, `ESOCKET` when the system refuses to open it, for example a raw socket without root.
-- `.blocking()` hands every write to the system before `write` returns, and waits for room in the send buffer instead of queueing. Reads stay event driven.
+- The wire decides what can be described: an IP wire offers `inet()`, `inet6()`, `raw()`, `dgram()`, the protocols (`icmp()`, `icmpv6()`, `udp()`, `tcp()`, `gre()`, `rawIp()`, or `protocol(number)`), the options (`broadcast()`, `reuseAddress()`, `timeToLive(64)`, `headerIncluded()`, `dontFragment()`, ...) and the descriptor flags (`blocking()`, `closeOnExec()`).
+- What can be opened is not a table in the library, the wire asks the system: `description.supports()` tries the described family, type and protocol for this process and remembers the answer, `description.availability()` adds the reason (`Operation not permitted` for a raw socket without root), `wire.socketSupport()` lists every combination. `otw docs socket` prints all of it.
+- The numbers are on the wire, not imported: `wire.sockets.SOL_SOCKET`, `wire.sockets.IPPROTO_ICMP`. `.option(level, name, value)` sets anything that has no name, `socket.socket.fcntl(command, value)` any other descriptor flag.
+- An option the system does not have or refuses never throws. The socket opens without it and `socket.unsupported` says which and why: `[{ option: 'reusePort', reason: 'SO_REUSEPORT is not defined on win32' }]`. An option spelled differently per system, like `dontFragment()`, uses the spelling the system has.
+- A socket that cannot exist at all rejects with a `code`: `ENOTSUPPORTED` when the system has no such family, type or protocol, `ESOCKET` when the system refuses to open it.
 - `otw({ iface: 'en0' }).socket()` binds the socket to that interface where the system allows it.
 - The result is a `SocketStream`: a duplex stream of packets with `expect`, `bind`, `connect`. `wire.close()` closes the sockets the wire opened.
 

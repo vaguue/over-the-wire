@@ -82,13 +82,15 @@ test('the constants live on the wire and only the ones this system has', () => {
 });
 
 test('the wire decides which sockets can be described', () => {
-  class NarrowWire extends Wire {}
-
-  NarrowWire.socketKinds = {
-    ...ipSockets,
-    families: { inet: 'AF_INET' },
-    protocols: { udp: 'IPPROTO_UDP' },
-  };
+  class NarrowWire extends Wire {
+    socketKinds() {
+      return {
+        ...ipSockets,
+        families: { inet: 'AF_INET' },
+        protocols: { udp: 'IPPROTO_UDP' },
+      };
+    }
+  }
 
   const narrow = new NarrowWire().socket();
   const usual = otw().socket();
@@ -98,6 +100,55 @@ test('the wire decides which sockets can be described', () => {
   assert.equal(narrow.icmp, undefined);
   assert.equal(typeof usual.inet6, 'function');
   assert.equal(typeof usual.icmp, 'function');
+});
+
+test('the wire asks the system what it can open, once per kind of socket', () => {
+  const asked = [];
+
+  const wire = otw({
+    system: {
+      probeSocket: ({ domain, type, protocol }) => {
+        asked.push({ domain, type, protocol });
+        return type === socketModule.SOCK_RAW ? 'Operation not permitted' : null;
+      },
+    },
+  });
+
+  const raw = wire.socket().inet().raw().icmp();
+
+  assert.equal(raw.supports(), false);
+  assert.deepEqual(raw.availability(), { available: false, reason: 'Operation not permitted' });
+  assert.equal(wire.socket().inet().icmp().supports('raw'), false);
+  assert.equal(wire.socket().inet().icmp().supports('dgram'), true);
+  assert.equal(wire.socket().inet().dgram().supports('udp'), true);
+
+  assert.deepEqual(asked, [
+    { domain: socketModule.AF_INET, type: socketModule.SOCK_RAW, protocol: socketModule.IPPROTO_ICMP },
+    { domain: socketModule.AF_INET, type: socketModule.SOCK_DGRAM, protocol: socketModule.IPPROTO_ICMP },
+    { domain: socketModule.AF_INET, type: socketModule.SOCK_DGRAM, protocol: socketModule.IPPROTO_UDP },
+  ]);
+
+  wire.flush();
+  raw.supports();
+  assert.equal(asked.length, 4);
+});
+
+test('what can be opened is the answer of this system for this process', async () => {
+  const wire = otw();
+  const support = wire.socketSupport();
+  const udp = support.find(({ family, type, protocol }) => family === 'inet' && type === 'dgram' && protocol === 'udp');
+  const tcpDatagrams = support.find(({ family, type, protocol }) => family === 'inet' && type === 'dgram' && protocol === 'tcp');
+  const rawIcmp = support.find(({ family, type, protocol }) => family === 'inet' && type === 'raw' && protocol === 'icmp');
+
+  assert.deepEqual(udp, { family: 'inet', type: 'dgram', protocol: 'udp', available: true, reason: null });
+  assert.equal(tcpDatagrams.available, false);
+  assert.ok(tcpDatagrams.reason.length > 0);
+  assert.equal(wire.socket().inet().dgram().supports('tcp'), false);
+
+  const opened = await wire.socket().inet().raw().icmp().then(() => true, () => false);
+
+  assert.equal(rawIcmp.available, opened);
+  wire.close();
 });
 
 test('an option this system does not have is reported on the socket instead of thrown', async () => {
@@ -179,22 +230,24 @@ test('raw sockets open for a privileged user and reject otherwise', async () => 
   }
 });
 
-test('blocking sockets hand every write to the system before write returns', async (t) => {
+test('descriptor flags are set through fcntl, blocking is one of them', async (t) => {
   const wire = otw();
   const port = firstPort + 2;
+  const { F_GETFL, F_GETFD, O_NONBLOCK, FD_CLOEXEC } = wire.sockets;
   const receiver = await wire.socket().inet().dgram().bind({ ip: LOOPBACK, port });
-  const sender = await wire.socket().inet().dgram().blocking().to({ ip: LOOPBACK, port });
+  const sender = await wire.socket().inet().dgram().blocking().closeOnExec().to({ ip: LOOPBACK, port });
 
   try {
     if (process.platform === 'win32') {
-      assert.deepEqual(sender.unsupported.map(({ option }) => option), ['blocking']);
-      t.skip('blocking sockets are not available on Windows');
+      assert.deepEqual(sender.unsupported.map(({ option }) => option), ['blocking', 'closeOnExec']);
+      t.skip('descriptor flags are not available on Windows');
       return;
     }
 
-    assert.equal(sender.socket.blocking, true);
-    assert.equal(receiver.socket.blocking, false);
     assert.deepEqual(sender.unsupported, []);
+    assert.equal(sender.socket.fcntl(F_GETFL) & O_NONBLOCK, 0);
+    assert.equal(sender.socket.fcntl(F_GETFD) & FD_CLOEXEC, FD_CLOEXEC);
+    assert.equal(receiver.socket.fcntl(F_GETFL) & O_NONBLOCK, O_NONBLOCK);
 
     const received = [];
     const everythingArrived = new Promise((resolve) => {
@@ -230,6 +283,54 @@ test('blocking sockets hand every write to the system before write returns', asy
   }
 });
 
+test('a descriptor flag can be switched off, and one the system lacks is reported', async () => {
+  const wire = otw();
+  const socket = await wire.socket().inet().dgram().blocking(false).closeOnExec(false);
+
+  try {
+    if (process.platform !== 'win32') {
+      assert.deepEqual(socket.unsupported, []);
+      assert.equal(socket.socket.fcntl(wire.sockets.F_GETFL) & wire.sockets.O_NONBLOCK, wire.sockets.O_NONBLOCK);
+      assert.equal(socket.socket.fcntl(wire.sockets.F_GETFD) & wire.sockets.FD_CLOEXEC, 0);
+    }
+  }
+  finally {
+    wire.close();
+  }
+
+  const elsewhere = otw({ system: { platform: 'win32', socketConstants: withoutConstants('O_NONBLOCK') } });
+  const withoutTheFlag = await elsewhere.socket().inet().dgram().blocking();
+
+  try {
+    assert.equal(elsewhere.socket().supports('blocking'), false);
+    assert.deepEqual(withoutTheFlag.unsupported, [
+      { option: 'blocking', reason: 'O_NONBLOCK is not defined on win32' },
+    ]);
+  }
+  finally {
+    elsewhere.close();
+  }
+});
+
+test('an option with a different spelling per system uses the one this system has', async () => {
+  const wire = otw();
+  const socket = await wire.socket().inet().dgram().dontFragment();
+
+  try {
+    assert.deepEqual(socket.unsupported, []);
+
+    if (wire.sockets.IP_MTU_DISCOVER !== undefined) {
+      assert.equal(socket.socket.getsockopt(wire.sockets.IPPROTO_IP, wire.sockets.IP_MTU_DISCOVER), wire.sockets.IP_PMTUDISC_PROBE);
+    }
+    else {
+      assert.notEqual(socket.socket.getsockopt(wire.sockets.IPPROTO_IP, wire.sockets.IP_DONTFRAG), 0);
+    }
+  }
+  finally {
+    wire.close();
+  }
+});
+
 test('a wire bound to an interface binds its sockets to it when the system allows', async () => {
   const iface = loopbackInterface();
   const wire = otw({ iface });
@@ -251,7 +352,7 @@ test('a wire bound to an interface binds its sockets to it when the system allow
   }
 });
 
-test('ping without capture privileges: an ICMP datagram socket', async (t) => {
+test('an ICMP datagram socket gets the echo reply', async (t) => {
   const wire = otw();
   let socket;
 

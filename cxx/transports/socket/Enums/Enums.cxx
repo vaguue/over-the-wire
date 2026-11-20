@@ -100,6 +100,38 @@ Napi::Object InitOptions(Napi::Env env, Napi::Object exports) {
 #ifdef IP_DONTFRAG
   ENUM_VALUE(IP_DONTFRAG);
 #endif
+#ifdef IP_DONTFRAGMENT
+  ENUM_VALUE(IP_DONTFRAGMENT);
+#endif
+#ifdef IP_PMTUDISC_DONT
+  ENUM_VALUE(IP_PMTUDISC_DONT);
+#endif
+#ifdef IP_PMTUDISC_DO
+  ENUM_VALUE(IP_PMTUDISC_DO);
+#endif
+#ifdef IP_PMTUDISC_PROBE
+  ENUM_VALUE(IP_PMTUDISC_PROBE);
+#endif
+#ifdef IP_MTU
+  ENUM_VALUE(IP_MTU);
+#endif
+#ifdef IP_RECVERR
+  ENUM_VALUE(IP_RECVERR);
+#endif
+#ifdef IP_RECVTTL
+  ENUM_VALUE(IP_RECVTTL);
+#endif
+#ifdef SO_TIMESTAMP
+  ENUM_VALUE(SO_TIMESTAMP);
+#endif
+#ifdef F_GETFL
+  ENUM_VALUE(F_GETFL);
+  ENUM_VALUE(F_SETFL);
+  ENUM_VALUE(F_GETFD);
+  ENUM_VALUE(F_SETFD);
+  ENUM_VALUE(O_NONBLOCK);
+  ENUM_VALUE(FD_CLOEXEC);
+#endif
 
   return exports;
 }

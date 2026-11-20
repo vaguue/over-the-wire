@@ -17,7 +17,7 @@ Napi::Object Socket::Init(Napi::Env env, Napi::Object exports) {
     InstanceMethod<&Socket::setsockopt>("setsockopt", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&Socket::getsockopt>("getsockopt", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceAccessor<&Socket::getBufferSize, &Socket::setBufferSize>("bufferSize"),
-    InstanceAccessor<&Socket::getBlocking>("blocking"),
+    InstanceMethod<&Socket::fcntl>("fcntl", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     //InstanceMethod<&Socket::ioctl>("ioctl", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&Socket::toHuman>(Napi::Symbol::For(env, "nodejs.util.inspect.custom"), static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&Socket::close>("close", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
@@ -39,7 +39,6 @@ static void IoEvent(uv_poll_t* watcher, int status, int revents) {
 
 Socket::Socket(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Socket>{info}, packets{sendFlags, connected} {
   Napi::Env env = info.Env();
-  bool wantsBlocking = false;
   checkLength(info, 1);
   if (info[0].IsObject()) {
     Napi::Object obj = info[0].As<Napi::Object>();
@@ -53,10 +52,6 @@ Socket::Socket(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Socket>{info},
 
     if (obj.Has("bufferSize")) {
       bufferSize = obj.Get("bufferSize").As<Napi::Number>().Uint32Value();
-    }
-
-    if (obj.Has("blocking")) {
-      wantsBlocking = obj.Get("blocking").ToBoolean().Value();
     }
   }
   else {
@@ -75,32 +70,31 @@ Socket::Socket(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Socket>{info},
   }
 
   initSocket(env);
-
-  if (env.IsExceptionPending()) {
-    return;
-  }
-
-  if (wantsBlocking) {
-    blocking = makeBlocking();
-  }
 }
 
-bool Socket::makeBlocking() {
+Napi::Value Socket::fcntl(const Napi::CallbackInfo& info) {
+  checkLength(info, 1);
+  Napi::Env env = info.Env();
 #ifdef _WIN32
-  return false;
+  Napi::Error::New(env, "fcntl is not available on Windows").ThrowAsJavaScriptException();
+  return env.Undefined();
 #else
-  int descriptorFlags = fcntl(pollfd, F_GETFL, 0);
+  int command = info[0].As<Napi::Number>().Int32Value();
+  int argument = 0;
 
-  if (descriptorFlags < 0) {
-    return false;
+  if (info.Length() > 1) {
+    argument = info[1].As<Napi::Number>().Int32Value();
   }
 
-  return fcntl(pollfd, F_SETFL, descriptorFlags & ~O_NONBLOCK) == 0;
-#endif
-}
+  int result = ::fcntl(pollfd, command, argument);
 
-Napi::Value Socket::getBlocking(const Napi::CallbackInfo& info) {
-  return Napi::Boolean::New(info.Env(), blocking);
+  if (result < 0) {
+    Napi::Error::New(env, getSystemError()).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  return Napi::Number::New(env, result);
+#endif
 }
 
 void Socket::createSocket(Napi::Env env) {
