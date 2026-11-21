@@ -33,6 +33,9 @@ const recordingHandlers = () => {
     printDocs: (request) => {
       calls.push(['docs', request]);
     },
+    printPorts: () => {
+      calls.push(['ports']);
+    },
   };
 };
 
@@ -44,6 +47,7 @@ test('arguments before the first positional belong to otw, the rest to the scrip
   await main([], handlers);
   await main(['docs', 'icmp'], handlers);
   await main(['docs'], handlers);
+  await main(['ports'], handlers);
 
   assert.deepEqual(handlers.calls, [
     ['script', { iface: 'en0', file: 'script.js', scriptArguments: ['8.8.8.8', '-i', 'x', '--help', '--count=4'] }],
@@ -51,6 +55,7 @@ test('arguments before the first positional belong to otw, the rest to the scrip
     ['shell', { iface: null }],
     ['docs', { protocol: 'icmp' }],
     ['docs', { protocol: undefined }],
+    ['ports'],
   ]);
 
   await assert.rejects(main(['--nope'], handlers), { code: 'EUSAGE' });
@@ -93,6 +98,13 @@ test('otw docs and otw --version work as a command', () => {
   assert.equal(run('--version').stdout.trim(), packageVersion());
   assert.equal(run('docs', 'nope').status, 1);
   assert.equal(run('--nope').status, 1);
+});
+
+test('otw ports lists the listeners of this machine', () => {
+  const listing = run('ports');
+
+  assert.equal(listing.status, 0, listing.stderr);
+  assert.match(listing.stdout, /^(PROTO\s+ADDRESS\s+PORT\s+PID\s+PROCESS|No open ports found\.)/);
 });
 
 test('a script run through otw gets wire, the constants, its own arguments and the package', () => {
@@ -148,10 +160,11 @@ test('the shell settles what is typed before printing it', async () => {
   assert.ok(text.includes('settled: 53'));
   assert.ok(text.includes("'lo0'"));
   assert.equal(typeof server.commands.docs.action, 'function');
+  assert.equal(typeof server.commands.ports.action, 'function');
 
   Wire.defaults.iface = null;
 
-  for (const name of ['wire', 'otw', 'docs', 'pcap', 'icmp', 'dns', 'tcp', 'udp']) {
+  for (const name of ['wire', 'otw', 'docs', 'ports', 'pcap', 'icmp', 'dns', 'tcp', 'udp']) {
     delete globalThis[name];
   }
 });

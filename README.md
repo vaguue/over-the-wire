@@ -34,6 +34,7 @@ Familiar tools rewritten as short scripts, and a few everyday tasks. They live i
 - [`arping`](./recipes/arping.md)
 - [`tcpdump`](./recipes/tcpdump.md)
 - [`nmap -sS`](./recipes/syn-scan.md)
+- [`netstat -tulpn`](./recipes/netstat.md)
 - [Did my handshake get an answer?](./recipes/handshake-answered.md)
 - [Send a packet and wait for the reply](./recipes/send-and-wait.md)
 - [Capture traffic into a pcapng file](./recipes/capture-to-file.md)
@@ -193,6 +194,7 @@ The package installs a command called `otw`. Without a global install it runs as
 otw [options]                    start the interactive shell
 otw [options] <file> [args...]   run a script
 otw docs [protocol]              describe a protocol: fields, constants, filter support
+otw ports                        list the ports this machine listens on and the processes behind them
 
 -i, --iface <name>               interface to use, otherwise chosen by the routing table
 ```
@@ -208,6 +210,8 @@ otw> wire.s(_).ex(wire.f.icmp({ type: icmp.ECHO_REPLY }))
 <Packet en0 | 50 bytes | Ethernet 84:aa:9c:af:3f:71 > 5c:e9:1e:9d:fc:40 / IPv4 8.8.8.8 > 192.168.1.36 / ICMP>
 otw> .docs icmp
 ```
+
+`.ports` lists the ports this machine listens on, the same table as `otw ports`. In a script it is `await system.getOpenPorts()`, an array of `{ protocol, family, address, port, pid, process }`.
 
 Short names for typing: `wire.p` is `wire.packet()`, `wire.f` is `wire.filter()`, `wire.c()` is `wire.capture()`, `wire.s()` is `wire.send()`, and `.ex()` on a send is `.expect()`.
 
