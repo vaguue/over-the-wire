@@ -17,7 +17,9 @@
 ## System Requirements
 - Libpcap/WinPcap/Npcap library installed (if Wireshark is installed on your system, you are good to go)
 - Node.js 18 or higher. The package is an ES module: use `import`. `require('over-the-wire')` works on Node.js versions that can load ES modules through `require` (20.19+, 22.12+) and returns the module namespace, so the callable is `require('over-the-wire').default`.
-- C++ compiler, if there are no prebuilt bindings for your system
+- C++ compiler and CMake, if there are no prebuilt bindings for your system
+
+Prebuilt bindings are published for Linux (glibc 2.28 or newer and musl, x64 and arm64), macOS 11 or newer (arm64 and x64) and Windows (x64). One binary serves every supported Node.js version. The Linux binaries carry their own libpcap, so nothing has to be installed next to them. When a prebuilt binary is missing or does not load, the install step says why and builds from source. `OVER_THE_WIRE_PREBUILDS` points the install step at a mirror of the release assets.
 
 ## Installation
 

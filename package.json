@@ -21,11 +21,11 @@
   },
   "author": "Seva D. <sabrinarempel7@gmail.com>",
   "scripts": {
-    "install": "prebuild-install -r node || cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake-js compile",
+    "install": "node scripts/install.js",
     "rebuild-debug": "cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake-js compile -D",
     "build-debug": "cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake-js build -D",
     "rebuild": "cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake-js compile",
-    "precompile": "cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 prebuild --backend cmake-js -r node -t 18.0.0 -t 20.0.0 -t 22.0.0 -t 23.0.0",
+    "precompile": "node scripts/prebuild.js",
     "build": "cross-env CMAKE_POLICY_VERSION_MINIMUM=3.5 cmake-js build",
     "test": "node --test test/*.test.js",
     "test-cov-text": "node --test --experimental-test-coverage test/*.test.js",
@@ -52,8 +52,8 @@
   "dependencies": {
     "@vaguuue/prebuild-install": "^7.1.2",
     "bindings": "^1.5.0",
+    "cmake-js": "^7.3.0",
     "node-addon-api": "^8.3.1",
-    "prebuild": "^13.0.1",
     "struct-compile": "^2.0.0",
     "yargs": "^17.7.3"
   },
@@ -68,11 +68,11 @@
     "bin",
     "lib",
     "test",
-    "recipes"
+    "recipes",
+    "scripts"
   ],
   "devDependencies": {
     "clean-jsdoc-theme": "^4.3.0",
-    "cmake-js": "^7.3.0",
     "cross-env": "^10.1.0",
     "jsdoc": "^4.0.4"
   }

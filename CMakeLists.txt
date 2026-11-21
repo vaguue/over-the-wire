@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.13)
 cmake_policy(SET CMP0042 NEW)
 set (CMAKE_CXX_STANDARD 17)
 
@@ -64,6 +64,11 @@ if(PCAP_ROOT)
         message(FATAL_ERROR "Required libraries not found. Ensure that PCAP_ROOT is set correctly.")
     endif()
 
+endif()
+
+if(DEFINED ENV{OVER_THE_WIRE_PORTABLE} AND NOT WIN32 AND NOT APPLE)
+  message("Portable build: libstdc++ and libgcc are linked statically, symbols are stripped")
+  target_link_options(${PROJECT_NAME} PRIVATE -static-libstdc++ -static-libgcc -s)
 endif()
 
 # PcapPlusPlus
