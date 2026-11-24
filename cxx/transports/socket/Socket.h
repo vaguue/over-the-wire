@@ -28,6 +28,7 @@ namespace OverTheWire::Transports::Socket {
     void initSocket(Napi::Env);
     void pollStart();
     void handleIOEvent(int, int);
+    void emitIOEvent(int, int);
     void setFlag(int, bool);
     void close();
     bool getFlag(int);
@@ -43,6 +44,8 @@ namespace OverTheWire::Transports::Socket {
     Napi::Value getsockopt(const Napi::CallbackInfo&);
     Napi::Value ioctl(const Napi::CallbackInfo&);
     Napi::Value toHuman(const Napi::CallbackInfo&);
+
+    Napi::Value fcntl(const Napi::CallbackInfo&);
 
     Napi::Value getBufferSize(const Napi::CallbackInfo&);
     void setBufferSize(const Napi::CallbackInfo&, const Napi::Value&);

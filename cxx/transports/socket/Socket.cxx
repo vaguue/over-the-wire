@@ -17,6 +17,7 @@ Napi::Object Socket::Init(Napi::Env env, Napi::Object exports) {
     InstanceMethod<&Socket::setsockopt>("setsockopt", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&Socket::getsockopt>("getsockopt", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceAccessor<&Socket::getBufferSize, &Socket::setBufferSize>("bufferSize"),
+    InstanceMethod<&Socket::fcntl>("fcntl", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     //InstanceMethod<&Socket::ioctl>("ioctl", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&Socket::toHuman>(Napi::Symbol::For(env, "nodejs.util.inspect.custom"), static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
     InstanceMethod<&Socket::close>("close", static_cast<napi_property_attributes>(napi_writable | napi_configurable)),
@@ -69,6 +70,31 @@ Socket::Socket(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Socket>{info},
   }
 
   initSocket(env);
+}
+
+Napi::Value Socket::fcntl(const Napi::CallbackInfo& info) {
+  checkLength(info, 1);
+  Napi::Env env = info.Env();
+#ifdef _WIN32
+  Napi::Error::New(env, "fcntl is not available on Windows").ThrowAsJavaScriptException();
+  return env.Undefined();
+#else
+  int command = info[0].As<Napi::Number>().Int32Value();
+  int argument = 0;
+
+  if (info.Length() > 1) {
+    argument = info[1].As<Napi::Number>().Int32Value();
+  }
+
+  int result = ::fcntl(pollfd, command, argument);
+
+  if (result < 0) {
+    Napi::Error::New(env, getSystemError()).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  return Napi::Number::New(env, result);
+#endif
 }
 
 void Socket::createSocket(Napi::Env env) {
@@ -279,6 +305,16 @@ Napi::Value Socket::toHuman(const Napi::CallbackInfo& info) {
 void Socket::handleIOEvent(int status, int revents) {
   Napi::HandleScope scope{Env()};
 
+  try {
+    emitIOEvent(status, revents);
+  }
+  catch (const Napi::Error& thrownByListener) {
+    napi_fatal_exception(Env(), thrownByListener.Value());
+  }
+}
+
+void Socket::emitIOEvent(int status, int revents) {
+
   Napi::Object self = this->Value().ToObject();
   Napi::Function emit = self.Get("emit").As<Napi::Function>();
 
@@ -375,6 +411,12 @@ bool Socket::processReq(Napi::Env& env, const Napi::Value&& inputBuf, const Napi
 Napi::Value Socket::write(const Napi::CallbackInfo& info) {
   checkLength(info, 1);
   Napi::Env env = info.Env();
+
+  if (!pollWatcher.get()) {
+    Napi::Error::New(env, "Socket is closed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (info[0].IsArray()) {
     Napi::Array ar = info[0].As<Napi::Array>();
     size_t n = ar.Length();
@@ -400,6 +442,25 @@ Napi::Value Socket::write(const Napi::CallbackInfo& info) {
   }
 
   if (!getFlag(UV_WRITABLE)) {
+    SendStatus sentRightAway = packets.send(pollfd);
+
+    if (sentRightAway == SendStatus::ok) {
+      return Napi::Boolean::New(env, true);
+    }
+
+    if (sentRightAway == SendStatus::fail) {
+      std::string sendError = getSystemError();
+
+      if (packets.size() > 0) {
+        setFlag(UV_WRITABLE, true);
+        pollStart();
+        refForWrite();
+      }
+
+      Napi::Error::New(env, sendError).ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
+
     setFlag(UV_WRITABLE, true);
     pollStart();
   }
@@ -407,7 +468,7 @@ Napi::Value Socket::write(const Napi::CallbackInfo& info) {
   refForWrite();
   DEBUG_OUTPUT((std::stringstream{} << "writeRefsCount is " << writeRefsCount).str());
 
-  return env.Undefined();
+  return Napi::Boolean::New(env, false);
 }
 
 void Socket::refForRead() {

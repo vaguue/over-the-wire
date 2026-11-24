@@ -2,6 +2,9 @@
   "ping": {
     "title": "ping"
   },
+  "path-mtu": {
+    "title": "Path MTU with a raw socket (tracepath)"
+  },
   "traceroute": {
     "title": "traceroute"
   },
