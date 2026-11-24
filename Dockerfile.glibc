@@ -1,0 +1,49 @@
+FROM almalinux:8 AS build
+RUN dnf install -y --enablerepo=powertools \
+  bison \
+  bluez-libs-devel \
+  cmake \
+  flex \
+  gcc-c++ \
+  libstdc++-static \
+  make \
+  xz \
+  && dnf module install -y nodejs:20/common \
+  && dnf clean all
+COPY scripts/static-libpcap.sh /tmp/static-libpcap.sh
+RUN /tmp/static-libpcap.sh /opt/libpcap
+ENV CMAKE_PREFIX_PATH=/opt/libpcap
+ENV OVER_THE_WIRE_PORTABLE=1
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --ignore-scripts
+COPY . .
+RUN CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) npm run precompile
+RUN npm test
+RUN ! ldd build/Release/over-the-wire.node | grep -E 'libpcap|libstdc\+\+|libgcc'
+
+FROM node:18-bullseye-slim AS debian11
+COPY --from=build /app /app
+RUN cd /app && npm test > /loads.log 2>&1 || (tail -n 60 /loads.log && false)
+
+FROM node:20-bookworm-slim AS debian12
+COPY --from=build /app /app
+RUN cd /app && npm test > /loads.log 2>&1 || (tail -n 60 /loads.log && false)
+
+FROM node:24-trixie-slim AS debian13
+COPY --from=build /app /app
+RUN cd /app && npm test > /loads.log 2>&1 || (tail -n 60 /loads.log && false)
+
+FROM amazonlinux:2023 AS amazonlinux2023
+RUN dnf install -y nodejs && dnf clean all
+COPY --from=build /app /app
+RUN cd /app && npm test > /loads.log 2>&1 || (tail -n 60 /loads.log && false)
+
+FROM build AS verified
+COPY --from=debian11 /loads.log /checks/debian11.log
+COPY --from=debian12 /loads.log /checks/debian12.log
+COPY --from=debian13 /loads.log /checks/debian13.log
+COPY --from=amazonlinux2023 /loads.log /checks/amazonlinux2023.log
+
+FROM scratch
+COPY --from=verified /app/prebuilds/ .

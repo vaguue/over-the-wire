@@ -17,7 +17,9 @@
 ## System Requirements
 - Libpcap/WinPcap/Npcap library installed (if Wireshark is installed on your system, you are good to go)
 - Node.js 18 or higher. The package is an ES module: use `import`. `require('over-the-wire')` works on Node.js versions that can load ES modules through `require` (20.19+, 22.12+) and returns the module namespace, so the callable is `require('over-the-wire').default`.
-- C++ compiler, if there are no prebuilt bindings for your system
+- C++ compiler and CMake, if there are no prebuilt bindings for your system
+
+Prebuilt bindings are published for Linux (glibc 2.28 or newer and musl, x64 and arm64), macOS 11 or newer (arm64 and x64) and Windows (x64). One binary serves every supported Node.js version. The Linux binaries carry their own libpcap, so nothing has to be installed next to them. When a prebuilt binary is missing or does not load, the install step says why and builds from source. `OVER_THE_WIRE_PREBUILDS` points the install step at a mirror of the release assets.
 
 ## Installation
 
@@ -35,6 +37,7 @@ Familiar tools rewritten as short scripts, and a few everyday tasks. They live i
 - [`arping`](./recipes/arping.md)
 - [`tcpdump`](./recipes/tcpdump.md)
 - [`nmap -sS`](./recipes/syn-scan.md)
+- [`netstat -tulpn`](./recipes/netstat.md)
 - [Did my handshake get an answer?](./recipes/handshake-answered.md)
 - [Send a packet and wait for the reply](./recipes/send-and-wait.md)
 - [Capture traffic into a pcapng file](./recipes/capture-to-file.md)
@@ -208,7 +211,7 @@ wire.packet().ethernet({ dst: ethernet.BROADCAST }).arp({ opcode: arp.WHO_HAS, p
 
 Both come from the layer itself: the comments in its struct describe the protocol and its fields, and one `attach.docs(Layer, { constants })` call lists the constants. A layer added with `otw.registerLayer(MyLayer)` gets its namespace in `otw.protocols` and its `otw docs` page the same way.
 
-## The `otw` command
+## The `otw` command [IN DEVELOPMENT]
 
 The package installs a command called `otw`. Without a global install it runs as `npx over-the-wire`.
 
@@ -216,6 +219,7 @@ The package installs a command called `otw`. Without a global install it runs as
 otw [options]                    start the interactive shell
 otw [options] <file> [args...]   run a script
 otw docs [protocol]              describe a protocol: fields, constants, filter support
+otw ports                        list the ports this machine listens on and the processes behind them
 
 -i, --iface <name>               interface to use, otherwise chosen by the routing table
 ```
@@ -231,6 +235,8 @@ otw> wire.w(_).ex(wire.f.icmp({ type: icmp.ECHO_REPLY }))
 <Packet en0 | 50 bytes | Ethernet 84:aa:9c:af:3f:71 > 5c:e9:1e:9d:fc:40 / IPv4 8.8.8.8 > 192.168.1.36 / ICMP>
 otw> .docs icmp
 ```
+
+`.ports` lists the ports this machine listens on, the same table as `otw ports`. In a script it is `await system.getOpenPorts()`, an array of `{ protocol, family, address, port, pid, process }`.
 
 Short names for typing: `wire.p` is `wire.packet()`, `wire.f` is `wire.filter()`, `wire.s` is `wire.socket()`, `wire.c()` is `wire.capture()`, `wire.w()` is `wire.send()`, and `.ex()` on a send is `.expect()`.
 

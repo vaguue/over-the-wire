@@ -9,6 +9,7 @@
 #include "converters/Converters.h"
 #include "arp/Arp.h"
 #include "routing/Routing.h"
+#include "ports/Ports.h"
 
 static Napi::Object Init(Napi::Env env, Napi::Object exports) {
   initAddon(env);
@@ -18,6 +19,7 @@ static Napi::Object Init(Napi::Env env, Napi::Object exports) {
   OverTheWire::BpfFilter::Init(env, exports);
   OverTheWire::Arp::Init(env, exports);
   OverTheWire::Routing::Init(env, exports);
+  OverTheWire::Ports::Init(env, exports);
 
   exports.Set("socket", OverTheWire::Transports::Socket::Init(env, Napi::Object::New(env)));
   exports.Set("converters", OverTheWire::Converters::Init(env, Napi::Object::New(env)));

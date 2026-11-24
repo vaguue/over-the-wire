@@ -20,6 +20,9 @@
   "syn-scan": {
     "title": "nmap -sS"
   },
+  "netstat": {
+    "title": "netstat -tulpn"
+  },
   "handshake-answered": {
     "title": "Did my handshake get an answer?"
   },

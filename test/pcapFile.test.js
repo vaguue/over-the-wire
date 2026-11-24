@@ -340,3 +340,71 @@ test('Pcapng write: comments and packets without interface details', async () =>
   assert.equal(first.iface.name, 'en0');
   assert.equal(second.buffer.length, 60);
 });
+
+const packetsFrom = (format, pieces) => {
+  return new Promise((resolve, reject) => {
+    const reader = createReadStream({ format });
+    const packets = [];
+
+    reader.on('data', (packet) => {
+      packets.push(packet.buffer.toString('hex'));
+    });
+
+    reader.on('error', reject);
+
+    reader.on('end', () => {
+      resolve(packets);
+    });
+
+    for (const piece of pieces) {
+      reader.write(piece);
+    }
+
+    reader.end();
+  });
+};
+
+const inPiecesOf = (buffer, size) => {
+  const pieces = [];
+
+  for (let offset = 0; offset < buffer.length; offset += size) {
+    pieces.push(buffer.subarray(offset, offset + size));
+  }
+
+  return pieces;
+};
+
+const PIECE_SIZES = [1, 7, 16, 24, 1500];
+
+test('Pcap read: the packets do not depend on how the bytes arrive', async () => {
+  const capture = fs.readFileSync(path.resolve(__dirname, 'data/example1.pcap'));
+  const inOnePiece = await packetsFrom('pcap', [capture]);
+
+  assert.ok(inOnePiece.length > 0);
+
+  for (const size of PIECE_SIZES) {
+    assert.deepEqual(await packetsFrom('pcap', inPiecesOf(capture, size)), inOnePiece, `pieces of ${size}`);
+  }
+});
+
+test('Pcapng read: the packets do not depend on how the bytes arrive', async () => {
+  const capture = fs.readFileSync(path.resolve(__dirname, 'data/example1.pcapng'));
+  const inOnePiece = await packetsFrom('pcapng', [capture]);
+
+  assert.ok(inOnePiece.length > 0);
+
+  for (const size of PIECE_SIZES) {
+    assert.deepEqual(await packetsFrom('pcapng', inPiecesOf(capture, size)), inOnePiece, `pieces of ${size}`);
+  }
+});
+
+test('Pcap read: a capture that ends inside a packet fails and says where', async () => {
+  const capture = fs.readFileSync(path.resolve(__dirname, 'data/example1.pcap'));
+  const FILE_HEADER_LENGTH = 24;
+  const PACKET_HEADER_LENGTH = 16;
+  const firstPacketLength = capture.readUInt32LE(FILE_HEADER_LENGTH + 8);
+  const cutInsideFirstPacket = capture.subarray(0, FILE_HEADER_LENGTH + PACKET_HEADER_LENGTH + firstPacketLength - 1);
+
+  await assert.rejects(packetsFrom('pcap', [cutInsideFirstPacket]), /truncated input at byte 40/);
+  await assert.rejects(packetsFrom('pcap', inPiecesOf(cutInsideFirstPacket, 5)), /truncated input at byte 40/);
+});
